@@ -51,30 +51,30 @@ const Index = () => {
       
       <main className="container py-8 space-y-12">
         {/* Hero Section */}
-        <section className="text-center space-y-4 py-12">
-          <h1 className="text-5xl md:text-6xl font-bold">
+        <section className="text-center space-y-4 py-8 md:py-12 px-4">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold">
             Track every <span className="text-racing-red">race</span> you watch.
           </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto px-4">
             BoxBoxd lets you log, rate, and review every F1 race. Keep a diary, share lists, and connect with fellow fans.
           </p>
-          <div className="flex items-center justify-center gap-4 pt-4">
-            <Button size="lg" className="gap-2" onClick={() => navigate('/diary')}>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 pt-4">
+            <Button size="lg" className="gap-2 w-full sm:w-auto" onClick={() => navigate('/diary')}>
               Get Racing <ArrowRight className="w-4 h-4" />
             </Button>
-            <Button size="lg" variant="outline" onClick={() => navigate('/explore')}>
+            <Button size="lg" variant="outline" className="w-full sm:w-auto" onClick={() => navigate('/explore')}>
               Pit Stop
             </Button>
           </div>
         </section>
 
-        <section className="space-y-6">
-          <div className="flex items-center justify-between">
+        <section className="space-y-6 px-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h2 className="text-2xl font-bold">Current Season</h2>
-              <p className="text-muted-foreground">2025 F1 Grand Prix Schedule</p>
+              <h2 className="text-xl sm:text-2xl font-bold">Current Season</h2>
+              <p className="text-sm sm:text-base text-muted-foreground">2025 F1 Grand Prix Schedule</p>
             </div>
-            <Button variant="ghost" className="gap-2" onClick={() => navigate('/explore')}>
+            <Button variant="ghost" className="gap-2 self-start sm:self-auto" onClick={() => navigate('/explore')}>
               View All <ArrowRight className="w-4 h-4" />
             </Button>
           </div>

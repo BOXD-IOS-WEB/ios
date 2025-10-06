@@ -1,7 +1,12 @@
 import { Card } from "@/components/ui/card";
-import { Star } from "lucide-react";
+import { Star, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { getCountryFlag } from "@/services/f1Api";
+import { Button } from "@/components/ui/button";
+import { addToWatchlist, removeFromWatchlist, getUserWatchlist } from "@/services/watchlist";
+import { useToast } from "@/hooks/use-toast";
+import { auth } from "@/lib/firebase";
+import { useState, useEffect } from "react";
 
 interface RaceCardProps {
   season: number;
@@ -14,6 +19,7 @@ interface RaceCardProps {
   watched?: boolean;
   id?: string;
   country?: string;
+  showWatchlistButton?: boolean;
 }
 
 export const RaceCard = ({
@@ -27,14 +33,81 @@ export const RaceCard = ({
   watched = false,
   id,
   country,
+  showWatchlistButton = true,
 }: RaceCardProps) => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [isInWatchlist, setIsInWatchlist] = useState(false);
+  const [watchlistId, setWatchlistId] = useState<string | null>(null);
+
+  useEffect(() => {
+    checkWatchlistStatus();
+  }, [season, gpName]);
+
+  const checkWatchlistStatus = async () => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    try {
+      const items = await getUserWatchlist(user.uid);
+      const watchlistItem = items.find(
+        item => item.raceYear === season && item.raceName === gpName
+      );
+      if (watchlistItem) {
+        setIsInWatchlist(true);
+        setWatchlistId(watchlistItem.id || null);
+      }
+    } catch (error) {
+      console.error('Error checking watchlist:', error);
+    }
+  };
 
   const handleClick = () => {
     if (id) {
       navigate(`/race/${id}`);
     } else if (season && round) {
       navigate(`/race/${season}/${round}`);
+    }
+  };
+
+  const handleWatchlistToggle = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const user = auth.currentUser;
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to add races to your watchlist",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      if (isInWatchlist && watchlistId) {
+        await removeFromWatchlist(watchlistId);
+        setIsInWatchlist(false);
+        setWatchlistId(null);
+        toast({ title: "Removed from watchlist" });
+      } else {
+        const newId = await addToWatchlist({
+          userId: user.uid,
+          raceYear: season,
+          raceName: gpName,
+          raceLocation: circuit,
+          raceDate: new Date(date),
+          notes: '',
+          reminderEnabled: false,
+        });
+        setIsInWatchlist(true);
+        setWatchlistId(newId);
+        toast({ title: "Added to watchlist" });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      });
     }
   };
 
@@ -86,6 +159,20 @@ export const RaceCard = ({
         {watched && (
           <div className="absolute top-2 right-2 bg-primary/90 backdrop-blur-sm px-2 py-1 rounded text-xs font-medium">
             Logged
+          </div>
+        )}
+
+        {/* Watchlist button */}
+        {showWatchlistButton && !watched && (
+          <div className="absolute top-2 right-2">
+            <Button
+              size="icon"
+              variant="secondary"
+              className="h-8 w-8 bg-black/60 hover:bg-black/80 backdrop-blur-sm"
+              onClick={handleWatchlistToggle}
+            >
+              <Eye className={`w-4 h-4 ${isInWatchlist ? 'fill-white' : ''}`} />
+            </Button>
           </div>
         )}
       </div>

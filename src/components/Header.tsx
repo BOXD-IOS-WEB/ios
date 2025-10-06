@@ -85,7 +85,7 @@ export const Header = () => {
             </div>
           </a>
 
-          <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
+          <nav className="hidden lg:flex items-center gap-6 text-sm font-medium">
             <a href="/" className="text-foreground hover:text-primary transition-colors">
               Home
             </a>
@@ -107,17 +107,26 @@ export const Header = () => {
           </nav>
         </div>
 
-        <div className="flex items-center gap-3 flex-shrink-0">
-          <form onSubmit={handleSearch} className="relative hidden sm:block">
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <form onSubmit={handleSearch} className="relative hidden md:block">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               type="search"
               placeholder="Search races, users..."
-              className="pl-9 w-64 bg-muted/50"
+              className="pl-9 w-48 lg:w-64 bg-muted/50"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </form>
+
+          <Button
+            size="icon"
+            variant="ghost"
+            className="md:hidden"
+            onClick={() => navigate('/search')}
+          >
+            <Search className="w-5 h-5" />
+          </Button>
 
           <LogRaceDialog
             trigger={

@@ -35,6 +35,7 @@ const Profile = () => {
   const [followers, setFollowers] = useState<any[]>([]);
   const [following, setFollowing] = useState<any[]>([]);
   const [followersLoading, setFollowersLoading] = useState(false);
+  const [statsDoc, setStatsDoc] = useState<any>(null);
 
   const loadProfile = async () => {
     const user = auth.currentUser;
@@ -61,27 +62,18 @@ const Profile = () => {
       const hoursWatched = calculateTotalHoursWatched(userLogs);
       const reviewsCount = userLogs.filter(log => log.review && log.review.length > 0).length;
 
-      const statsDoc = await getDoc(doc(db, 'userStats', targetUserId));
-      if (statsDoc.exists()) {
-        const statsData = statsDoc.data();
-        setStats({
-          racesWatched: userLogs.length,
-          hoursSpent: Math.round(hoursWatched),
-          reviews: reviewsCount,
-          lists: statsData.listsCount || 0,
-          followers: statsData.followersCount || 0,
-          following: statsData.followingCount || 0,
-        });
-      } else {
-        setStats({
-          racesWatched: userLogs.length,
-          hoursSpent: Math.round(hoursWatched),
-          reviews: reviewsCount,
-          lists: 0,
-          followers: 0,
-          following: 0,
-        });
-      }
+      const userStatsDoc = await getDoc(doc(db, 'userStats', targetUserId));
+      setStatsDoc(userStatsDoc);
+      const statsData = userStatsDoc.exists() ? userStatsDoc.data() : {};
+
+      setStats({
+        racesWatched: userLogs.length,
+        hoursSpent: Math.round(hoursWatched),
+        reviews: reviewsCount,
+        lists: statsData.listsCount || 0,
+        followers: statsData.followersCount || 0,
+        following: statsData.followingCount || 0,
+      });
 
       setLogs(userLogs.map(log => ({
         id: log.id,
@@ -155,9 +147,9 @@ const Profile = () => {
           <div className="h-48 bg-gradient-to-r from-racing-red/20 to-primary/5 rounded-lg" />
           
           {/* Profile Info */}
-          <div className="flex flex-col md:flex-row gap-6 items-start -mt-20 relative">
+          <div className="flex flex-col md:flex-row gap-6 items-start -mt-20 relative px-4">
             {/* Avatar */}
-            <div className="w-32 h-32 rounded-full border-4 border-background overflow-hidden bg-muted flex items-center justify-center">
+            <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-background overflow-hidden bg-muted flex items-center justify-center">
               {profile?.photoURL ? (
                 <img
                   src={profile.photoURL}
@@ -165,18 +157,18 @@ const Profile = () => {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="text-4xl font-bold">
+                <div className="text-3xl sm:text-4xl font-bold">
                   {(profile?.name || profile?.email?.split('@')[0] || 'U').charAt(0).toUpperCase()}
                 </div>
               )}
             </div>
 
-            <div className="flex-1 pt-16 md:pt-14">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex-1 pt-12 sm:pt-16 md:pt-14 w-full">
+              <div className="flex flex-col gap-4">
                 <div>
-                  <h1 className="text-3xl font-bold">{profile?.name || 'Loading...'}</h1>
-                  <p className="text-muted-foreground">@{profile?.email?.split('@')[0] || 'user'}</p>
-                  <p className="mt-2">{profile?.description || 'F1 fan'}</p>
+                  <h1 className="text-2xl sm:text-3xl font-bold break-words">{profile?.name || 'Loading...'}</h1>
+                  <p className="text-sm sm:text-base text-muted-foreground">@{profile?.email?.split('@')[0] || 'user'}</p>
+                  <p className="mt-2 text-sm sm:text-base">{profile?.description || 'F1 fan'}</p>
                 </div>
                 
                 <div className="flex gap-2">
@@ -206,44 +198,56 @@ const Profile = () => {
               </div>
 
               {/* Stats */}
-              <div className="grid grid-cols-3 md:grid-cols-6 gap-4 mt-6">
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 sm:gap-4 mt-6">
                 <div className="text-center">
-                  <div className="text-2xl font-bold">{stats.racesWatched}</div>
+                  <div className="text-xl sm:text-2xl font-bold">{stats.racesWatched}</div>
                   <div className="text-xs text-muted-foreground">Races</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold">{stats.hoursSpent}h</div>
+                  <div className="text-xl sm:text-2xl font-bold">{stats.hoursSpent}h</div>
                   <div className="text-xs text-muted-foreground">Hours</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold">{stats.reviews}</div>
+                  <div className="text-xl sm:text-2xl font-bold">{stats.reviews}</div>
                   <div className="text-xs text-muted-foreground">Reviews</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold">{stats.lists}</div>
+                  <div className="text-xl sm:text-2xl font-bold">{stats.lists}</div>
                   <div className="text-xs text-muted-foreground">Lists</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold">{stats.followers}</div>
+                  <div className="text-xl sm:text-2xl font-bold">{stats.followers}</div>
                   <div className="text-xs text-muted-foreground">Followers</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold">{stats.following}</div>
+                  <div className="text-xl sm:text-2xl font-bold">{stats.following}</div>
                   <div className="text-xs text-muted-foreground">Following</div>
                 </div>
               </div>
 
               {/* Favourites */}
-              <div className="flex flex-wrap gap-4 mt-6">
-                <Badge variant="secondary" className="gap-2 py-2 px-3">
-                  <Heart className="w-4 h-4 fill-red-500 text-red-500" />
-                  Favorite Driver: Lewis Hamilton
-                </Badge>
-                <Badge variant="secondary" className="gap-2 py-2 px-3">
-                  <Heart className="w-4 h-4 fill-red-500 text-red-500" />
-                  Favorite Circuit: Suzuka
-                </Badge>
-              </div>
+              {(statsDoc?.exists() && (statsDoc.data()?.favoriteDriver || statsDoc.data()?.favoriteCircuit || statsDoc.data()?.favoriteTeam)) && (
+                <div className="flex flex-wrap gap-4 mt-6">
+                  {statsDoc.data()?.favoriteDriver && (
+                    <Badge variant="secondary" className="gap-2 py-2 px-3">
+                      <Heart className="w-4 h-4 fill-red-500 text-red-500" />
+                      Favorite Driver: {statsDoc.data().favoriteDriver}
+                    </Badge>
+                  )}
+                  {statsDoc.data()?.favoriteCircuit && (
+                    <Badge variant="secondary" className="gap-2 py-2 px-3">
+                      <Heart className="w-4 h-4 fill-red-500 text-red-500" />
+                      Favorite Circuit: {statsDoc.data().favoriteCircuit}
+                    </Badge>
+                  )}
+                  {statsDoc.data()?.favoriteTeam && (
+                    <Badge variant="secondary" className="gap-2 py-2 px-3">
+                      <Heart className="w-4 h-4 fill-red-500 text-red-500" />
+                      Favorite Team: {statsDoc.data().favoriteTeam}
+                    </Badge>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
