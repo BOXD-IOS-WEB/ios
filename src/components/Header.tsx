@@ -205,8 +205,18 @@ export const Header = () => {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button size="icon" variant="ghost">
-                <User className="w-5 h-5" />
+              <Button size="icon" variant="ghost" className="relative rounded-full">
+                {user?.photoURL ? (
+                  <img
+                    src={user.photoURL}
+                    alt="Profile"
+                    className="w-8 h-8 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-racing-red/20 flex items-center justify-center text-racing-red font-bold">
+                    {(user?.displayName || user?.email?.split('@')[0] || 'U').charAt(0).toUpperCase()}
+                  </div>
+                )}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
