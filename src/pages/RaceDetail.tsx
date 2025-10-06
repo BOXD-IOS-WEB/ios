@@ -16,7 +16,8 @@ import { getRaceLogById, getPublicRaceLogs } from "@/services/raceLogs";
 import { auth } from "@/lib/firebase";
 
 const RaceDetail = () => {
-  const { id, year, round } = useParams();
+  const { id, season, round } = useParams();
+  const year = season;
   const [isInWatchlist, setIsInWatchlist] = useState(false);
   const [watchlistId, setWatchlistId] = useState<string | null>(null);
   const [isLiked, setIsLiked] = useState(false);
