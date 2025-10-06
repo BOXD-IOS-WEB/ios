@@ -6,8 +6,8 @@ import { getStorage } from 'firebase/storage';
 const firebaseConfig = {
   apiKey: "AIzaSyAxxOGSqsd79qXvGUz7FEKgBuc-pafGE9A",
   authDomain: "box-boxd.firebaseapp.com",
-  projectId: "box-boxd",
-  storageBucket: "box-boxd.appspot.com",
+  projectId: "box-boxd-f1-1759326853",
+  storageBucket: "box-boxd-f1-1759326853.appspot.com",
   messagingSenderId: "750144678811",
   appId: "1:750144678811:web:47f55a4293e9b7e66dcf3e"
 };
