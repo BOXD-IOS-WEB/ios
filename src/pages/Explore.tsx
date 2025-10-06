@@ -16,7 +16,7 @@ const Explore = () => {
   const [topReviews, setTopReviews] = useState<any[]>([]);
   const [popularLists, setPopularLists] = useState<any[]>([]);
   const [upcomingRaces, setUpcomingRaces] = useState<any[]>([]);
-  const [selectedSeason, setSelectedSeason] = useState(2024);
+  const [selectedSeason, setSelectedSeason] = useState(new Date().getFullYear());
   const [seasonRaces, setSeasonRaces] = useState<any[]>([]);
   const [seasonLoading, setSeasonLoading] = useState(false);
   const [loading, setLoading] = useState(true);
