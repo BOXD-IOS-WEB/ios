@@ -20,10 +20,14 @@ const Index = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
+        console.log('Fetching current season races...');
         const f1Races = await getCurrentSeasonRaces();
+        console.log('Races fetched:', f1Races.length, 'races');
 
         if (Array.isArray(f1Races) && f1Races.length > 0) {
           setCurrentRaces(f1Races.slice(0, 6));
+        } else {
+          console.warn('No races returned from API');
         }
 
         try {

@@ -86,7 +86,9 @@ const Explore = () => {
     const loadSeasonRaces = async () => {
       setSeasonLoading(true);
       try {
+        console.log(`Fetching races for season ${selectedSeason}...`);
         const races = await getRacesBySeason(selectedSeason);
+        console.log(`Fetched ${races.length} races for ${selectedSeason}`);
         setSeasonRaces(races);
       } catch (error) {
         console.error('Error loading season races:', error);
