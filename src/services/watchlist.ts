@@ -17,10 +17,10 @@ export interface WatchlistItem {
   raceYear: number;
   raceName: string;
   raceLocation: string;
-  raceDate: Date;
+  raceDate: Date | Timestamp;
   notes: string;
   reminderEnabled: boolean;
-  createdAt: Date;
+  createdAt: Date | Timestamp;
 }
 
 const watchlistCollection = collection(db, 'watchlist');
@@ -32,6 +32,7 @@ export const addToWatchlist = async (item: Omit<WatchlistItem, 'id' | 'createdAt
   const newItem = {
     ...item,
     userId: user.uid,
+    raceDate: item.raceDate instanceof Date ? Timestamp.fromDate(item.raceDate) : item.raceDate,
     createdAt: Timestamp.now()
   };
 
