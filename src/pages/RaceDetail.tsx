@@ -120,7 +120,6 @@ const RaceDetail = () => {
       rating: 0,
       totalRatings: 0,
       watched: allRaceLogs.filter(l => l.raceName === raceInfo.meeting_name && l.raceYear === raceInfo.year).length,
-      laps: 'TBD',
     };
   }
 
@@ -308,13 +307,16 @@ const RaceDetail = () => {
                     <p className="text-sm text-muted-foreground">Country</p>
                     <p className="font-semibold">{race.country}</p>
                   </div>
-                  <div>
+                  <div className="col-span-2">
                     <p className="text-sm text-muted-foreground">Date</p>
-                    <p className="font-semibold">{race.date}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Laps</p>
-                    <p className="font-semibold">{race.laps}</p>
+                    <p className="font-semibold">
+                      {new Date(race.date).toLocaleDateString('en-US', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </p>
                   </div>
                 </div>
               </div>
