@@ -13,11 +13,12 @@ import { followUser, unfollowUser, isFollowing, getFollowers, getFollowing } fro
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { EditProfileDialog } from "@/components/EditProfileDialog";
 
 const Profile = () => {
   const { userId } = useParams();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [logs, setLogs] = useState<any[]>([]);
   const [stats, setStats] = useState({
@@ -144,12 +145,15 @@ const Profile = () => {
         {/* Profile Header */}
         <div className="space-y-6 mb-8">
           {/* Cover/Banner */}
-          <div className="h-48 bg-gradient-to-r from-racing-red/20 to-primary/5 rounded-lg" />
-          
+          <div className="h-48 sm:h-64 bg-gradient-to-br from-racing-red via-racing-red/40 to-racing-red/10 rounded-lg relative overflow-hidden">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(255,255,255,0.1),transparent)] opacity-50" />
+            <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:20px_20px]" />
+          </div>
+
           {/* Profile Info */}
-          <div className="flex flex-col md:flex-row gap-6 items-start -mt-20 relative px-4">
+          <div className="flex flex-col md:flex-row gap-6 items-start -mt-20 sm:-mt-24 relative px-4">
             {/* Avatar */}
-            <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-background overflow-hidden bg-muted flex items-center justify-center">
+            <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full border-4 border-background overflow-hidden bg-gradient-to-br from-racing-red/30 to-primary/10 flex items-center justify-center shadow-2xl ring-4 ring-racing-red/20">
               {profile?.photoURL ? (
                 <img
                   src={profile.photoURL}
@@ -157,7 +161,7 @@ const Profile = () => {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="text-3xl sm:text-4xl font-bold">
+                <div className="text-4xl sm:text-5xl font-bold text-racing-red">
                   {(profile?.name || profile?.email?.split('@')[0] || 'U').charAt(0).toUpperCase()}
                 </div>
               )}
@@ -198,32 +202,44 @@ const Profile = () => {
               </div>
 
               {/* Stats */}
-              <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 sm:gap-4 mt-6">
-                <div className="text-center">
-                  <div className="text-xl sm:text-2xl font-bold">{stats.racesWatched}</div>
-                  <div className="text-xs text-muted-foreground">Races</div>
+              <Card className="grid grid-cols-3 sm:grid-cols-6 gap-4 sm:gap-6 mt-6 p-6 bg-gradient-to-br from-card to-card/50 border-racing-red/20">
+                <div className="text-center group cursor-pointer">
+                  <div className="text-2xl sm:text-3xl font-bold bg-gradient-to-br from-racing-red to-racing-red/60 bg-clip-text text-transparent group-hover:from-racing-red group-hover:to-racing-red transition-all">
+                    {stats.racesWatched}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">Races</div>
                 </div>
-                <div className="text-center">
-                  <div className="text-xl sm:text-2xl font-bold">{stats.hoursSpent}h</div>
-                  <div className="text-xs text-muted-foreground">Hours</div>
+                <div className="text-center group cursor-pointer">
+                  <div className="text-2xl sm:text-3xl font-bold bg-gradient-to-br from-racing-red to-racing-red/60 bg-clip-text text-transparent group-hover:from-racing-red group-hover:to-racing-red transition-all">
+                    {stats.hoursSpent}h
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">Hours</div>
                 </div>
-                <div className="text-center">
-                  <div className="text-xl sm:text-2xl font-bold">{stats.reviews}</div>
-                  <div className="text-xs text-muted-foreground">Reviews</div>
+                <div className="text-center group cursor-pointer">
+                  <div className="text-2xl sm:text-3xl font-bold bg-gradient-to-br from-racing-red to-racing-red/60 bg-clip-text text-transparent group-hover:from-racing-red group-hover:to-racing-red transition-all">
+                    {stats.reviews}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">Reviews</div>
                 </div>
-                <div className="text-center">
-                  <div className="text-xl sm:text-2xl font-bold">{stats.lists}</div>
-                  <div className="text-xs text-muted-foreground">Lists</div>
+                <div className="text-center group cursor-pointer">
+                  <div className="text-2xl sm:text-3xl font-bold bg-gradient-to-br from-racing-red to-racing-red/60 bg-clip-text text-transparent group-hover:from-racing-red group-hover:to-racing-red transition-all">
+                    {stats.lists}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">Lists</div>
                 </div>
-                <div className="text-center">
-                  <div className="text-xl sm:text-2xl font-bold">{stats.followers}</div>
-                  <div className="text-xs text-muted-foreground">Followers</div>
+                <div className="text-center group cursor-pointer">
+                  <div className="text-2xl sm:text-3xl font-bold bg-gradient-to-br from-racing-red to-racing-red/60 bg-clip-text text-transparent group-hover:from-racing-red group-hover:to-racing-red transition-all">
+                    {stats.followers}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">Followers</div>
                 </div>
-                <div className="text-center">
-                  <div className="text-xl sm:text-2xl font-bold">{stats.following}</div>
-                  <div className="text-xs text-muted-foreground">Following</div>
+                <div className="text-center group cursor-pointer">
+                  <div className="text-2xl sm:text-3xl font-bold bg-gradient-to-br from-racing-red to-racing-red/60 bg-clip-text text-transparent group-hover:from-racing-red group-hover:to-racing-red transition-all">
+                    {stats.following}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">Following</div>
                 </div>
-              </div>
+              </Card>
 
               {/* Favourites */}
               {(statsDoc?.exists() && (statsDoc.data()?.favoriteDriver || statsDoc.data()?.favoriteCircuit || statsDoc.data()?.favoriteTeam)) && (
