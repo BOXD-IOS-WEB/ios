@@ -48,8 +48,12 @@ export const getRacesBySeason = async (year: number): Promise<F1Meeting[]> => {
 };
 
 export const getRaceByYearAndRound = async (year: number, round: number): Promise<F1Meeting | null> => {
+  console.log(`getRaceByYearAndRound: year=${year}, round=${round}`);
   const races = await getRacesBySeason(year);
-  return races.find(r => r.meeting_key === round) || null;
+  console.log(`getRaceByYearAndRound: found ${races.length} races for year ${year}`);
+  const race = races.find(r => r.meeting_key === round);
+  console.log(`getRaceByYearAndRound: race found?`, race ? 'YES' : 'NO', race);
+  return race || null;
 };
 
 const getRacesFromErgast = async (year: number): Promise<F1Meeting[]> => {
