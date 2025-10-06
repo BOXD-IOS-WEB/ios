@@ -91,23 +91,41 @@ export const EditProfileDialog = ({ profile, onSuccess }: EditProfileDialogProps
 
     setLoading(true);
     try {
-      console.log('[EditProfileDialog] Starting profile update...', { hasPhotoFile: !!photoFile });
+      console.log('[EditProfileDialog] Starting profile update...', {
+        hasPhotoFile: !!photoFile,
+        name: name.trim(),
+        description: description.trim()
+      });
 
       let photoURL = profile?.photoURL;
 
-      // Upload photo if changed
+      // Upload photo if changed - make this optional, don't block the update
       if (photoFile) {
-        console.log('[EditProfileDialog] Uploading photo...');
-        photoURL = await uploadProfilePicture(user.uid, photoFile);
-        console.log('[EditProfileDialog] Photo uploaded successfully:', photoURL);
+        try {
+          console.log('[EditProfileDialog] Uploading photo...');
+          photoURL = await uploadProfilePicture(user.uid, photoFile);
+          console.log('[EditProfileDialog] Photo uploaded successfully:', photoURL);
+        } catch (uploadError: any) {
+          console.error('[EditProfileDialog] Photo upload failed, continuing anyway:', uploadError);
+          toast({
+            title: "Photo upload failed",
+            description: "Saving other changes...",
+            variant: "destructive",
+          });
+        }
       }
 
-      console.log('[EditProfileDialog] Updating profile...');
-      await updateUserProfile(user.uid, {
+      const updates = {
         name: name.trim(),
         description: description.trim(),
-        photoURL,
-      });
+      };
+
+      if (photoURL) {
+        Object.assign(updates, { photoURL });
+      }
+
+      console.log('[EditProfileDialog] Updating profile with:', updates);
+      await updateUserProfile(user.uid, updates);
 
       console.log('[EditProfileDialog] Profile updated successfully!');
 
@@ -117,12 +135,19 @@ export const EditProfileDialog = ({ profile, onSuccess }: EditProfileDialogProps
       });
 
       setOpen(false);
-      onSuccess?.();
+
+      // Refresh the profile data
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        // Force page reload to show updated data
+        window.location.reload();
+      }
     } catch (error: any) {
       console.error('[EditProfileDialog] Error updating profile:', error);
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to update profile",
         variant: "destructive",
       });
     } finally {

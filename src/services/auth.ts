@@ -148,7 +148,14 @@ export const uploadProfilePicture = async (userId: string, file: File): Promise<
     const storageRef = ref(storage, `profile-pictures/${fileName}`);
 
     console.log('[uploadProfilePicture] Uploading to storage...', { path: `profile-pictures/${fileName}` });
-    await uploadBytes(storageRef, file);
+
+    // Add timeout to prevent hanging
+    const uploadPromise = uploadBytes(storageRef, file);
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Upload timeout after 30 seconds')), 30000)
+    );
+
+    await Promise.race([uploadPromise, timeoutPromise]);
 
     console.log('[uploadProfilePicture] Getting download URL...');
     const downloadURL = await getDownloadURL(storageRef);
