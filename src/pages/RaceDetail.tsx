@@ -43,6 +43,8 @@ const RaceDetail = () => {
             setIsLiked(log.likedBy?.includes(user.uid) || false);
           }
         } else if (year && round) {
+          console.log('Loading race for year:', year, 'round:', round);
+
           // Try to find a race log for this year/round
           const matchingLogs = logs.filter(log =>
             log.raceYear === parseInt(year) && log.round === parseInt(round)
@@ -50,11 +52,13 @@ const RaceDetail = () => {
 
           if (matchingLogs.length > 0) {
             // Use the first matching log for race details
+            console.log('Found matching log:', matchingLogs[0]);
             setRaceLog(matchingLogs[0]);
           }
 
           // Always fetch race info from F1 API
           const raceData = await getRaceByYearAndRound(parseInt(year), parseInt(round));
+          console.log('Race data from API:', raceData);
           if (raceData) {
             setRaceInfo(raceData);
           }
