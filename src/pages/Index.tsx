@@ -1,0 +1,171 @@
+import { Header } from "@/components/Header";
+import { RaceCard } from "@/components/RaceCard";
+import { ActivityFeed } from "@/components/ActivityFeed";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ArrowRight } from "lucide-react";
+import { useEffect, useState } from "react";
+import { getPublicRaceLogs } from "@/services/raceLogs";
+import { getCurrentSeasonRaces, getPosterUrl } from "@/services/f1Api";
+import { useNavigate } from "react-router-dom";
+import { auth } from "@/lib/firebase";
+
+const Index = () => {
+  const navigate = useNavigate();
+  const [currentRaces, setCurrentRaces] = useState<any[]>([]);
+  const [popularRaces, setPopularRaces] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const f1Races = await getCurrentSeasonRaces();
+
+        if (Array.isArray(f1Races) && f1Races.length > 0) {
+          setCurrentRaces(f1Races.slice(0, 6));
+        }
+
+        try {
+          const publicLogs = await getPublicRaceLogs(12);
+          if (Array.isArray(publicLogs) && publicLogs.length > 0) {
+            setPopularRaces(publicLogs.slice(0, 6));
+          }
+        } catch (logError) {
+          console.error('Error loading public logs:', logError);
+        }
+      } catch (err: any) {
+        console.error('Error loading data:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Header />
+      
+      <main className="container py-8 space-y-12">
+        {/* Hero Section */}
+        <section className="text-center space-y-4 py-12">
+          <h1 className="text-5xl md:text-6xl font-bold">
+            Track every <span className="text-racing-red">race</span> you watch.
+          </h1>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            BoxBoxd lets you log, rate, and review every F1 race. Keep a diary, share lists, and connect with fellow fans.
+          </p>
+          <div className="flex items-center justify-center gap-4 pt-4">
+            <Button size="lg" className="gap-2" onClick={() => navigate('/diary')}>
+              Get Racing <ArrowRight className="w-4 h-4" />
+            </Button>
+            <Button size="lg" variant="outline" onClick={() => navigate('/explore')}>
+              Pit Stop
+            </Button>
+          </div>
+        </section>
+
+        <section className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold">Current Season</h2>
+              <p className="text-muted-foreground">2025 F1 Grand Prix Schedule</p>
+            </div>
+            <Button variant="ghost" className="gap-2" onClick={() => navigate('/explore')}>
+              View All <ArrowRight className="w-4 h-4" />
+            </Button>
+          </div>
+
+          {error ? (
+            <div className="text-center py-12 text-red-500">Error: {error}</div>
+          ) : loading ? (
+            <div className="text-center py-12 text-muted-foreground">Loading races...</div>
+          ) : currentRaces.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+              {currentRaces.map((race) => {
+                const posterUrl = getPosterUrl(race.circuit_short_name || race.circuit_key);
+                return (
+                  <RaceCard
+                    key={race.meeting_key}
+                    season={race.year}
+                    round={race.meeting_key}
+                    gpName={race.meeting_name}
+                    circuit={race.circuit_short_name}
+                    date={race.date_start}
+                    country={race.country_code}
+                    posterUrl={posterUrl || undefined}
+                  />
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-12 text-muted-foreground">No races available</div>
+          )}
+        </section>
+
+        <section className="space-y-6">
+          <div>
+            <h2 className="text-2xl font-bold">Activity</h2>
+            <p className="text-muted-foreground">See what the community is watching</p>
+          </div>
+
+          <Tabs defaultValue={auth.currentUser ? "following" : "global"}>
+            {auth.currentUser && (
+              <TabsList>
+                <TabsTrigger value="following">Following</TabsTrigger>
+                <TabsTrigger value="global">Global</TabsTrigger>
+              </TabsList>
+            )}
+
+            {auth.currentUser && (
+              <TabsContent value="following">
+                <ActivityFeed feedType="following" limit={20} />
+              </TabsContent>
+            )}
+
+            <TabsContent value="global">
+              <ActivityFeed feedType="global" limit={20} />
+            </TabsContent>
+          </Tabs>
+        </section>
+
+        <section className="space-y-6">
+          <div>
+            <h2 className="text-2xl font-bold">Recently Logged</h2>
+            <p className="text-muted-foreground">Latest races logged by the community</p>
+          </div>
+
+          {loading ? (
+            <div className="text-center py-12 text-muted-foreground">Loading...</div>
+          ) : popularRaces.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+              {popularRaces.map((race) => (
+                <RaceCard
+                  key={race.id}
+                  id={race.id}
+                  season={race.raceYear}
+                  round={1}
+                  gpName={race.raceName}
+                  circuit={race.raceLocation}
+                  date={race.dateWatched?.toDate?.()?.toISOString() || ''}
+                  rating={race.rating}
+                  watched={true}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 text-muted-foreground">
+              <p>No races logged yet</p>
+              <p className="text-sm mt-2">Be the first to log a race!</p>
+            </div>
+          )}
+        </section>
+      </main>
+    </div>
+  );
+};
+
+export default Index;
