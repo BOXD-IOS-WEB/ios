@@ -1,10 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LogRaceDialog } from "@/components/LogRaceDialog";
-import { Search, Plus, User, Bell, LogOut, Settings } from "lucide-react";
+import { Search, Plus, User, Bell, LogOut, Settings, Menu, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState, useEffect } from "react";
 import { getUserNotifications, markNotificationAsRead, markAllNotificationsAsRead, getUnreadNotificationsCount } from "@/services/notifications";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +21,7 @@ export const Header = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [userPhotoURL, setUserPhotoURL] = useState<string | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
@@ -99,9 +101,39 @@ export const Header = () => {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
-        <div className="flex items-center gap-8 flex-1">
+        <div className="flex items-center gap-2 sm:gap-8 flex-1">
+          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+            <SheetTrigger asChild className="md:hidden">
+              <Button variant="ghost" size="icon">
+                <Menu className="w-5 h-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-64">
+              <nav className="flex flex-col gap-4 mt-8">
+                <a href="/" className="text-lg font-medium hover:text-racing-red transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                  Home
+                </a>
+                <a href="/explore" className="text-lg font-medium hover:text-racing-red transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                  Explore
+                </a>
+                <a href="/lists" className="text-lg font-medium hover:text-racing-red transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                  Lists
+                </a>
+                <a href="/diary" className="text-lg font-medium hover:text-racing-red transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                  Diary
+                </a>
+                <a href="/watchlist" className="text-lg font-medium hover:text-racing-red transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                  Watchlist
+                </a>
+                <a href="/profile" className="text-lg font-medium hover:text-racing-red transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                  Profile
+                </a>
+              </nav>
+            </SheetContent>
+          </Sheet>
+
           <a href="/" className="flex items-center gap-2">
-            <div className="text-2xl font-bold">
+            <div className="text-xl sm:text-2xl font-bold">
               <span className="text-foreground">BOX</span>
               <span className="text-racing-red">BOXD</span>
             </div>
