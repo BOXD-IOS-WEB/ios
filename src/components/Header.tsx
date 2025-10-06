@@ -85,7 +85,7 @@ export const Header = () => {
             </div>
           </a>
 
-          <nav className="hidden lg:flex items-center gap-6 text-sm font-medium">
+          <nav className="hidden md:flex items-center gap-4 lg:gap-6 text-sm font-medium">
             <a href="/" className="text-foreground hover:text-primary transition-colors">
               Home
             </a>

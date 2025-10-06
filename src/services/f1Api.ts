@@ -47,6 +47,11 @@ export const getRacesBySeason = async (year: number): Promise<F1Meeting[]> => {
   return getRacesFromErgast(year);
 };
 
+export const getRaceByYearAndRound = async (year: number, round: number): Promise<F1Meeting | null> => {
+  const races = await getRacesBySeason(year);
+  return races.find(r => r.meeting_key === round) || null;
+};
+
 const getRacesFromErgast = async (year: number): Promise<F1Meeting[]> => {
   // Static historical race data for 2020-2022
   const historicalRaces = getHistoricalRaces(year);

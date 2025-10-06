@@ -11,7 +11,7 @@ import { useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { addToWatchlist, removeFromWatchlist } from "@/services/watchlist";
 import { toggleLike } from "@/services/likes";
-import { getCountryFlag } from "@/services/f1Api";
+import { getCountryFlag, getRaceByYearAndRound } from "@/services/f1Api";
 import { getRaceLogById, getPublicRaceLogs } from "@/services/raceLogs";
 import { auth } from "@/lib/firebase";
 
@@ -22,6 +22,7 @@ const RaceDetail = () => {
   const [isLiked, setIsLiked] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [raceLog, setRaceLog] = useState<any>(null);
+  const [raceInfo, setRaceInfo] = useState<any>(null);
   const [allRaceLogs, setAllRaceLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -51,6 +52,12 @@ const RaceDetail = () => {
             // Use the first matching log for race details
             setRaceLog(matchingLogs[0]);
           }
+
+          // Always fetch race info from F1 API
+          const raceData = await getRaceByYearAndRound(parseInt(year), parseInt(round));
+          if (raceData) {
+            setRaceInfo(raceData);
+          }
         }
       } catch (error) {
         console.error('Error loading race data:', error);
@@ -71,31 +78,8 @@ const RaceDetail = () => {
     );
   }
 
-  if (!raceLog) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <div className="container py-8">
-          <div className="text-center py-12">
-            <h1 className="text-2xl font-bold mb-4">No Race Logs Found</h1>
-            <p className="text-muted-foreground mb-6">
-              This race hasn't been logged yet. Be the first to log it!
-            </p>
-            <LogRaceDialog
-              trigger={
-                <Button className="gap-2">
-                  <Plus className="w-4 h-4" />
-                  Log This Race
-                </Button>
-              }
-            />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const race = {
+  // Use raceInfo from F1 API if no logs exist
+  const race = raceLog ? {
     season: raceLog.raceYear,
     round: raceLog.round || 1,
     gpName: raceLog.raceName,
@@ -106,7 +90,34 @@ const RaceDetail = () => {
     rating: raceLog.rating,
     totalRatings: raceLog.likesCount || 0,
     watched: allRaceLogs.filter(l => l.raceName === raceLog.raceName && l.raceYear === raceLog.raceYear).length,
-  };
+  } : raceInfo ? {
+    season: raceInfo.year,
+    round: raceInfo.meeting_key,
+    gpName: raceInfo.meeting_name,
+    circuit: raceInfo.circuit_short_name,
+    country: raceInfo.country_name,
+    countryCode: raceInfo.country_code || 'ae',
+    date: raceInfo.date_start,
+    rating: 0,
+    totalRatings: 0,
+    watched: allRaceLogs.filter(l => l.raceName === raceInfo.meeting_name && l.raceYear === raceInfo.year).length,
+  } : null;
+
+  if (!race) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container py-8">
+          <div className="text-center py-12">
+            <h1 className="text-2xl font-bold mb-4">Race Not Found</h1>
+            <p className="text-muted-foreground mb-6">
+              This race doesn't exist in our database.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const flagUrl = getCountryFlag(race.countryCode);
 
