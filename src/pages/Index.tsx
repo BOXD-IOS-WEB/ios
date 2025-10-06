@@ -88,23 +88,27 @@ const Index = () => {
           ) : loading ? (
             <div className="text-center py-12 text-muted-foreground">Loading races...</div>
           ) : currentRaces.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-              {currentRaces.map((race) => {
-                const posterUrl = getPosterUrl(race.circuit_short_name || race.circuit_key);
-                return (
-                  <RaceCard
-                    key={race.meeting_key}
-                    season={race.year}
-                    round={race.meeting_key}
-                    gpName={race.meeting_name}
-                    circuit={race.circuit_short_name}
-                    date={race.date_start}
-                    country={race.country_code}
-                    posterUrl={posterUrl || undefined}
-                  />
-                );
-              })}
-            </div>
+            <>
+              <p className="text-xs text-muted-foreground mb-2">Showing {currentRaces.length} races</p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                {currentRaces.map((race) => {
+                  console.log('Rendering race card:', race.meeting_name, race);
+                  const posterUrl = getPosterUrl(race.circuit_short_name || race.circuit_key);
+                  return (
+                    <RaceCard
+                      key={race.meeting_key}
+                      season={race.year}
+                      round={race.meeting_key}
+                      gpName={race.meeting_name}
+                      circuit={race.circuit_short_name}
+                      date={race.date_start}
+                      country={race.country_code}
+                      posterUrl={posterUrl || undefined}
+                    />
+                  );
+                })}
+              </div>
+            </>
           ) : (
             <div className="text-center py-12 text-muted-foreground">No races available</div>
           )}

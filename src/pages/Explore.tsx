@@ -162,19 +162,25 @@ const Explore = () => {
                   description="Try selecting a different season or check back later"
                 />
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-                  {seasonRaces.map((race) => (
-                    <RaceCard
-                      key={race.meeting_key}
-                      season={race.year}
-                      round={race.meeting_key}
-                      gpName={race.meeting_name}
-                      circuit={race.circuit_short_name}
-                      date={race.date_start}
-                      country={race.country_code}
-                    />
-                  ))}
-                </div>
+                <>
+                  <p className="text-xs text-muted-foreground mb-2">Showing {seasonRaces.length} races for {selectedSeason}</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                    {seasonRaces.map((race) => {
+                      console.log('Rendering race card in Explore:', race.meeting_name, race);
+                      return (
+                        <RaceCard
+                          key={race.meeting_key}
+                          season={race.year}
+                          round={race.meeting_key}
+                          gpName={race.meeting_name}
+                          circuit={race.circuit_short_name}
+                          date={race.date_start}
+                          country={race.country_code}
+                        />
+                      );
+                    })}
+                  </div>
+                </>
               )}
             </div>
           </TabsContent>
