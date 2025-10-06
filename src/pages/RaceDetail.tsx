@@ -18,6 +18,8 @@ import { auth } from "@/lib/firebase";
 const RaceDetail = () => {
   const { id, season, round } = useParams();
   const year = season;
+  console.log('[RaceDetail] URL Params:', { id, season, year, round });
+
   const [isInWatchlist, setIsInWatchlist] = useState(false);
   const [watchlistId, setWatchlistId] = useState<string | null>(null);
   const [isLiked, setIsLiked] = useState(false);
@@ -31,12 +33,16 @@ const RaceDetail = () => {
   useEffect(() => {
     const loadRaceData = async () => {
       try {
+        console.log('[RaceDetail] Starting data load...');
         const logs = await getPublicRaceLogs(100);
+        console.log('[RaceDetail] Loaded', logs.length, 'public race logs');
         setAllRaceLogs(logs);
 
         if (id) {
+          console.log('[RaceDetail] Loading by ID:', id);
           // Load specific race log by ID
           const log = await getRaceLogById(id);
+          console.log('[RaceDetail] Race log by ID:', log);
           setRaceLog(log);
 
           const user = auth.currentUser;
@@ -44,30 +50,36 @@ const RaceDetail = () => {
             setIsLiked(log.likedBy?.includes(user.uid) || false);
           }
         } else if (year && round) {
-          console.log('Loading race for year:', year, 'round:', round);
+          console.log('[RaceDetail] Loading by year/round:', year, round);
 
           // Try to find a race log for this year/round
           const matchingLogs = logs.filter(log =>
             log.raceYear === parseInt(year) && log.round === parseInt(round)
           );
+          console.log('[RaceDetail] Found', matchingLogs.length, 'matching logs');
 
           if (matchingLogs.length > 0) {
-            // Use the first matching log for race details
-            console.log('Found matching log:', matchingLogs[0]);
+            console.log('[RaceDetail] Using first matching log:', matchingLogs[0]);
             setRaceLog(matchingLogs[0]);
           }
 
           // Always fetch race info from F1 API
+          console.log('[RaceDetail] Fetching from F1 API: year=', parseInt(year), 'round=', parseInt(round));
           const raceData = await getRaceByYearAndRound(parseInt(year), parseInt(round));
-          console.log('Race data from API:', raceData);
+          console.log('[RaceDetail] F1 API returned:', raceData);
           if (raceData) {
             setRaceInfo(raceData);
+          } else {
+            console.error('[RaceDetail] F1 API returned null!');
           }
+        } else {
+          console.error('[RaceDetail] No id, year, or round found in URL params!');
         }
       } catch (error) {
-        console.error('Error loading race data:', error);
+        console.error('[RaceDetail] Error loading race data:', error);
       } finally {
         setLoading(false);
+        console.log('[RaceDetail] Loading complete');
       }
     };
 
