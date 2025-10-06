@@ -7,7 +7,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyAxxOGSqsd79qXvGUz7FEKgBuc-pafGE9A",
   authDomain: "box-boxd.firebaseapp.com",
   projectId: "box-boxd",
-  storageBucket: "box-boxd.firebasestorage.app",
+  storageBucket: "box-boxd.appspot.com",
   messagingSenderId: "750144678811",
   appId: "1:750144678811:web:47f55a4293e9b7e66dcf3e"
 };

@@ -168,38 +168,51 @@ const Profile = () => {
             </div>
 
             <div className="flex-1 pt-12 sm:pt-16 md:pt-14 w-full">
-              <div className="flex flex-col gap-4">
-                <div>
-                  <h1 className="text-2xl sm:text-3xl font-bold break-words">{profile?.name || 'Loading...'}</h1>
-                  <p className="text-sm sm:text-base text-muted-foreground">@{profile?.email?.split('@')[0] || 'user'}</p>
-                  <p className="mt-2 text-sm sm:text-base">{profile?.description || 'F1 fan'}</p>
-                </div>
-                
-                <div className="flex gap-2">
-                  {auth.currentUser?.uid === (userId || auth.currentUser?.uid) ? (
-                    <EditProfileDialog profile={profile} onSuccess={loadProfile} />
-                  ) : (
-                    <Button
-                      className="gap-2"
-                      onClick={handleFollowToggle}
-                      disabled={followLoading}
-                      variant={followingUser ? "outline" : "default"}
-                    >
-                      {followingUser ? (
-                        <>
-                          <UserMinus className="w-4 h-4" />
-                          Unfollow
-                        </>
+              <Card className="p-6 bg-gradient-to-br from-card via-card to-card/80 border-racing-red/10">
+                <div className="flex flex-col gap-4">
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <h1 className="text-2xl sm:text-3xl font-bold break-words bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text">
+                        {profile?.name || 'Loading...'}
+                      </h1>
+                      <p className="text-sm sm:text-base text-muted-foreground mt-1">
+                        @{profile?.email?.split('@')[0] || 'user'}
+                      </p>
+                    </div>
+
+                    <div className="flex gap-2">
+                      {auth.currentUser?.uid === (userId || auth.currentUser?.uid) ? (
+                        <EditProfileDialog profile={profile} onSuccess={loadProfile} />
                       ) : (
-                        <>
-                          <UserPlus className="w-4 h-4" />
-                          Follow
-                        </>
+                        <Button
+                          className="gap-2"
+                          onClick={handleFollowToggle}
+                          disabled={followLoading}
+                          variant={followingUser ? "outline" : "default"}
+                        >
+                          {followingUser ? (
+                            <>
+                              <UserMinus className="w-4 h-4" />
+                              Unfollow
+                            </>
+                          ) : (
+                            <>
+                              <UserPlus className="w-4 h-4" />
+                              Follow
+                            </>
+                          )}
+                        </Button>
                       )}
-                    </Button>
+                    </div>
+                  </div>
+
+                  {profile?.description && (
+                    <p className="text-sm sm:text-base text-muted-foreground border-l-2 border-racing-red/30 pl-4 py-2">
+                      {profile.description}
+                    </p>
                   )}
                 </div>
-              </div>
+              </Card>
 
               {/* Stats */}
               <Card className="grid grid-cols-3 sm:grid-cols-6 gap-4 sm:gap-6 mt-6 p-6 bg-gradient-to-br from-card to-card/50 border-racing-red/20">

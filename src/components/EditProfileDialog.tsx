@@ -91,18 +91,25 @@ export const EditProfileDialog = ({ profile, onSuccess }: EditProfileDialogProps
 
     setLoading(true);
     try {
+      console.log('[EditProfileDialog] Starting profile update...', { hasPhotoFile: !!photoFile });
+
       let photoURL = profile?.photoURL;
 
       // Upload photo if changed
       if (photoFile) {
+        console.log('[EditProfileDialog] Uploading photo...');
         photoURL = await uploadProfilePicture(user.uid, photoFile);
+        console.log('[EditProfileDialog] Photo uploaded successfully:', photoURL);
       }
 
+      console.log('[EditProfileDialog] Updating profile...');
       await updateUserProfile(user.uid, {
         name: name.trim(),
         description: description.trim(),
         photoURL,
       });
+
+      console.log('[EditProfileDialog] Profile updated successfully!');
 
       toast({
         title: "Profile updated",
@@ -112,6 +119,7 @@ export const EditProfileDialog = ({ profile, onSuccess }: EditProfileDialogProps
       setOpen(false);
       onSuccess?.();
     } catch (error: any) {
+      console.error('[EditProfileDialog] Error updating profile:', error);
       toast({
         title: "Error",
         description: error.message,

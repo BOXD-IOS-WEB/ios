@@ -83,10 +83,10 @@ const Login = () => {
         });
         navigate('/onboarding');
       } else {
-        const userCredential = await signIn(email, password);
+        const user = await signIn(email, password);
         toast({ title: 'Welcome back!' });
 
-        const userDoc = await getDoc(doc(db, 'users', userCredential.user.uid));
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
         const userData = userDoc.data();
 
         if (!userDoc.exists() || !userData?.onboardingCompleted) {

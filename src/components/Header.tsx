@@ -9,6 +9,8 @@ import { useState, useEffect } from "react";
 import { getUserNotifications, markNotificationAsRead, markAllNotificationsAsRead, getUnreadNotificationsCount } from "@/services/notifications";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 export const Header = () => {
   const { user, signOut } = useAuth();
@@ -17,6 +19,7 @@ export const Header = () => {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [userPhotoURL, setUserPhotoURL] = useState<string | null>(null);
 
   const handleSignOut = async () => {
     await signOut();
@@ -72,6 +75,25 @@ export const Header = () => {
     // Refresh notifications every 30 seconds
     const interval = setInterval(loadNotifications, 30000);
     return () => clearInterval(interval);
+  }, [user]);
+
+  useEffect(() => {
+    const loadUserPhoto = async () => {
+      if (!user) return;
+      try {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setUserPhotoURL(userData.photoURL || user.photoURL || null);
+        } else {
+          setUserPhotoURL(user.photoURL || null);
+        }
+      } catch (error) {
+        console.error('Error loading user photo:', error);
+        setUserPhotoURL(user.photoURL || null);
+      }
+    };
+    loadUserPhoto();
   }, [user]);
 
   return (
@@ -206,9 +228,9 @@ export const Header = () => {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button size="icon" variant="ghost" className="relative rounded-full">
-                {user?.photoURL ? (
+                {userPhotoURL ? (
                   <img
-                    src={user.photoURL}
+                    src={userPhotoURL}
                     alt="Profile"
                     className="w-8 h-8 rounded-full object-cover"
                   />

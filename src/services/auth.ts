@@ -16,7 +16,8 @@ export interface UserProfile {
   username: string;
   email: string;
   description: string;
-  profile_image_url: string;
+  photoURL?: string;
+  profile_image_url?: string; // deprecated, use photoURL
   created_at: Date;
   updated_at: Date;
 }
@@ -45,7 +46,7 @@ export const signUp = async (email: string, password: string, name: string, user
     username: username.toLowerCase().trim(),
     email,
     description: '',
-    profile_image_url: '',
+    photoURL: '',
     created_at: Timestamp.now() as any,
     updated_at: Timestamp.now() as any
   };
@@ -106,12 +107,32 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
   return null;
 };
 
-export const updateUserProfile = async (userId: string, updates: Partial<UserProfile>) => {
-  const docRef = doc(db, 'users', userId);
-  await setDoc(docRef, {
-    ...updates,
-    updated_at: Timestamp.now()
-  }, { merge: true });
+export const updateUserProfile = async (userId: string, updates: any) => {
+  try {
+    console.log('[updateUserProfile] Updating profile...', { userId, updates });
+
+    const docRef = doc(db, 'users', userId);
+
+    // Clean up the updates object - remove any undefined values
+    const cleanUpdates: any = {};
+    Object.keys(updates).forEach(key => {
+      if (updates[key] !== undefined) {
+        cleanUpdates[key] = updates[key];
+      }
+    });
+
+    // Add timestamp
+    cleanUpdates.updated_at = Timestamp.now();
+
+    console.log('[updateUserProfile] Clean updates:', cleanUpdates);
+
+    await setDoc(docRef, cleanUpdates, { merge: true });
+
+    console.log('[updateUserProfile] Profile updated successfully!');
+  } catch (error: any) {
+    console.error('[updateUserProfile] Failed to update profile:', error);
+    throw new Error(`Failed to update profile: ${error.message}`);
+  }
 };
 
 export const onAuthChange = (callback: (user: User | null) => void) => {
@@ -119,12 +140,23 @@ export const onAuthChange = (callback: (user: User | null) => void) => {
 };
 
 export const uploadProfilePicture = async (userId: string, file: File): Promise<string> => {
-  const fileExtension = file.name.split('.').pop();
-  const fileName = `${userId}_${Date.now()}.${fileExtension}`;
-  const storageRef = ref(storage, `profile-pictures/${fileName}`);
+  try {
+    console.log('[uploadProfilePicture] Starting upload...', { userId, fileName: file.name, fileSize: file.size });
 
-  await uploadBytes(storageRef, file);
-  const downloadURL = await getDownloadURL(storageRef);
+    const fileExtension = file.name.split('.').pop();
+    const fileName = `${userId}_${Date.now()}.${fileExtension}`;
+    const storageRef = ref(storage, `profile-pictures/${fileName}`);
 
-  return downloadURL;
+    console.log('[uploadProfilePicture] Uploading to storage...', { path: `profile-pictures/${fileName}` });
+    await uploadBytes(storageRef, file);
+
+    console.log('[uploadProfilePicture] Getting download URL...');
+    const downloadURL = await getDownloadURL(storageRef);
+
+    console.log('[uploadProfilePicture] Upload complete!', { downloadURL });
+    return downloadURL;
+  } catch (error: any) {
+    console.error('[uploadProfilePicture] Upload failed:', error);
+    throw new Error(`Failed to upload profile picture: ${error.message}`);
+  }
 };

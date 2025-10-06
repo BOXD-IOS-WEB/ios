@@ -9,15 +9,25 @@ import { useToast } from "@/hooks/use-toast";
 
 const drivers = [
   { id: "verstappen", name: "Max Verstappen", team: "Red Bull Racing" },
-  { id: "hamilton", name: "Lewis Hamilton", team: "Mercedes" },
+  { id: "tsunoda", name: "Yuki Tsunoda", team: "Red Bull Racing" },
   { id: "leclerc", name: "Charles Leclerc", team: "Ferrari" },
-  { id: "norris", name: "Lando Norris", team: "McLaren" },
-  { id: "sainz", name: "Carlos Sainz", team: "Ferrari" },
-  { id: "alonso", name: "Fernando Alonso", team: "Aston Martin" },
+  { id: "hamilton", name: "Lewis Hamilton", team: "Ferrari" },
   { id: "russell", name: "George Russell", team: "Mercedes" },
-  { id: "perez", name: "Sergio Perez", team: "Red Bull Racing" },
+  { id: "antonelli", name: "Kimi Antonelli", team: "Mercedes" },
+  { id: "norris", name: "Lando Norris", team: "McLaren" },
   { id: "piastri", name: "Oscar Piastri", team: "McLaren" },
+  { id: "alonso", name: "Fernando Alonso", team: "Aston Martin" },
+  { id: "stroll", name: "Lance Stroll", team: "Aston Martin" },
   { id: "gasly", name: "Pierre Gasly", team: "Alpine" },
+  { id: "colapinto", name: "Franco Colapinto", team: "Alpine" },
+  { id: "albon", name: "Alex Albon", team: "Williams" },
+  { id: "sainz", name: "Carlos Sainz", team: "Williams" },
+  { id: "hadjar", name: "Isack Hadjar", team: "RB" },
+  { id: "lawson", name: "Liam Lawson", team: "RB" },
+  { id: "bearman", name: "Oliver Bearman", team: "Haas" },
+  { id: "ocon", name: "Esteban Ocon", team: "Haas" },
+  { id: "hulkenberg", name: "Nico Hülkenberg", team: "Sauber" },
+  { id: "bortoleto", name: "Gabriel Bortoleto", team: "Sauber" },
 ];
 
 const teams = [
@@ -28,22 +38,36 @@ const teams = [
   { id: "astonmartin", name: "Aston Martin" },
   { id: "alpine", name: "Alpine" },
   { id: "williams", name: "Williams" },
-  { id: "haas", name: "Haas F1 Team" },
-  { id: "rbvcarb", name: "RB" },
+  { id: "rb", name: "RB (Racing Bulls)" },
+  { id: "haas", name: "Haas" },
   { id: "sauber", name: "Sauber" },
 ];
 
 const circuits = [
-  { id: "silverstone", name: "Silverstone", country: "gb" },
-  { id: "monza", name: "Monza", country: "it" },
-  { id: "spa", name: "Spa-Francorchamps", country: "be" },
-  { id: "suzuka", name: "Suzuka", country: "jp" },
-  { id: "monaco", name: "Monaco", country: "mc" },
-  { id: "interlagos", name: "Interlagos", country: "br" },
-  { id: "austin", name: "Circuit of the Americas", country: "us" },
   { id: "melbourne", name: "Albert Park", country: "au" },
+  { id: "shanghai", name: "Shanghai", country: "cn" },
+  { id: "suzuka", name: "Suzuka", country: "jp" },
+  { id: "sakhir", name: "Sakhir", country: "bh" },
+  { id: "jeddah", name: "Jeddah", country: "sa" },
+  { id: "miami", name: "Miami", country: "us" },
+  { id: "imola", name: "Imola", country: "it" },
+  { id: "monaco", name: "Monaco", country: "mc" },
+  { id: "barcelona", name: "Barcelona", country: "es" },
+  { id: "montreal", name: "Montreal", country: "ca" },
+  { id: "redbullring", name: "Red Bull Ring", country: "at" },
+  { id: "silverstone", name: "Silverstone", country: "gb" },
+  { id: "spa", name: "Spa-Francorchamps", country: "be" },
+  { id: "hungaroring", name: "Hungaroring", country: "hu" },
   { id: "zandvoort", name: "Zandvoort", country: "nl" },
+  { id: "monza", name: "Monza", country: "it" },
+  { id: "baku", name: "Baku", country: "az" },
   { id: "singapore", name: "Marina Bay", country: "sg" },
+  { id: "austin", name: "Austin", country: "us" },
+  { id: "mexico", name: "Mexico City", country: "mx" },
+  { id: "interlagos", name: "Interlagos", country: "br" },
+  { id: "lasvegas", name: "Las Vegas", country: "us" },
+  { id: "losail", name: "Losail", country: "qa" },
+  { id: "abudhabi", name: "Yas Marina", country: "ae" },
 ];
 
 const Onboarding = () => {
@@ -83,6 +107,11 @@ const Onboarding = () => {
     if (!user) return;
 
     try {
+      // Get the actual names instead of IDs
+      const favoriteDriverName = drivers.find(d => d.id === selectedDrivers[0])?.name || '';
+      const favoriteCircuitName = circuits.find(c => c.id === selectedCircuits[0])?.name || '';
+      const favoriteTeamName = teams.find(t => t.id === selectedTeams[0])?.name || '';
+
       await setDoc(doc(db, 'users', user.uid), {
         name: user.displayName || user.email?.split('@')[0] || 'User',
         email: user.email,
@@ -102,9 +131,9 @@ const Onboarding = () => {
         followersCount: 0,
         followingCount: 0,
         totalHoursWatched: 0,
-        favoriteDriver: selectedDrivers[0] || '',
-        favoriteCircuit: selectedCircuits[0] || '',
-        favoriteTeam: selectedTeams[0] || ''
+        favoriteDriver: favoriteDriverName,
+        favoriteCircuit: favoriteCircuitName,
+        favoriteTeam: favoriteTeamName
       }, { merge: true });
 
       toast({ title: 'Welcome to BoxBoxd!' });
