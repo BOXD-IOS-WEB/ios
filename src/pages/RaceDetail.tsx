@@ -84,29 +84,40 @@ const RaceDetail = () => {
   }
 
   // Use raceInfo from F1 API if no logs exist
-  const race = raceLog ? {
-    season: raceLog.raceYear,
-    round: raceLog.round || 1,
-    gpName: raceLog.raceName,
-    circuit: raceLog.raceLocation,
-    country: raceLog.raceLocation,
-    countryCode: raceLog.countryCode || 'ae',
-    date: raceLog.dateWatched?.toDate?.()?.toISOString() || new Date().toISOString(),
-    rating: raceLog.rating,
-    totalRatings: raceLog.likesCount || 0,
-    watched: allRaceLogs.filter(l => l.raceName === raceLog.raceName && l.raceYear === raceLog.raceYear).length,
-  } : raceInfo ? {
-    season: raceInfo.year,
-    round: raceInfo.meeting_key,
-    gpName: raceInfo.meeting_name,
-    circuit: raceInfo.circuit_short_name,
-    country: raceInfo.country_name,
-    countryCode: raceInfo.country_code || 'ae',
-    date: raceInfo.date_start,
-    rating: 0,
-    totalRatings: 0,
-    watched: allRaceLogs.filter(l => l.raceName === raceInfo.meeting_name && l.raceYear === raceInfo.year).length,
-  } : null;
+  let race = null;
+
+  if (raceLog) {
+    console.log('Using race log data:', raceLog);
+    race = {
+      season: raceLog.raceYear,
+      round: raceLog.round || 1,
+      gpName: raceLog.raceName,
+      circuit: raceLog.raceLocation,
+      country: raceLog.raceLocation,
+      countryCode: raceLog.countryCode || 'ae',
+      date: raceLog.dateWatched?.toDate?.()?.toISOString() || new Date().toISOString(),
+      rating: raceLog.rating,
+      totalRatings: raceLog.likesCount || 0,
+      watched: allRaceLogs.filter(l => l.raceName === raceLog.raceName && l.raceYear === raceLog.raceYear).length,
+    };
+  } else if (raceInfo) {
+    console.log('Using F1 API data:', raceInfo);
+    race = {
+      season: raceInfo.year,
+      round: raceInfo.meeting_key,
+      gpName: raceInfo.meeting_name,
+      circuit: raceInfo.circuit_short_name,
+      country: raceInfo.country_name,
+      countryCode: raceInfo.country_code || 'BRN',
+      date: raceInfo.date_start,
+      rating: 0,
+      totalRatings: 0,
+      watched: allRaceLogs.filter(l => l.raceName === raceInfo.meeting_name && l.raceYear === raceInfo.year).length,
+      laps: 'TBD',
+    };
+  }
+
+  console.log('Final race object:', race);
 
   if (!race) {
     return (
