@@ -17,33 +17,71 @@ export interface F1Meeting {
 
 export const getCurrentSeasonRaces = async (): Promise<F1Meeting[]> => {
   const year = new Date().getFullYear();
+  console.log(`[F1 API] Fetching races for year ${year}...`);
 
   try {
-    const response = await fetch(`${F1_API_BASE}/meetings?year=${year}`);
+    const url = `${F1_API_BASE}/meetings?year=${year}`;
+    console.log(`[F1 API] Request URL: ${url}`);
+    const response = await fetch(url);
+    console.log(`[F1 API] Response status: ${response.status}`);
+
+    if (!response.ok) {
+      console.error(`[F1 API] HTTP error: ${response.status} ${response.statusText}`);
+      return [];
+    }
+
     const data = await response.json();
-    if (Array.isArray(data) && data.length > 0) return data;
+    console.log(`[F1 API] Received ${Array.isArray(data) ? data.length : 0} meetings`);
+    console.log(`[F1 API] First meeting:`, data[0]);
+
+    if (Array.isArray(data) && data.length > 0) {
+      // Filter out pre-season testing
+      const races = data.filter(m => !m.meeting_name.toLowerCase().includes('testing'));
+      console.log(`[F1 API] After filtering testing: ${races.length} races`);
+      return races;
+    }
   } catch (error) {
-    console.error('OpenF1 API error:', error);
+    console.error('[F1 API] Error fetching races:', error);
   }
 
   return [];
 };
 
 export const getRacesBySeason = async (year: number): Promise<F1Meeting[]> => {
+  console.log(`[F1 API] getRacesBySeason called for year ${year}`);
+
   // Use Ergast for years before 2023
   if (year < 2023) {
+    console.log(`[F1 API] Using Ergast for historical year ${year}`);
     return getRacesFromErgast(year);
   }
 
   try {
-    const response = await fetch(`${F1_API_BASE}/meetings?year=${year}`);
+    const url = `${F1_API_BASE}/meetings?year=${year}`;
+    console.log(`[F1 API] Fetching from: ${url}`);
+    const response = await fetch(url);
+    console.log(`[F1 API] Response status: ${response.status}`);
+
+    if (!response.ok) {
+      console.error(`[F1 API] HTTP error: ${response.status} ${response.statusText}`);
+      return getRacesFromErgast(year);
+    }
+
     const data = await response.json();
-    if (Array.isArray(data) && data.length > 0) return data;
+    console.log(`[F1 API] Received data:`, data);
+
+    if (Array.isArray(data) && data.length > 0) {
+      // Filter out pre-season testing
+      const races = data.filter(m => !m.meeting_name.toLowerCase().includes('testing'));
+      console.log(`[F1 API] Returning ${races.length} races (filtered from ${data.length})`);
+      return races;
+    }
   } catch (error) {
-    console.error('OpenF1 API error for year', year, ', falling back to Ergast:', error);
+    console.error('[F1 API] Error for year', year, ':', error);
   }
 
   // Fallback to Ergast for historical data
+  console.log(`[F1 API] Falling back to Ergast for year ${year}`);
   return getRacesFromErgast(year);
 };
 
