@@ -88,18 +88,7 @@ export const getUserByUsername = async (username: string): Promise<string | null
   return null;
 };
 
-export const signIn = async (emailOrUsername: string, password: string) => {
-  let email = emailOrUsername;
-
-  // Check if input is username (doesn't contain @)
-  if (!emailOrUsername.includes('@')) {
-    const userEmail = await getUserByUsername(emailOrUsername);
-    if (!userEmail) {
-      throw new Error('Username not found');
-    }
-    email = userEmail;
-  }
-
+export const signIn = async (email: string, password: string) => {
   const userCredential = await signInWithEmailAndPassword(auth, email, password);
   return userCredential.user;
 };
