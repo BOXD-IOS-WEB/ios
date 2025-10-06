@@ -1,76 +1,135 @@
-const F1_API_BASE = 'https://api.openf1.org/v1';
+const OPENF1_BASE = 'https://api.openf1.org/v1';
+const JOLPICA_BASE = 'https://api.jolpi.ca/ergast/f1';
 
 export interface F1Meeting {
-  circuit_key: number;
+  circuit_key?: number;
   circuit_short_name: string;
   country_code: string;
-  country_key: number;
+  country_key?: number;
   country_name: string;
   date_start: string;
-  gmt_offset: string;
+  gmt_offset?: string;
   location: string;
   meeting_key: number;
   meeting_name: string;
-  meeting_official_name: string;
+  meeting_official_name?: string;
   year: number;
 }
+
+// Convert Jolpica/Ergast format to our format
+const convertErgastToF1Meeting = (race: any, year: number, round: number): F1Meeting => {
+  const countryCode = getCountryCodeFromName(race.Circuit.Location.country);
+  return {
+    meeting_key: round,
+    circuit_short_name: race.Circuit.circuitName,
+    country_code: countryCode,
+    country_name: race.Circuit.Location.country,
+    date_start: race.date,
+    location: race.Circuit.Location.locality,
+    meeting_name: race.raceName,
+    meeting_official_name: race.raceName,
+    year: year,
+  };
+};
 
 export const getCurrentSeasonRaces = async (): Promise<F1Meeting[]> => {
   const year = new Date().getFullYear();
   console.log(`[F1 API] Fetching races for year ${year}...`);
 
+  // Try OpenF1 first
   try {
-    const url = `${F1_API_BASE}/meetings?year=${year}`;
-    console.log(`[F1 API] Request URL: ${url}`);
+    const url = `${OPENF1_BASE}/meetings?year=${year}`;
+    console.log(`[F1 API] Trying OpenF1: ${url}`);
     const response = await fetch(url);
-    console.log(`[F1 API] Response status: ${response.status}`);
 
-    if (!response.ok) {
-      throw new Error(`HTTP error: ${response.status} ${response.statusText}`);
-    }
+    if (response.ok) {
+      const data = await response.json();
+      console.log(`[F1 API] OpenF1 returned ${data.length} meetings`);
 
-    const data = await response.json();
-    console.log(`[F1 API] Received ${Array.isArray(data) ? data.length : 0} meetings`);
-
-    if (Array.isArray(data) && data.length > 0) {
-      const races = data.filter(m => !m.meeting_name.toLowerCase().includes('testing'));
-      console.log(`[F1 API] Returning ${races.length} races`);
-      return races;
+      if (Array.isArray(data) && data.length > 0) {
+        const races = data.filter(m => !m.meeting_name.toLowerCase().includes('testing'));
+        console.log(`[F1 API] Success! Returning ${races.length} races from OpenF1`);
+        return races;
+      }
     }
   } catch (error) {
-    console.error('[F1 API] Error fetching races:', error);
-    throw error;
+    console.warn('[F1 API] OpenF1 failed:', error);
   }
 
+  // Fallback to Jolpica/Ergast
+  try {
+    const url = `${JOLPICA_BASE}/${year}.json`;
+    console.log(`[F1 API] Trying Jolpica: ${url}`);
+    const response = await fetch(url);
+
+    if (response.ok) {
+      const data = await response.json();
+      const races = data.MRData.RaceTable.Races;
+      console.log(`[F1 API] Jolpica returned ${races.length} races`);
+
+      if (Array.isArray(races) && races.length > 0) {
+        const converted = races.map((race: any, index: number) =>
+          convertErgastToF1Meeting(race, year, index + 1)
+        );
+        console.log(`[F1 API] Success! Returning ${converted.length} races from Jolpica`);
+        return converted;
+      }
+    }
+  } catch (error) {
+    console.warn('[F1 API] Jolpica failed:', error);
+  }
+
+  console.error('[F1 API] All APIs failed');
   return [];
 };
 
 export const getRacesBySeason = async (year: number): Promise<F1Meeting[]> => {
-  console.log(`[F1 API] getRacesBySeason called for year ${year}`);
+  console.log(`[F1 API] getRacesBySeason for year ${year}`);
 
+  // Try OpenF1 first
   try {
-    const url = `${F1_API_BASE}/meetings?year=${year}`;
-    console.log(`[F1 API] Fetching from: ${url}`);
+    const url = `${OPENF1_BASE}/meetings?year=${year}`;
+    console.log(`[F1 API] Trying OpenF1: ${url}`);
     const response = await fetch(url);
-    console.log(`[F1 API] Response status: ${response.status}`);
 
-    if (!response.ok) {
-      throw new Error(`HTTP error: ${response.status} ${response.statusText}`);
-    }
+    if (response.ok) {
+      const data = await response.json();
+      console.log(`[F1 API] OpenF1 returned ${data.length} meetings`);
 
-    const data = await response.json();
-    console.log(`[F1 API] Received data:`, data);
-
-    if (Array.isArray(data) && data.length > 0) {
-      const races = data.filter(m => !m.meeting_name.toLowerCase().includes('testing'));
-      console.log(`[F1 API] Returning ${races.length} races`);
-      return races;
+      if (Array.isArray(data) && data.length > 0) {
+        const races = data.filter(m => !m.meeting_name.toLowerCase().includes('testing'));
+        console.log(`[F1 API] Success! Returning ${races.length} races from OpenF1`);
+        return races;
+      }
     }
   } catch (error) {
-    console.error('[F1 API] Error for year', year, ':', error);
-    throw error;
+    console.warn('[F1 API] OpenF1 failed:', error);
   }
 
+  // Fallback to Jolpica/Ergast
+  try {
+    const url = `${JOLPICA_BASE}/${year}.json`;
+    console.log(`[F1 API] Trying Jolpica: ${url}`);
+    const response = await fetch(url);
+
+    if (response.ok) {
+      const data = await response.json();
+      const races = data.MRData.RaceTable.Races;
+      console.log(`[F1 API] Jolpica returned ${races.length} races`);
+
+      if (Array.isArray(races) && races.length > 0) {
+        const converted = races.map((race: any, index: number) =>
+          convertErgastToF1Meeting(race, year, index + 1)
+        );
+        console.log(`[F1 API] Success! Returning ${converted.length} races from Jolpica`);
+        return converted;
+      }
+    }
+  } catch (error) {
+    console.warn('[F1 API] Jolpica failed:', error);
+  }
+
+  console.error('[F1 API] All APIs failed for year', year);
   return [];
 };
 
@@ -81,6 +140,41 @@ export const getRaceByYearAndRound = async (year: number, round: number): Promis
   const race = races.find(r => r.meeting_key === round);
   console.log(`[F1 API] Race found?`, race ? 'YES' : 'NO', race);
   return race || null;
+};
+
+const getCountryCodeFromName = (country: string): string => {
+  const countryMap: { [key: string]: string } = {
+    'Australia': 'AUS',
+    'Austria': 'AUT',
+    'Azerbaijan': 'AZE',
+    'Bahrain': 'BRN',
+    'Belgium': 'BEL',
+    'Brazil': 'BRA',
+    'Canada': 'CAN',
+    'China': 'CHN',
+    'France': 'FRA',
+    'Germany': 'DEU',
+    'Hungary': 'HUN',
+    'Italy': 'ITA',
+    'Japan': 'JPN',
+    'Mexico': 'MEX',
+    'Monaco': 'MCO',
+    'Netherlands': 'NLD',
+    'Portugal': 'PRT',
+    'Qatar': 'QAT',
+    'Russia': 'RUS',
+    'Saudi Arabia': 'KSA',
+    'Singapore': 'SGP',
+    'Spain': 'ESP',
+    'Turkey': 'TUR',
+    'UAE': 'ARE',
+    'United Arab Emirates': 'ARE',
+    'UK': 'GBR',
+    'United Kingdom': 'GBR',
+    'USA': 'USA',
+    'United States': 'USA',
+  };
+  return countryMap[country] || 'XXX';
 };
 
 const countryCodeMap: { [key: string]: string } = {
