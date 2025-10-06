@@ -91,6 +91,20 @@
           "order": "DESCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "watchlist",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "raceDate",
+          "order": "ASCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": []
