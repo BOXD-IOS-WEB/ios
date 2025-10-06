@@ -5,7 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { LogRaceDialog } from "@/components/LogRaceDialog";
 import { StarRating } from "@/components/StarRating";
 import { Comments } from "@/components/Comments";
-import { Plus, Heart, Bookmark, Share2, Eye, Star, MessageSquare } from "lucide-react";
+import { AddToListDialog } from "@/components/AddToListDialog";
+import { Plus, Heart, Bookmark, Share2, Eye, Star, MessageSquare, List } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -275,6 +276,17 @@ const RaceDetail = () => {
                       <Button className="gap-2">
                         <Plus className="w-4 h-4" />
                         Log
+                      </Button>
+                    }
+                  />
+                  <AddToListDialog
+                    raceYear={race.season}
+                    raceName={race.gpName}
+                    raceLocation={race.circuit}
+                    trigger={
+                      <Button variant="outline" className="gap-2">
+                        <List className="w-4 h-4" />
+                        Add to List
                       </Button>
                     }
                   />

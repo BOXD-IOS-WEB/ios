@@ -131,13 +131,22 @@ export const LogRaceDialog = ({ trigger, onSuccess }: LogRaceDialogProps) => {
 
     setLoading(true);
     try {
+      console.log('[LogRaceDialog] Submitting race log:', {
+        raceName,
+        raceYear,
+        dateWatched: date,
+        rating,
+        sessionType,
+        watchMode,
+      });
+
       const logId = await createRaceLog({
         userId: user.uid,
         username: username,
         raceYear,
         raceName,
         raceLocation,
-        dateWatched: Timestamp.fromDate(date) as any,
+        dateWatched: date, // Pass Date object, it will be converted to Timestamp in createRaceLog
         sessionType,
         watchMode,
         rating,
@@ -150,6 +159,7 @@ export const LogRaceDialog = ({ trigger, onSuccess }: LogRaceDialogProps) => {
       });
 
       if (visibility === 'public') {
+        console.log('[LogRaceDialog] Creating activity for public log');
         await createActivity({
           type: review && review.length > 0 ? 'review' : 'log',
           targetId: logId,
@@ -158,10 +168,12 @@ export const LogRaceDialog = ({ trigger, onSuccess }: LogRaceDialogProps) => {
         });
       }
 
+      console.log('[LogRaceDialog] Race log created successfully with ID:', logId);
       toast({ title: "Race logged successfully!" });
       setOpen(false);
       onSuccess?.();
 
+      // Reset form
       setRaceName("");
       setRaceLocation("");
       setRating(0);
@@ -170,6 +182,7 @@ export const LogRaceDialog = ({ trigger, onSuccess }: LogRaceDialogProps) => {
       setCompanions([]);
       setCompanionInput("");
     } catch (error: any) {
+      console.error('[LogRaceDialog] Error creating race log:', error);
       toast({
         title: "Error",
         description: error.message,

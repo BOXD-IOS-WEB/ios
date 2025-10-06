@@ -42,7 +42,13 @@ const listsCollection = collection(db, 'lists');
 
 export const createList = async (list: Omit<RaceList, 'id' | 'createdAt' | 'updatedAt' | 'likesCount' | 'commentsCount'>) => {
   const user = auth.currentUser;
-  if (!user) throw new Error('User not authenticated');
+  if (!user) {
+    console.error('[createList] User not authenticated');
+    throw new Error('User not authenticated');
+  }
+
+  console.log('[createList] Creating list for user:', user.uid);
+  console.log('[createList] List data:', list);
 
   const newList = {
     ...list,
@@ -53,23 +59,47 @@ export const createList = async (list: Omit<RaceList, 'id' | 'createdAt' | 'upda
     commentsCount: 0
   };
 
-  const docRef = await addDoc(listsCollection, newList);
+  console.log('[createList] newList with timestamps:', newList);
 
-  await updateDoc(doc(db, 'userStats', user.uid), {
-    listsCount: increment(1)
-  });
+  try {
+    const docRef = await addDoc(listsCollection, newList);
+    console.log('[createList] List created successfully with ID:', docRef.id);
 
-  return docRef.id;
+    await updateDoc(doc(db, 'userStats', user.uid), {
+      listsCount: increment(1)
+    });
+    console.log('[createList] User stats updated');
+
+    return docRef.id;
+  } catch (error) {
+    console.error('[createList] Error creating list:', error);
+    throw error;
+  }
 };
 
 export const getUserLists = async (userId: string) => {
-  const q = query(
-    listsCollection,
-    where('userId', '==', userId),
-    orderBy('updatedAt', 'desc')
-  );
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as RaceList));
+  console.log('[getUserLists] Fetching lists for user:', userId);
+
+  try {
+    const q = query(
+      listsCollection,
+      where('userId', '==', userId),
+      orderBy('updatedAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    console.log('[getUserLists] Found', snapshot.docs.length, 'lists');
+
+    const lists = snapshot.docs.map(doc => {
+      const data = doc.data();
+      console.log('[getUserLists] List data:', { id: doc.id, ...data });
+      return { id: doc.id, ...data } as RaceList;
+    });
+
+    return lists;
+  } catch (error) {
+    console.error('[getUserLists] Error fetching lists:', error);
+    throw error;
+  }
 };
 
 export const getPublicLists = async () => {

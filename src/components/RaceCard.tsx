@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/card";
-import { Star, Eye } from "lucide-react";
+import { Star, Eye, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { getCountryFlag } from "@/services/f1Api";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,7 @@ import { addToWatchlist, removeFromWatchlist, getUserWatchlist } from "@/service
 import { useToast } from "@/hooks/use-toast";
 import { auth } from "@/lib/firebase";
 import { useState, useEffect } from "react";
+import { AddToListDialog } from "@/components/AddToListDialog";
 
 interface RaceCardProps {
   season: number;
@@ -50,15 +51,21 @@ export const RaceCard = ({
 
     try {
       const items = await getUserWatchlist(user.uid);
+      console.log('[RaceCard] Checking watchlist status for:', { season, gpName, totalItems: items.length });
+
       const watchlistItem = items.find(
         item => item.raceYear === season && item.raceName === gpName
       );
+
       if (watchlistItem) {
+        console.log('[RaceCard] Found in watchlist:', watchlistItem);
         setIsInWatchlist(true);
         setWatchlistId(watchlistItem.id || null);
+      } else {
+        console.log('[RaceCard] Not in watchlist');
       }
     } catch (error) {
-      console.error('Error checking watchlist:', error);
+      console.error('[RaceCard] Error checking watchlist:', error);
     }
   };
 
@@ -84,11 +91,13 @@ export const RaceCard = ({
 
     try {
       if (isInWatchlist && watchlistId) {
+        console.log('[RaceCard] Removing from watchlist:', watchlistId);
         await removeFromWatchlist(watchlistId);
         setIsInWatchlist(false);
         setWatchlistId(null);
         toast({ title: "Removed from watchlist" });
       } else {
+        console.log('[RaceCard] Adding to watchlist:', { season, gpName, circuit, date });
         const newId = await addToWatchlist({
           userId: user.uid,
           raceYear: season,
@@ -98,11 +107,13 @@ export const RaceCard = ({
           notes: '',
           reminderEnabled: false,
         });
+        console.log('[RaceCard] Successfully added with ID:', newId);
         setIsInWatchlist(true);
         setWatchlistId(newId);
         toast({ title: "Added to watchlist" });
       }
     } catch (error: any) {
+      console.error('[RaceCard] Error toggling watchlist:', error);
       toast({
         title: "Error",
         description: error.message,
@@ -162,9 +173,24 @@ export const RaceCard = ({
           </div>
         )}
 
-        {/* Watchlist button */}
+        {/* Action buttons */}
         {showWatchlistButton && !watched && (
-          <div className="absolute top-2 right-2">
+          <div className="absolute top-2 right-2 flex gap-1">
+            <AddToListDialog
+              raceYear={season}
+              raceName={gpName}
+              raceLocation={circuit}
+              trigger={
+                <Button
+                  size="icon"
+                  variant="secondary"
+                  className="h-8 w-8 bg-black/60 hover:bg-black/80 backdrop-blur-sm"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Plus className="w-4 h-4" />
+                </Button>
+              }
+            />
             <Button
               size="icon"
               variant="secondary"

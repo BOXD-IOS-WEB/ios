@@ -2,49 +2,94 @@ import { Header } from "@/components/Header";
 import { RaceCard } from "@/components/RaceCard";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Bell } from "lucide-react";
+import { Bell, RefreshCw } from "lucide-react";
 import { useState, useEffect } from "react";
 import { auth } from "@/lib/firebase";
 import { getUserWatchlist } from "@/services/watchlist";
+import { onAuthStateChanged } from "firebase/auth";
+import { useToast } from "@/hooks/use-toast";
 
 const Watchlist = () => {
   const [upcomingRaces, setUpcomingRaces] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
-    loadWatchlist();
+    // Wait for auth state to be ready
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        console.log('[Watchlist Page] Auth state changed, user logged in:', user.uid);
+        loadWatchlist();
+      } else {
+        console.log('[Watchlist Page] Auth state changed, no user');
+        setLoading(false);
+        setUpcomingRaces([]);
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const loadWatchlist = async () => {
     const user = auth.currentUser;
     if (!user) {
+      console.log('[Watchlist Page] No user authenticated');
       setLoading(false);
       return;
     }
 
+    console.log('[Watchlist Page] Loading watchlist for user:', user.uid);
     setLoading(true);
     try {
       const items = await getUserWatchlist(user.uid);
-      const formattedRaces = items.map(item => ({
-        id: item.id,
-        season: item.raceYear,
-        round: 1,
-        gpName: item.raceName,
-        circuit: item.raceLocation,
-        date: item.raceDate?.toDate?.()?.toISOString() || item.raceDate.toString(),
-      }));
+      console.log('[Watchlist Page] Received items:', items.length);
+
+      const formattedRaces = items.map(item => {
+        // Handle both Timestamp and Date objects
+        let dateString: string;
+        if (item.raceDate && typeof item.raceDate === 'object' && 'toDate' in item.raceDate) {
+          // It's a Firestore Timestamp
+          dateString = item.raceDate.toDate().toISOString();
+        } else if (item.raceDate instanceof Date) {
+          // It's a Date object
+          dateString = item.raceDate.toISOString();
+        } else {
+          // Fallback to string representation
+          dateString = item.raceDate.toString();
+        }
+
+        const formattedRace = {
+          id: item.id,
+          season: item.raceYear,
+          round: 1,
+          gpName: item.raceName,
+          circuit: item.raceLocation,
+          date: dateString,
+        };
+
+        console.log('[Watchlist Page] Formatted race:', formattedRace);
+        return formattedRace;
+      });
+
+      console.log('[Watchlist Page] Setting races:', formattedRaces);
       setUpcomingRaces(formattedRaces);
     } catch (error) {
-      console.error('Error loading watchlist:', error);
+      console.error('[Watchlist Page] Error loading watchlist:', error);
     } finally {
       setLoading(false);
     }
   };
 
+  const handleRefresh = async () => {
+    toast({ title: "Refreshing watchlist..." });
+    await loadWatchlist();
+    toast({ title: "Watchlist refreshed" });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      
+
       <main className="container py-8">
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -65,7 +110,12 @@ const Watchlist = () => {
                 <SelectItem value="2024">2024 Season</SelectItem>
               </SelectContent>
             </Select>
-            
+
+            <Button variant="outline" className="gap-2" onClick={handleRefresh} disabled={loading}>
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+
             <Button variant="outline" className="gap-2">
               <Bell className="w-4 h-4" />
               Notifications

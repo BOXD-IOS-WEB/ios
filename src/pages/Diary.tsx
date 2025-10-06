@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar, List, Plus, Trash2, Edit } from "lucide-react";
 import { useState, useEffect } from "react";
 import { auth } from "@/lib/firebase";
-import { getUserRaceLogs, calculateTotalHoursWatched, deleteRaceLog } from "@/services/raceLogs";
+import { getUserRaceLogs, calculateTotalHoursWatched, deleteRaceLog, RaceLog } from "@/services/raceLogs";
 import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog,
@@ -21,6 +21,7 @@ import {
 const Diary = () => {
   const [view, setView] = useState<"list" | "calendar">("list");
   const [logs, setLogs] = useState<any[]>([]);
+  const [rawLogs, setRawLogs] = useState<RaceLog[]>([]); // Store raw logs for calculations
   const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [logToDelete, setLogToDelete] = useState<string | null>(null);
@@ -29,25 +30,47 @@ const Diary = () => {
   const loadLogs = async () => {
     const user = auth.currentUser;
     if (!user) {
+      console.log('[Diary] No authenticated user found');
       setLoading(false);
       return;
     }
 
     try {
+      console.log('[Diary] Loading race logs for user:', user.uid);
       const userLogs = await getUserRaceLogs(user.uid);
-      setLogs(userLogs.map(log => ({
-        id: log.id,
-        season: log.raceYear,
-        round: log.round || 1,
-        gpName: log.raceName,
-        circuit: log.raceLocation,
-        date: log.dateWatched.toString(),
-        rating: log.rating,
-        watched: true,
-        country: log.countryCode,
-      })));
+      console.log('[Diary] Retrieved', userLogs.length, 'race logs');
+
+      // Store raw logs for calculations (including sessionType)
+      setRawLogs(userLogs);
+
+      const mappedLogs = userLogs.map(log => {
+        // dateWatched is now a Date object after conversion in getUserRaceLogs
+        const dateString = log.dateWatched instanceof Date
+          ? log.dateWatched.toISOString()
+          : new Date(log.dateWatched).toISOString();
+
+        return {
+          id: log.id,
+          season: log.raceYear,
+          round: log.round || 1,
+          gpName: log.raceName,
+          circuit: log.raceLocation,
+          date: dateString,
+          rating: log.rating,
+          watched: true,
+          country: log.countryCode,
+        };
+      });
+
+      console.log('[Diary] Mapped logs:', mappedLogs);
+      setLogs(mappedLogs);
     } catch (error) {
-      console.error('Error loading logs:', error);
+      console.error('[Diary] Error loading logs:', error);
+      toast({
+        title: 'Error loading diary',
+        description: error instanceof Error ? error.message : 'Unknown error',
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
     }
@@ -66,10 +89,12 @@ const Diary = () => {
     if (!logToDelete) return;
 
     try {
+      console.log('[Diary] Deleting race log:', logToDelete);
       await deleteRaceLog(logToDelete);
       toast({ title: 'Race log deleted' });
-      loadLogs();
+      await loadLogs(); // Reload logs after deletion
     } catch (error: any) {
+      console.error('[Diary] Error deleting race log:', error);
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } finally {
       setDeleteDialogOpen(false);
@@ -86,7 +111,7 @@ const Diary = () => {
           <div>
             <h1 className="text-4xl font-bold mb-2">Your Diary</h1>
             <p className="text-muted-foreground">
-              {logs.length} races logged • {calculateTotalHoursWatched(logs as any).toFixed(1)} hours of F1
+              {logs.length} races logged • {calculateTotalHoursWatched(rawLogs).toFixed(1)} hours of F1
             </p>
           </div>
           
