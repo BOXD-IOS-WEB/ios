@@ -119,28 +119,15 @@ const RaceDetail = () => {
 
   console.log('Final race object:', race);
 
-  // Fallback: if no race data, create a basic race object
-  if (!race && year && round) {
-    console.warn('No race data found, using fallback');
-    race = {
-      season: parseInt(year),
-      round: parseInt(round),
-      gpName: `Grand Prix ${round}`,
-      circuit: 'TBD',
-      country: 'TBD',
-      countryCode: 'BRN',
-      date: new Date().toISOString(),
-      rating: 0,
-      totalRatings: 0,
-      watched: 0,
-      laps: 'TBD',
-    };
-  }
-
   if (!race) {
-    console.error('Could not create race object, redirecting to home');
-    window.location.href = '/';
-    return null;
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container py-8 text-center">
+          <p className="text-muted-foreground">Race not found. Please try again.</p>
+        </div>
+      </div>
+    );
   }
 
   const flagUrl = getCountryFlag(race.countryCode);
