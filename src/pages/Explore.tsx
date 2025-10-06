@@ -171,7 +171,7 @@ const Explore = () => {
                         <RaceCard
                           key={race.meeting_key}
                           season={race.year}
-                          round={race.meeting_key}
+                          round={race.round}
                           gpName={race.meeting_name}
                           circuit={race.circuit_short_name}
                           date={race.date_start}
@@ -324,7 +324,7 @@ const Explore = () => {
                     <RaceCard
                       key={race.meeting_key}
                       season={race.year}
-                      round={race.meeting_key}
+                      round={race.round}
                       gpName={race.meeting_name}
                       circuit={race.circuit_short_name}
                       date={race.date_start}

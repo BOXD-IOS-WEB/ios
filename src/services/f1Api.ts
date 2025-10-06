@@ -14,6 +14,7 @@ export interface F1Meeting {
   meeting_name: string;
   meeting_official_name?: string;
   year: number;
+  round: number; // Sequential round number within the season (1, 2, 3, etc.)
 }
 
 // Convert Jolpica/Ergast format to our format
@@ -29,6 +30,7 @@ const convertErgastToF1Meeting = (race: any, year: number, round: number): F1Mee
     meeting_name: race.raceName,
     meeting_official_name: race.raceName,
     year: year,
+    round: round, // Ergast provides sequential round numbers
   };
 };
 
@@ -48,8 +50,13 @@ export const getCurrentSeasonRaces = async (): Promise<F1Meeting[]> => {
 
       if (Array.isArray(data) && data.length > 0) {
         const races = data.filter(m => !m.meeting_name.toLowerCase().includes('testing'));
-        console.log(`[F1 API] Success! Returning ${races.length} races from OpenF1`);
-        return races;
+        // Add sequential round numbers to OpenF1 data
+        const racesWithRounds = races.map((race, index) => ({
+          ...race,
+          round: index + 1
+        }));
+        console.log(`[F1 API] Success! Returning ${racesWithRounds.length} races from OpenF1`);
+        return racesWithRounds;
       }
     }
   } catch (error) {
@@ -98,8 +105,13 @@ export const getRacesBySeason = async (year: number): Promise<F1Meeting[]> => {
 
       if (Array.isArray(data) && data.length > 0) {
         const races = data.filter(m => !m.meeting_name.toLowerCase().includes('testing'));
-        console.log(`[F1 API] Success! Returning ${races.length} races from OpenF1`);
-        return races;
+        // Add sequential round numbers to OpenF1 data
+        const racesWithRounds = races.map((race, index) => ({
+          ...race,
+          round: index + 1
+        }));
+        console.log(`[F1 API] Success! Returning ${racesWithRounds.length} races from OpenF1`);
+        return racesWithRounds;
       }
     }
   } catch (error) {
@@ -137,7 +149,8 @@ export const getRaceByYearAndRound = async (year: number, round: number): Promis
   console.log(`[F1 API] getRaceByYearAndRound: year=${year}, round=${round}`);
   const races = await getRacesBySeason(year);
   console.log(`[F1 API] Found ${races.length} races for year ${year}`);
-  const race = races.find(r => r.meeting_key === round);
+  // Use the round field (1, 2, 3...) instead of meeting_key for consistent lookup
+  const race = races.find(r => r.round === round);
   console.log(`[F1 API] Race found?`, race ? 'YES' : 'NO', race);
   return race || null;
 };

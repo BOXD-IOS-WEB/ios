@@ -104,7 +104,7 @@ const RaceDetail = () => {
     console.log('Using F1 API data:', raceInfo);
     race = {
       season: raceInfo.year,
-      round: raceInfo.meeting_key,
+      round: raceInfo.round,
       gpName: raceInfo.meeting_name,
       circuit: raceInfo.circuit_short_name,
       country: raceInfo.country_name,

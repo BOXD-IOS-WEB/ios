@@ -122,7 +122,7 @@ const Search = () => {
                               <RaceCard
                                 key={result.id}
                                 season={result.metadata?.year}
-                                round={result.metadata?.meeting_key}
+                                round={result.metadata?.round}
                                 gpName={result.title}
                                 circuit={result.metadata?.circuit_short_name}
                                 date={result.metadata?.date_start}
@@ -203,7 +203,7 @@ const Search = () => {
                         <RaceCard
                           key={result.id}
                           season={result.metadata?.year}
-                          round={result.metadata?.meeting_key}
+                          round={result.metadata?.round}
                           gpName={result.title}
                           circuit={result.metadata?.circuit_short_name}
                           date={result.metadata?.date_start}
