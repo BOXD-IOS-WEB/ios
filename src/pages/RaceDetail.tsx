@@ -32,15 +32,21 @@ const RaceDetail = () => {
 
   useEffect(() => {
     const loadRaceData = async () => {
+      console.log('[RaceDetail] Starting data load...');
+
+      // Try to load public race logs, but don't let it block the rest
       try {
-        console.log('[RaceDetail] Starting data load...');
         const logs = await getPublicRaceLogs(100);
         console.log('[RaceDetail] Loaded', logs.length, 'public race logs');
         setAllRaceLogs(logs);
+      } catch (error) {
+        console.warn('[RaceDetail] Failed to load public logs (probably missing index):', error);
+        setAllRaceLogs([]);
+      }
 
+      try {
         if (id) {
           console.log('[RaceDetail] Loading by ID:', id);
-          // Load specific race log by ID
           const log = await getRaceLogById(id);
           console.log('[RaceDetail] Race log by ID:', log);
           setRaceLog(log);
@@ -51,17 +57,6 @@ const RaceDetail = () => {
           }
         } else if (year && round) {
           console.log('[RaceDetail] Loading by year/round:', year, round);
-
-          // Try to find a race log for this year/round
-          const matchingLogs = logs.filter(log =>
-            log.raceYear === parseInt(year) && log.round === parseInt(round)
-          );
-          console.log('[RaceDetail] Found', matchingLogs.length, 'matching logs');
-
-          if (matchingLogs.length > 0) {
-            console.log('[RaceDetail] Using first matching log:', matchingLogs[0]);
-            setRaceLog(matchingLogs[0]);
-          }
 
           // Always fetch race info from F1 API
           console.log('[RaceDetail] Fetching from F1 API: year=', parseInt(year), 'round=', parseInt(round));
