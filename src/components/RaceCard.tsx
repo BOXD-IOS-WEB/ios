@@ -127,9 +127,9 @@ export const RaceCard = ({
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center p-4 space-y-4">
+          <div className="w-full h-full flex flex-col items-center justify-center p-4 space-y-4 text-white">
             {flagUrl && (
-              <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-white/20 shadow-lg">
+              <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-white/20 shadow-lg bg-white/10">
                 <img
                   src={flagUrl}
                   alt={country || circuit}
@@ -141,8 +141,8 @@ export const RaceCard = ({
               </div>
             )}
             <div className="text-center">
-              <div className="text-2xl font-bold">{season}</div>
-              <div className="text-xs mt-1 font-medium line-clamp-2">{gpName}</div>
+              <div className="text-2xl font-bold text-white">{season}</div>
+              <div className="text-xs mt-1 font-medium line-clamp-2 text-white/90">{gpName}</div>
             </div>
           </div>
         )}
