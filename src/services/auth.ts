@@ -23,11 +23,35 @@ export interface UserProfile {
 }
 
 export const checkUsernameAvailable = async (username: string): Promise<boolean> => {
-  const normalizedUsername = username.toLowerCase().trim();
-  const usersRef = collection(db, 'users');
-  const q = query(usersRef, where('username', '==', normalizedUsername));
-  const snapshot = await getDocs(q);
-  return snapshot.empty;
+  try {
+    console.log('[checkUsernameAvailable] Checking username:', username);
+    const normalizedUsername = username.toLowerCase().trim();
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, where('username', '==', normalizedUsername));
+
+    console.log('[checkUsernameAvailable] Executing query...');
+    const snapshot = await getDocs(q);
+
+    console.log('[checkUsernameAvailable] Query results:', {
+      empty: snapshot.empty,
+      size: snapshot.size,
+      docs: snapshot.docs.map(doc => doc.data().username)
+    });
+
+    return snapshot.empty;
+  } catch (error: any) {
+    console.error('[checkUsernameAvailable] Error checking username:', error);
+    console.error('[checkUsernameAvailable] Error code:', error.code);
+    console.error('[checkUsernameAvailable] Error message:', error.message);
+
+    // If we get a permission error, we can't check - assume not available for safety
+    if (error.code === 'permission-denied') {
+      console.warn('[checkUsernameAvailable] Permission denied - cannot verify username availability');
+      throw new Error('Unable to verify username availability. Please try again.');
+    }
+
+    throw error;
+  }
 };
 
 export const signUp = async (email: string, password: string, name: string, username: string) => {

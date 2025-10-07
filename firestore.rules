@@ -2,7 +2,13 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Temporary open rules for testing - TIGHTEN BEFORE PRODUCTION
+    // Users collection - allow unauthenticated reads for username checking
+    match /users/{userId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // All other collections require authentication
     match /{document=**} {
       allow read, write: if request.auth != null;
     }
