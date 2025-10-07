@@ -56,7 +56,8 @@ const Login = () => {
     } catch (error: any) {
       console.error('[Login] Error checking username:', error);
       console.error('[Login] Error details:', error.message, error.code);
-      setUsernameError(error.message || 'Error checking username availability');
+      // Don't show error to user - let them proceed with signup
+      console.warn('[Login] Bypassing username check error - will verify during signup');
     } finally {
       setCheckingUsername(false);
     }
