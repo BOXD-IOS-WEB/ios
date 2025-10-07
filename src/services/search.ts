@@ -46,17 +46,23 @@ export const searchUsers = async (searchTerm: string, limitCount: number = 10): 
   const term = searchTerm.toLowerCase();
 
   try {
+    console.log('[searchUsers] Searching for:', term);
     const usersCollection = collection(db, 'users');
-    const q = query(usersCollection, limit(50));
+    const q = query(usersCollection, limit(100));
     const snapshot = await getDocs(q);
+
+    console.log('[searchUsers] Found', snapshot.docs.length, 'total users');
 
     const users = snapshot.docs
       .map(doc => ({ id: doc.id, ...doc.data() }))
-      .filter(user =>
-        user.name?.toLowerCase().includes(term) ||
-        user.email?.toLowerCase().includes(term)
-      )
+      .filter(user => {
+        const nameMatch = user.name?.toLowerCase().includes(term);
+        const emailMatch = user.email?.toLowerCase().includes(term);
+        return nameMatch || emailMatch;
+      })
       .slice(0, limitCount);
+
+    console.log('[searchUsers] Filtered to', users.length, 'matching users');
 
     return users.map(user => ({
       id: user.id,
@@ -66,7 +72,7 @@ export const searchUsers = async (searchTerm: string, limitCount: number = 10): 
       metadata: user
     }));
   } catch (error) {
-    console.error('Error searching users:', error);
+    console.error('[searchUsers] Error searching users:', error);
     return [];
   }
 };
