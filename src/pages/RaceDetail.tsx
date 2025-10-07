@@ -4,7 +4,6 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { LogRaceDialog } from "@/components/LogRaceDialog";
 import { StarRating } from "@/components/StarRating";
-import { Comments } from "@/components/Comments";
 import { AddToListDialog } from "@/components/AddToListDialog";
 import { Plus, Heart, Bookmark, Share2, Eye, Star, MessageSquare, List } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -29,7 +28,6 @@ const RaceDetail = () => {
   const [raceInfo, setRaceInfo] = useState<any>(null);
   const [allRaceLogs, setAllRaceLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [expandedComments, setExpandedComments] = useState<string | null>(null);
   const [logDialogOpen, setLogDialogOpen] = useState(false);
   const { toast } = useToast();
 
@@ -469,23 +467,7 @@ const RaceDetail = () => {
                                 {review.likesCount > 0 ? review.likesCount : 'Like'}
                               </span>
                             </button>
-                            <button
-                              className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors group"
-                              onClick={() => setExpandedComments(expandedComments === review.id ? null : review.id)}
-                            >
-                              <MessageSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover:scale-110 transition-transform" />
-                              <span className="font-medium">
-                                {review.commentsCount > 0 ? `${review.commentsCount} ${review.commentsCount === 1 ? 'comment' : 'comments'}` : 'Comment'}
-                              </span>
-                            </button>
                           </div>
-
-                          {/* Comments Section */}
-                          {expandedComments === review.id && review.id && (
-                            <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t">
-                              <Comments raceLogId={review.id} />
-                            </div>
-                          )}
                         </div>
                       </div>
                     </Card>
@@ -493,8 +475,6 @@ const RaceDetail = () => {
                 )}
               </div>
             </div>
-
-            <Comments raceLogId={id || ''} />
           </div>
 
           {/* Sidebar */}

@@ -72,7 +72,7 @@ export const StarRating = ({
   return (
     <div className="space-y-2">
       {/* Rating Display */}
-      {(displayRating > 0 || readonly) && (
+      {(readonly || displayRating > 0) && (
         <div className="flex items-center gap-2 mb-1">
           <span className="text-3xl sm:text-4xl font-bold text-racing-red">{displayRating.toFixed(1)}</span>
           <div className="flex flex-col">
@@ -94,7 +94,7 @@ export const StarRating = ({
               key={position}
               className={`relative flex-1 ${sizeClasses[size]} rounded-md overflow-hidden ${
                 (readonly && onClickWhenReadonly) || !readonly ? 'cursor-pointer' : ''
-              } transition-all duration-200 hover:scale-105 shadow-sm`}
+              } shadow-sm`}
               onClick={() => handleClick(position)}
               onMouseEnter={() => handleMouseEnter(position)}
               onMouseLeave={handleMouseLeave}
@@ -104,7 +104,7 @@ export const StarRating = ({
 
               {/* Fill */}
               <div
-                className={`absolute inset-0 ${getRatingColor(position)} transition-all duration-300`}
+                className={`absolute inset-0 ${getRatingColor(position)}`}
                 style={{ width: `${fillPercentage}%` }}
               />
 
@@ -112,9 +112,7 @@ export const StarRating = ({
               <div className="absolute inset-0 flex items-center justify-center">
                 <Flag
                   size={flagSizes[size]}
-                  className={`transition-colors ${
-                    isActive || isPartial ? 'text-white drop-shadow-sm' : 'text-muted-foreground'
-                  }`}
+                  className={isActive || isPartial ? 'text-white drop-shadow-sm' : 'text-muted-foreground'}
                   fill={isActive || isPartial ? 'currentColor' : 'none'}
                 />
               </div>
