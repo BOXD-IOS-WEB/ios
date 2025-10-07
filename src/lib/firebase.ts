@@ -4,12 +4,12 @@ import { getFirestore, initializeFirestore, memoryLocalCache, clearIndexedDbPers
 import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAxxOGSqsd79qXvGUz7FEKgBuc-pafGE9A",
-  authDomain: "box-boxd-f1-1759326853.firebaseapp.com",
-  projectId: "box-boxd-f1-1759326853",
-  storageBucket: "box-boxd-f1-1759326853.appspot.com",
-  messagingSenderId: "750144678811",
-  appId: "1:750144678811:web:47f55a4293e9b7e66dcf3e"
+  apiKey: "AIzaSyB7H6m2OPFlTx2_QYv2PZoT73JiRCNRV-I",
+  authDomain: "boxboxd-web-new.firebaseapp.com",
+  projectId: "boxboxd-web-new",
+  storageBucket: "boxboxd-web-new.firebasestorage.app",
+  messagingSenderId: "1033200550139",
+  appId: "1:1033200550139:web:0230ea06efd7054aa0f05e"
 };
 
 // Clear any cached Firestore data to force re-fetch of rules
