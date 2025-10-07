@@ -9,14 +9,15 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth } from "@/lib/firebase";
 import { getUserLists } from "@/services/lists";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Lists = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [lists, setLists] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadLists = async () => {
-    const user = auth.currentUser;
     if (!user) {
       setLoading(false);
       return;

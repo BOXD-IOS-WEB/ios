@@ -15,11 +15,13 @@ import { db } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { useParams, useNavigate } from "react-router-dom";
 import { EditProfileDialog } from "@/components/EditProfileDialog";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Profile = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user: currentUser } = useAuth();
   const [logs, setLogs] = useState<any[]>([]);
   const [stats, setStats] = useState({
     racesWatched: 0,
@@ -39,8 +41,7 @@ const Profile = () => {
   const [statsDoc, setStatsDoc] = useState<any>(null);
 
   const loadProfile = async () => {
-    const user = auth.currentUser;
-    const targetUserId = userId || user?.uid;
+    const targetUserId = userId || currentUser?.uid;
 
     if (!targetUserId) {
       setLoading(false);
@@ -108,10 +109,9 @@ const Profile = () => {
   };
 
   const handleFollowToggle = async () => {
-    const user = auth.currentUser;
-    const targetUserId = userId || user?.uid;
+    const targetUserId = userId || currentUser?.uid;
 
-    if (!user || !targetUserId || targetUserId === user.uid) return;
+    if (!currentUser || !targetUserId || targetUserId === currentUser.uid) return;
 
     setFollowLoading(true);
     try {
@@ -181,7 +181,7 @@ const Profile = () => {
                     </div>
 
                     <div className="flex gap-2">
-                      {auth.currentUser?.uid === (userId || auth.currentUser?.uid) ? (
+                      {currentUser?.uid === (userId || currentUser?.uid) ? (
                         <EditProfileDialog profile={profile} onSuccess={loadProfile} />
                       ) : (
                         <Button

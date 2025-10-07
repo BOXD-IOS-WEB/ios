@@ -8,8 +8,10 @@ import { auth } from "@/lib/firebase";
 import { getUserWatchlist } from "@/services/watchlist";
 import { onAuthStateChanged } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Watchlist = () => {
+  const { user } = useAuth();
   const [upcomingRaces, setUpcomingRaces] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -31,7 +33,6 @@ const Watchlist = () => {
   }, []);
 
   const loadWatchlist = async () => {
-    const user = auth.currentUser;
     if (!user) {
       console.log('[Watchlist Page] No user authenticated');
       setLoading(false);

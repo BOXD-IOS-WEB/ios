@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import { auth } from "@/lib/firebase";
 import { getUserRaceLogs, calculateTotalHoursWatched, deleteRaceLog, RaceLog } from "@/services/raceLogs";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +20,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const Diary = () => {
+  const { user } = useAuth();
   const [view, setView] = useState<"list" | "calendar">("list");
   const [logs, setLogs] = useState<any[]>([]);
   const [rawLogs, setRawLogs] = useState<RaceLog[]>([]); // Store raw logs for calculations
@@ -28,7 +30,6 @@ const Diary = () => {
   const { toast } = useToast();
 
   const loadLogs = async () => {
-    const user = auth.currentUser;
     if (!user) {
       console.log('[Diary] No authenticated user found');
       setLoading(false);
