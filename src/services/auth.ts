@@ -25,11 +25,17 @@ export interface UserProfile {
 export const checkUsernameAvailable = async (username: string): Promise<boolean> => {
   try {
     console.log('[checkUsernameAvailable] Checking username:', username);
+    console.log('[checkUsernameAvailable] Auth state:', auth.currentUser ? 'authenticated' : 'unauthenticated');
+    console.log('[checkUsernameAvailable] Database type:', db.type);
+
     const normalizedUsername = username.toLowerCase().trim();
     const usersRef = collection(db, 'users');
     const q = query(usersRef, where('username', '==', normalizedUsername));
 
     console.log('[checkUsernameAvailable] Executing query...');
+    console.log('[checkUsernameAvailable] Collection path:', 'users');
+    console.log('[checkUsernameAvailable] Query filter:', `username == ${normalizedUsername}`);
+
     const snapshot = await getDocs(q);
 
     console.log('[checkUsernameAvailable] Query results:', {
@@ -40,14 +46,17 @@ export const checkUsernameAvailable = async (username: string): Promise<boolean>
 
     return snapshot.empty;
   } catch (error: any) {
-    console.error('[checkUsernameAvailable] Error checking username:', error);
+    console.error('[checkUsernameAvailable] FULL ERROR OBJECT:', error);
+    console.error('[checkUsernameAvailable] Error name:', error.name);
     console.error('[checkUsernameAvailable] Error code:', error.code);
     console.error('[checkUsernameAvailable] Error message:', error.message);
+    console.error('[checkUsernameAvailable] Error stack:', error.stack);
 
     // If we get a permission error, we can't check - assume not available for safety
     if (error.code === 'permission-denied') {
-      console.warn('[checkUsernameAvailable] Permission denied - cannot verify username availability');
-      throw new Error('Unable to verify username availability. Please try again.');
+      console.warn('[checkUsernameAvailable] ⚠️ Permission denied - Rules are deployed but SDK may be caching old rules');
+      console.warn('[checkUsernameAvailable] ⚠️ Try: 1) Clear browser cache, 2) Use incognito mode, 3) Try different browser');
+      throw new Error('Unable to verify username. Please clear your browser cache and try again.');
     }
 
     throw error;
