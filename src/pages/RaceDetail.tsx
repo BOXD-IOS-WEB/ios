@@ -29,56 +29,57 @@ const RaceDetail = () => {
   const [allRaceLogs, setAllRaceLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [logDialogOpen, setLogDialogOpen] = useState(false);
+  const [revealedSpoilers, setRevealedSpoilers] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
-  useEffect(() => {
-    const loadRaceData = async () => {
-      console.log('[RaceDetail] Starting data load...');
+  const loadRaceData = async () => {
+    console.log('[RaceDetail] Starting data load...');
 
-      // Try to load public race logs, but don't let it block the rest
-      try {
-        const logs = await getPublicRaceLogs(100);
-        console.log('[RaceDetail] Loaded', logs.length, 'public race logs');
-        setAllRaceLogs(logs);
-      } catch (error) {
-        console.warn('[RaceDetail] Failed to load public logs (probably missing index):', error);
-        setAllRaceLogs([]);
-      }
+    // Try to load public race logs, but don't let it block the rest
+    try {
+      const logs = await getPublicRaceLogs(100);
+      console.log('[RaceDetail] Loaded', logs.length, 'public race logs');
+      setAllRaceLogs(logs);
+    } catch (error) {
+      console.warn('[RaceDetail] Failed to load public logs (probably missing index):', error);
+      setAllRaceLogs([]);
+    }
 
-      try {
-        if (id) {
-          console.log('[RaceDetail] Loading by ID:', id);
-          const log = await getRaceLogById(id);
-          console.log('[RaceDetail] Race log by ID:', log);
-          setRaceLog(log);
+    try {
+      if (id) {
+        console.log('[RaceDetail] Loading by ID:', id);
+        const log = await getRaceLogById(id);
+        console.log('[RaceDetail] Race log by ID:', log);
+        setRaceLog(log);
 
-          const user = auth.currentUser;
-          if (user && log) {
-            setIsLiked(log.likedBy?.includes(user.uid) || false);
-          }
-        } else if (year && round) {
-          console.log('[RaceDetail] Loading by year/round:', year, round);
-
-          // Always fetch race info from F1 API
-          console.log('[RaceDetail] Fetching from F1 API: year=', parseInt(year), 'round=', parseInt(round));
-          const raceData = await getRaceByYearAndRound(parseInt(year), parseInt(round));
-          console.log('[RaceDetail] F1 API returned:', raceData);
-          if (raceData) {
-            setRaceInfo(raceData);
-          } else {
-            console.error('[RaceDetail] F1 API returned null!');
-          }
-        } else {
-          console.error('[RaceDetail] No id, year, or round found in URL params!');
+        const user = auth.currentUser;
+        if (user && log) {
+          setIsLiked(log.likedBy?.includes(user.uid) || false);
         }
-      } catch (error) {
-        console.error('[RaceDetail] Error loading race data:', error);
-      } finally {
-        setLoading(false);
-        console.log('[RaceDetail] Loading complete');
-      }
-    };
+      } else if (year && round) {
+        console.log('[RaceDetail] Loading by year/round:', year, round);
 
+        // Always fetch race info from F1 API
+        console.log('[RaceDetail] Fetching from F1 API: year=', parseInt(year), 'round=', parseInt(round));
+        const raceData = await getRaceByYearAndRound(parseInt(year), parseInt(round));
+        console.log('[RaceDetail] F1 API returned:', raceData);
+        if (raceData) {
+          setRaceInfo(raceData);
+        } else {
+          console.error('[RaceDetail] F1 API returned null!');
+        }
+      } else {
+        console.error('[RaceDetail] No id, year, or round found in URL params!');
+      }
+    } catch (error) {
+      console.error('[RaceDetail] Error loading race data:', error);
+    } finally {
+      setLoading(false);
+      console.log('[RaceDetail] Loading complete');
+    }
+  };
+
+  useEffect(() => {
     loadRaceData();
   }, [id, year, round]);
 
@@ -274,9 +275,34 @@ const RaceDetail = () => {
               </div>
 
               <div className="flex-1 space-y-3 md:space-y-4">
-                <div>
-                  <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2">{race.gpName}</h1>
-                  <p className="text-base sm:text-lg md:text-xl text-muted-foreground">{race.season} • Round {race.round}</p>
+                <div className="grid grid-cols-3 gap-3 md:gap-4 text-center sm:text-left">
+                  <div>
+                    <p className="text-xs sm:text-sm text-muted-foreground">Circuit</p>
+                    <p className="text-sm sm:text-base font-semibold">{race.circuit}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs sm:text-sm text-muted-foreground">Country</p>
+                    <p className="text-sm sm:text-base font-semibold">{race.country}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs sm:text-sm text-muted-foreground">Date</p>
+                    <p className="text-sm sm:text-base font-semibold">
+                      <span className="hidden sm:inline">
+                        {new Date(race.date).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric'
+                        })}
+                      </span>
+                      <span className="sm:hidden">
+                        {new Date(race.date).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric'
+                        })}
+                      </span>
+                    </p>
+                  </div>
                 </div>
 
                 <div>
@@ -288,7 +314,7 @@ const RaceDetail = () => {
                   />
                 </div>
 
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
                   <LogRaceDialog
                     trigger={
                       <Button size="sm" className="gap-2">
@@ -298,6 +324,7 @@ const RaceDetail = () => {
                     }
                     open={logDialogOpen}
                     onOpenChange={setLogDialogOpen}
+                    onSuccess={loadRaceData}
                   />
                   <AddToListDialog
                     raceYear={race.season}
@@ -332,37 +359,6 @@ const RaceDetail = () => {
                   <Button variant="outline" size="icon" onClick={handleShare}>
                     <Share2 className="w-4 h-4" />
                   </Button>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 md:gap-4 pt-3 md:pt-4">
-                  <div>
-                    <p className="text-xs sm:text-sm text-muted-foreground">Circuit</p>
-                    <p className="text-sm sm:text-base font-semibold">{race.circuit}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs sm:text-sm text-muted-foreground">Country</p>
-                    <p className="text-sm sm:text-base font-semibold">{race.country}</p>
-                  </div>
-                  <div className="col-span-2">
-                    <p className="text-xs sm:text-sm text-muted-foreground">Date</p>
-                    <p className="text-sm sm:text-base font-semibold">
-                      <span className="hidden sm:inline">
-                        {new Date(race.date).toLocaleDateString('en-US', {
-                          weekday: 'long',
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })}
-                      </span>
-                      <span className="sm:hidden">
-                        {new Date(race.date).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric'
-                        })}
-                      </span>
-                    </p>
-                  </div>
                 </div>
               </div>
             </div>
@@ -433,9 +429,42 @@ const RaceDetail = () => {
                             </span>
                           </div>
 
-                          <div className="text-sm sm:text-base leading-relaxed mb-3 sm:mb-4 text-foreground/90">
-                            {review.review}
-                          </div>
+                          {/* Review with spoiler handling */}
+                          {review.spoilerWarning && !revealedSpoilers.has(review.id) ? (
+                            <div className="relative mb-3 sm:mb-4">
+                              <div className="text-sm sm:text-base leading-relaxed blur-sm select-none pointer-events-none">
+                                {review.review}
+                              </div>
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <button
+                                  onClick={() => setRevealedSpoilers(new Set([...revealedSpoilers, review.id]))}
+                                  className="bg-racing-red hover:bg-racing-red/90 text-white px-4 py-2 rounded-lg font-medium shadow-lg flex items-center gap-2"
+                                >
+                                  ⚠️ Show Spoilers
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="text-sm sm:text-base leading-relaxed mb-3 sm:mb-4 text-foreground/90">
+                              {review.review}
+                            </div>
+                          )}
+
+                          {/* Companions */}
+                          {review.companions && review.companions.length > 0 && (
+                            <div className="flex flex-wrap items-center gap-1.5 mb-3 text-xs text-muted-foreground">
+                              <span>Watched with:</span>
+                              {review.companions.map((companion: string) => (
+                                <Badge
+                                  key={companion}
+                                  variant="outline"
+                                  className="text-[10px] sm:text-xs"
+                                >
+                                  @{companion}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
 
                           {/* Tags */}
                           {review.tags && review.tags.length > 0 && (
@@ -445,8 +474,12 @@ const RaceDetail = () => {
                                   key={tag}
                                   variant="secondary"
                                   className="text-[10px] sm:text-xs hover:bg-racing-red/10 transition-colors cursor-pointer"
+                                  onClick={() => {
+                                    // Navigate to home with tag filter
+                                    navigate(`/?tag=${encodeURIComponent(tag)}`);
+                                  }}
                                 >
-                                  {tag}
+                                  #{tag}
                                 </Badge>
                               ))}
                             </div>
@@ -482,18 +515,16 @@ const RaceDetail = () => {
             <Card className="p-4 sm:p-5 md:p-6 border-0 shadow-sm">
               <h3 className="font-semibold text-base sm:text-lg mb-3 sm:mb-4">Popular Tags</h3>
               <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                <Badge variant="secondary" className="text-xs hover:bg-racing-red/10 transition-colors cursor-pointer">
-                  overtake
-                </Badge>
-                <Badge variant="secondary" className="text-xs hover:bg-racing-red/10 transition-colors cursor-pointer">
-                  late-drama
-                </Badge>
-                <Badge variant="secondary" className="text-xs hover:bg-racing-red/10 transition-colors cursor-pointer">
-                  season-finale
-                </Badge>
-                <Badge variant="secondary" className="text-xs hover:bg-racing-red/10 transition-colors cursor-pointer">
-                  sunset
-                </Badge>
+                {['overtake', 'late-drama', 'season-finale', 'sunset', 'rain', 'safety-car'].map((tag) => (
+                  <Badge
+                    key={tag}
+                    variant="secondary"
+                    className="text-xs hover:bg-racing-red/10 transition-colors cursor-pointer"
+                    onClick={() => navigate(`/?tag=${encodeURIComponent(tag)}`)}
+                  >
+                    #{tag}
+                  </Badge>
+                ))}
               </div>
             </Card>
           </div>

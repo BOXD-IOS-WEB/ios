@@ -3,15 +3,18 @@ import { RaceCard } from "@/components/RaceCard";
 import { ActivityFeed } from "@/components/ActivityFeed";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowRight } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { ArrowRight, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getPublicRaceLogs } from "@/services/raceLogs";
 import { getCurrentSeasonRaces, getPosterUrl } from "@/services/f1Api";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { auth } from "@/lib/firebase";
 
 const Index = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tagFilter = searchParams.get('tag');
   const [currentRaces, setCurrentRaces] = useState<any[]>([]);
   const [popularRaces, setPopularRaces] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,9 +34,17 @@ const Index = () => {
         }
 
         try {
-          const publicLogs = await getPublicRaceLogs(12);
+          const publicLogs = await getPublicRaceLogs(100);
           if (Array.isArray(publicLogs) && publicLogs.length > 0) {
-            setPopularRaces(publicLogs.slice(0, 6));
+            // Filter by tag if present
+            if (tagFilter) {
+              const filtered = publicLogs.filter(log =>
+                log.tags && log.tags.includes(tagFilter)
+              );
+              setPopularRaces(filtered);
+            } else {
+              setPopularRaces(publicLogs.slice(0, 6));
+            }
           }
         } catch (logError) {
           console.error('Error loading public logs:', logError);
@@ -47,7 +58,7 @@ const Index = () => {
     };
 
     loadData();
-  }, []);
+  }, [tagFilter]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -87,6 +98,24 @@ const Index = () => {
             </div>
           </div>
         </section>
+
+        {tagFilter && (
+          <div className="flex items-center gap-2 p-4 bg-racing-red/10 border border-racing-red/20 rounded-lg">
+            <span className="text-sm font-medium">Filtering by tag:</span>
+            <Badge variant="secondary" className="text-sm">
+              #{tagFilter}
+            </Badge>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="ml-auto h-8"
+              onClick={() => navigate('/')}
+            >
+              <X className="w-4 h-4" />
+              Clear filter
+            </Button>
+          </div>
+        )}
 
         <section className="space-y-4 sm:space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -158,8 +187,12 @@ const Index = () => {
 
         <section className="space-y-4 sm:space-y-6">
           <div>
-            <h2 className="text-xl sm:text-2xl font-bold">Recently Logged</h2>
-            <p className="text-sm sm:text-base text-muted-foreground">Latest races logged by the community</p>
+            <h2 className="text-xl sm:text-2xl font-bold">
+              {tagFilter ? `Races tagged with #${tagFilter}` : 'Recently Logged'}
+            </h2>
+            <p className="text-sm sm:text-base text-muted-foreground">
+              {tagFilter ? `${popularRaces.length} race${popularRaces.length === 1 ? '' : 's'} found` : 'Latest races logged by the community'}
+            </p>
           </div>
 
           {loading ? (
