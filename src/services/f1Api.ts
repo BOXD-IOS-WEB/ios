@@ -19,12 +19,48 @@ export interface F1Meeting {
 
 // Convert Jolpica/Ergast format to our format
 const convertErgastToF1Meeting = (race: any, year: number, round: number): F1Meeting => {
-  const countryCode = getCountryCodeFromName(race.Circuit.Location.country);
+  // Map circuit names to their correct countries
+  const circuitToCountry: { [key: string]: string } = {
+    'Yas Marina Circuit': 'UAE',
+    'Circuit de Monaco': 'Monaco',
+    'Marina Bay Street Circuit': 'Singapore',
+    'Albert Park Circuit': 'Australia',
+    'Autodromo Nazionale di Monza': 'Italy',
+    'Silverstone Circuit': 'United Kingdom',
+    'Circuit de Spa-Francorchamps': 'Belgium',
+    'Suzuka Circuit': 'Japan',
+    'Autódromo José Carlos Pace': 'Brazil',
+    'Red Bull Ring': 'Austria',
+    'Circuit Gilles Villeneuve': 'Canada',
+    'Bahrain International Circuit': 'Bahrain',
+    'Jeddah Corniche Circuit': 'Saudi Arabia',
+    'Miami International Autodrome': 'USA',
+    'Circuit of the Americas': 'USA',
+    'Las Vegas Street Circuit': 'USA',
+    'Autódromo Hermanos Rodríguez': 'Mexico',
+    'Circuit de Barcelona-Catalunya': 'Spain',
+    'Hungaroring': 'Hungary',
+    'Circuit Zandvoort': 'Netherlands',
+    'Baku City Circuit': 'Azerbaijan',
+    'Circuit Paul Ricard': 'France',
+    'Algarve International Circuit': 'Portugal',
+    'Istanbul Park': 'Turkey',
+  };
+
+  let countryName = race.Circuit.Location.country;
+  const circuitName = race.Circuit.circuitName;
+
+  // Override country if we have a manual mapping
+  if (circuitToCountry[circuitName]) {
+    countryName = circuitToCountry[circuitName];
+  }
+
+  const countryCode = getCountryCodeFromName(countryName);
   return {
     meeting_key: round,
     circuit_short_name: race.Circuit.circuitName,
     country_code: countryCode,
-    country_name: race.Circuit.Location.country,
+    country_name: countryName,
     date_start: race.date,
     location: race.Circuit.Location.locality,
     meeting_name: race.raceName,

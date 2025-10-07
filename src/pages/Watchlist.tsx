@@ -15,6 +15,7 @@ const Watchlist = () => {
   const { user } = useAuth();
   const [upcomingRaces, setUpcomingRaces] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filterValue, setFilterValue] = useState<string>("all");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -117,6 +118,11 @@ const Watchlist = () => {
     toast({ title: "Watchlist refreshed" });
   };
 
+  // Filter races based on selected year
+  const filteredRaces = filterValue === "all"
+    ? upcomingRaces
+    : upcomingRaces.filter(race => race.season.toString() === filterValue);
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -126,12 +132,12 @@ const Watchlist = () => {
           <div>
             <h1 className="text-3xl sm:text-4xl font-bold mb-2">Watchlist</h1>
             <p className="text-sm sm:text-base text-muted-foreground">
-              {upcomingRaces.length} races on your watchlist
+              {filteredRaces.length} {filterValue !== "all" ? `${filterValue} ` : ''}races on your watchlist
             </p>
           </div>
 
           <div className="flex flex-col xs:flex-row gap-2 self-start sm:self-auto">
-            <Select defaultValue="all">
+            <Select value={filterValue} onValueChange={setFilterValue}>
               <SelectTrigger className="w-full xs:w-[140px] sm:w-[180px]">
                 <SelectValue />
               </SelectTrigger>
@@ -158,14 +164,14 @@ const Watchlist = () => {
 
         {loading ? (
           <div className="text-center py-12 text-muted-foreground">Loading...</div>
-        ) : upcomingRaces.length === 0 ? (
+        ) : filteredRaces.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
-            <p>Your watchlist is empty</p>
-            <p className="text-sm mt-2">Add races you want to watch!</p>
+            <p>{filterValue === "all" ? "Your watchlist is empty" : `No races from ${filterValue} season`}</p>
+            <p className="text-sm mt-2">{filterValue === "all" ? "Add races you want to watch!" : "Try selecting a different season"}</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
-            {upcomingRaces.map((race, idx) => (
+            {filteredRaces.map((race, idx) => (
               <RaceCard key={idx} {...race} showWatchlistButton={false} />
             ))}
           </div>

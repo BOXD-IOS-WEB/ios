@@ -113,29 +113,29 @@ const Explore = () => {
         </div>
 
         <Tabs defaultValue="seasons" className="space-y-6">
-          <div className="w-full overflow-x-auto">
-            <TabsList className="w-full sm:w-auto inline-flex">
-              <TabsTrigger value="seasons" className="gap-1 sm:gap-2 text-xs sm:text-sm whitespace-nowrap">
+          <div className="w-full overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+            <TabsList className="w-full sm:w-auto inline-flex min-w-max">
+              <TabsTrigger value="seasons" className="gap-1 sm:gap-2 text-[11px] sm:text-sm whitespace-nowrap px-2 sm:px-3">
                 <History className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span className="hidden xs:inline">Browse Seasons</span>
-                <span className="xs:hidden">Seasons</span>
+                <span className="hidden xs:inline">Browse </span>Seasons
               </TabsTrigger>
-              <TabsTrigger value="trending" className="gap-1 sm:gap-2 text-xs sm:text-sm whitespace-nowrap">
+              <TabsTrigger value="trending" className="gap-1 sm:gap-2 text-[11px] sm:text-sm whitespace-nowrap px-2 sm:px-3">
                 <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" />
-                Trending
+                <span className="hidden xs:inline">Trending</span>
+                <span className="xs:hidden">Trend</span>
               </TabsTrigger>
-              <TabsTrigger value="reviews" className="gap-1 sm:gap-2 text-xs sm:text-sm whitespace-nowrap">
+              <TabsTrigger value="reviews" className="gap-1 sm:gap-2 text-[11px] sm:text-sm whitespace-nowrap px-2 sm:px-3">
                 <Star className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span className="hidden xs:inline">Top </span>Reviews
+                Reviews
               </TabsTrigger>
-              <TabsTrigger value="lists" className="gap-1 sm:gap-2 text-xs sm:text-sm whitespace-nowrap">
+              <TabsTrigger value="lists" className="gap-1 sm:gap-2 text-[11px] sm:text-sm whitespace-nowrap px-2 sm:px-3">
                 <List className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span className="hidden xs:inline">Popular </span>Lists
+                Lists
               </TabsTrigger>
-              <TabsTrigger value="upcoming" className="gap-1 sm:gap-2 text-xs sm:text-sm whitespace-nowrap">
+              <TabsTrigger value="upcoming" className="gap-1 sm:gap-2 text-[11px] sm:text-sm whitespace-nowrap px-2 sm:px-3">
                 <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span className="hidden sm:inline">This Week in F1</span>
-                <span className="sm:hidden">This Week</span>
+                <span className="hidden xs:inline">This Week</span>
+                <span className="xs:hidden">Week</span>
               </TabsTrigger>
             </TabsList>
           </div>

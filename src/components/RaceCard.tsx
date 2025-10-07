@@ -206,7 +206,7 @@ export const RaceCard = ({
       </div>
 
       {/* Info */}
-      <div className="p-2 sm:p-3">
+      <div className="p-2 sm:p-3 text-center sm:text-left">
         <h3 className="font-semibold text-xs sm:text-sm line-clamp-1">{gpName}</h3>
         <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1">{season} • Round {round}</p>
         <p className="text-[10px] sm:text-xs text-muted-foreground line-clamp-1">{circuit}</p>

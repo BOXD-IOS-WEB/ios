@@ -318,37 +318,35 @@ const Profile = () => {
 
         {/* Tabs */}
         <Tabs defaultValue="logs" className="space-y-6">
-          <div className="w-full overflow-x-auto">
-            <TabsList className="w-full sm:w-auto inline-flex justify-start">
-              <TabsTrigger value="logs" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3">
+          <div className="w-full overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+            <TabsList className="w-full sm:w-auto inline-flex justify-start min-w-max">
+              <TabsTrigger value="logs" className="gap-1 sm:gap-2 text-[11px] sm:text-sm px-2 sm:px-3">
                 <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
                 Logs
               </TabsTrigger>
-              <TabsTrigger value="reviews" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3">
+              <TabsTrigger value="reviews" className="gap-1 sm:gap-2 text-[11px] sm:text-sm px-2 sm:px-3">
                 <Star className="w-3 h-3 sm:w-4 sm:h-4" />
                 Reviews
               </TabsTrigger>
-              <TabsTrigger value="lists" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3">
+              <TabsTrigger value="lists" className="gap-1 sm:gap-2 text-[11px] sm:text-sm px-2 sm:px-3">
                 <List className="w-3 h-3 sm:w-4 sm:h-4" />
                 Lists
               </TabsTrigger>
-              <TabsTrigger value="watchlist" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3">
+              <TabsTrigger value="watchlist" className="gap-1 sm:gap-2 text-[11px] sm:text-sm px-2 sm:px-3">
                 <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span className="hidden xs:inline">Watchlist</span>
-                <span className="xs:hidden">Watch</span>
+                Watch
               </TabsTrigger>
-              <TabsTrigger value="likes" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3">
+              <TabsTrigger value="likes" className="gap-1 sm:gap-2 text-[11px] sm:text-sm px-2 sm:px-3">
                 <Heart className="w-3 h-3 sm:w-4 sm:h-4" />
                 Likes
               </TabsTrigger>
-              <TabsTrigger value="followers" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3">
+              <TabsTrigger value="followers" className="gap-1 sm:gap-2 text-[11px] sm:text-sm px-2 sm:px-3">
                 <Users className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span className="hidden xs:inline">Followers</span>
-                <span className="xs:hidden">Fans</span>
+                Fans
               </TabsTrigger>
-              <TabsTrigger value="following" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-3">
+              <TabsTrigger value="following" className="gap-1 sm:gap-2 text-[11px] sm:text-sm px-2 sm:px-3">
                 <Users className="w-3 h-3 sm:w-4 sm:h-4" />
-                Following
+                Follow
               </TabsTrigger>
             </TabsList>
           </div>

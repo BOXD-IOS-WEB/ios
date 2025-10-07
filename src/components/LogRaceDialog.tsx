@@ -14,7 +14,7 @@ import { CalendarIcon, Plus, X } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
-import { createRaceLog } from "@/services/raceLogs";
+import { createRaceLog, updateRaceLog } from "@/services/raceLogs";
 import { createActivity } from "@/services/activity";
 import { getUserProfile } from "@/services/auth";
 import { getCountryCodeFromName } from "@/services/f1Api";
@@ -24,10 +24,16 @@ import { Timestamp } from "firebase/firestore";
 interface LogRaceDialogProps {
   trigger?: React.ReactNode;
   onSuccess?: () => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  existingLog?: any; // Existing log data for editing
+  editMode?: boolean;
 }
 
-export const LogRaceDialog = ({ trigger, onSuccess }: LogRaceDialogProps) => {
-  const [open, setOpen] = useState(false);
+export const LogRaceDialog = ({ trigger, onSuccess, open: controlledOpen, onOpenChange, existingLog, editMode = false }: LogRaceDialogProps) => {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setOpen = onOpenChange || setInternalOpen;
   const [date, setDate] = useState<Date>(new Date());
   const [rating, setRating] = useState(0);
   const [tags, setTags] = useState<string[]>([]);
@@ -63,6 +69,33 @@ export const LogRaceDialog = ({ trigger, onSuccess }: LogRaceDialogProps) => {
     };
     loadUserProfile();
   }, [user]);
+
+  // Load existing log data when in edit mode
+  useEffect(() => {
+    if (editMode && existingLog) {
+      console.log('[LogRaceDialog] Loading existing log for editing:', existingLog);
+      setRaceName(existingLog.raceName || '');
+      setRaceLocation(existingLog.raceLocation || '');
+      setRaceYear(existingLog.raceYear || new Date().getFullYear());
+      setRating(existingLog.rating || 0);
+      setReview(existingLog.review || '');
+      setTags(existingLog.tags || []);
+      setSessionType(existingLog.sessionType || 'race');
+      setWatchMode(existingLog.watchMode || 'live');
+      setVisibility(existingLog.visibility || 'public');
+      setCompanions(existingLog.companions || []);
+      setSpoiler(existingLog.hasSpoilers || false);
+      setCountryCode(existingLog.countryCode);
+
+      // Handle date conversion
+      if (existingLog.dateWatched) {
+        const logDate = existingLog.dateWatched instanceof Date
+          ? existingLog.dateWatched
+          : existingLog.dateWatched.toDate?.() || new Date();
+        setDate(logDate);
+      }
+    }
+  }, [editMode, existingLog]);
 
   const suggestedTags = ["rain", "safety-car", "overtake", "pitstop-chaos", "attended", "late-drama", "dnf"];
 
@@ -134,6 +167,8 @@ export const LogRaceDialog = ({ trigger, onSuccess }: LogRaceDialogProps) => {
     setLoading(true);
     try {
       console.log('[LogRaceDialog] Submitting race log:', {
+        editMode,
+        existingLogId: existingLog?.id,
         raceName,
         raceYear,
         dateWatched: date,
@@ -142,14 +177,14 @@ export const LogRaceDialog = ({ trigger, onSuccess }: LogRaceDialogProps) => {
         watchMode,
       });
 
-      const logId = await createRaceLog({
+      const logData = {
         userId: user.uid,
         username: username,
         raceYear,
         raceName,
         raceLocation,
         countryCode,
-        dateWatched: date, // Pass Date object, it will be converted to Timestamp in createRaceLog
+        dateWatched: date,
         sessionType,
         watchMode,
         rating,
@@ -159,20 +194,34 @@ export const LogRaceDialog = ({ trigger, onSuccess }: LogRaceDialogProps) => {
         mediaUrls: [],
         spoilerWarning: spoiler,
         visibility,
-      });
+      };
 
-      if (visibility === 'public') {
-        console.log('[LogRaceDialog] Creating activity for public log');
-        await createActivity({
-          type: review && review.length > 0 ? 'review' : 'log',
-          targetId: logId,
-          targetType: 'raceLog',
-          content: review && review.length > 0 ? review.substring(0, 100) : `${raceName} - ${raceYear}`,
-        });
+      let logId: string;
+
+      if (editMode && existingLog?.id) {
+        // Update existing log
+        await updateRaceLog(existingLog.id, logData);
+        logId = existingLog.id;
+        console.log('[LogRaceDialog] Race log updated successfully:', logId);
+        toast({ title: "Race log updated successfully!" });
+      } else {
+        // Create new log
+        logId = await createRaceLog(logData);
+        console.log('[LogRaceDialog] Race log created successfully with ID:', logId);
+        toast({ title: "Race logged successfully!" });
+
+        // Only create activity for new public logs
+        if (visibility === 'public') {
+          console.log('[LogRaceDialog] Creating activity for public log');
+          await createActivity({
+            type: review && review.length > 0 ? 'review' : 'log',
+            targetId: logId,
+            targetType: 'raceLog',
+            content: review && review.length > 0 ? review.substring(0, 100) : `${raceName} - ${raceYear}`,
+          });
+        }
       }
 
-      console.log('[LogRaceDialog] Race log created successfully with ID:', logId);
-      toast({ title: "Race logged successfully!" });
       setOpen(false);
       onSuccess?.();
 
@@ -186,7 +235,7 @@ export const LogRaceDialog = ({ trigger, onSuccess }: LogRaceDialogProps) => {
       setCompanions([]);
       setCompanionInput("");
     } catch (error: any) {
-      console.error('[LogRaceDialog] Error creating race log:', error);
+      console.error('[LogRaceDialog] Error saving race log:', error);
       toast({
         title: "Error",
         description: error.message,
@@ -211,7 +260,7 @@ export const LogRaceDialog = ({ trigger, onSuccess }: LogRaceDialogProps) => {
         <DialogHeader className="border-b border-border/50 pb-4">
           <DialogTitle className="text-2xl font-bold flex items-center gap-2">
             <div className="w-1 h-8 bg-racing-red rounded-full" />
-            Log a Race
+            {editMode ? 'Edit Race Log' : 'Log a Race'}
           </DialogTitle>
         </DialogHeader>
 
@@ -517,7 +566,7 @@ export const LogRaceDialog = ({ trigger, onSuccess }: LogRaceDialogProps) => {
                 Saving...
               </span>
             ) : (
-              '🏁 Save Log'
+              editMode ? '💾 Update Log' : '🏁 Save Log'
             )}
           </Button>
         </div>

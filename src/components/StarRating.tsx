@@ -6,6 +6,8 @@ interface StarRatingProps {
   onRatingChange?: (rating: number) => void;
   readonly?: boolean;
   size?: "sm" | "md" | "lg";
+  totalRatings?: number;
+  onClickWhenReadonly?: () => void;
 }
 
 export const StarRating = ({
@@ -13,11 +15,15 @@ export const StarRating = ({
   onRatingChange,
   readonly = false,
   size = "md",
+  totalRatings = 0,
+  onClickWhenReadonly,
 }: StarRatingProps) => {
   const [hoverRating, setHoverRating] = useState(0);
 
   const handleClick = (value: number) => {
-    if (!readonly && onRatingChange) {
+    if (readonly && onClickWhenReadonly) {
+      onClickWhenReadonly();
+    } else if (!readonly && onRatingChange) {
       onRatingChange(value);
     }
   };
@@ -37,30 +43,47 @@ export const StarRating = ({
   const displayRating = hoverRating || rating;
 
   const sizeClasses = {
-    sm: "h-6",
-    md: "h-10",
-    lg: "h-12",
+    sm: "h-5",
+    md: "h-7",
+    lg: "h-9",
   };
 
   const flagSizes = {
-    sm: 14,
-    md: 18,
-    lg: 22,
+    sm: 12,
+    md: 14,
+    lg: 18,
   };
 
   const getRatingColor = (position: number) => {
     if (displayRating >= position) {
-      if (displayRating >= 4.5) return "bg-racing-red"; // Red for excellent
-      if (displayRating >= 3.5) return "bg-orange-500"; // Orange for good
-      if (displayRating >= 2.5) return "bg-yellow-500"; // Yellow for average
-      return "bg-gray-500"; // Gray for below average
+      // Each flag gets its own color in a gradient from green to red
+      const colors = [
+        "bg-emerald-500",  // 1 - Green
+        "bg-lime-500",     // 2 - Light green
+        "bg-yellow-500",   // 3 - Yellow
+        "bg-orange-500",   // 4 - Orange
+        "bg-racing-red",   // 5 - Red
+      ];
+      return colors[position - 1];
     }
     return "bg-muted";
   };
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-2">
+    <div className="space-y-2">
+      {/* Rating Display */}
+      {(displayRating > 0 || readonly) && (
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-3xl sm:text-4xl font-bold text-racing-red">{displayRating.toFixed(1)}</span>
+          <div className="flex flex-col">
+            <span className="text-xs text-muted-foreground leading-tight">out of</span>
+            <span className="text-sm font-semibold text-muted-foreground leading-tight">5.0</span>
+          </div>
+        </div>
+      )}
+
+      {/* Flags */}
+      <div className="flex items-center gap-1.5 sm:gap-2">
         {[1, 2, 3, 4, 5].map((position) => {
           const isActive = displayRating >= position;
           const isPartial = displayRating > position - 1 && displayRating < position;
@@ -69,15 +92,15 @@ export const StarRating = ({
           return (
             <div
               key={position}
-              className={`relative flex-1 ${sizeClasses[size]} rounded-sm overflow-hidden ${
-                readonly ? '' : 'cursor-pointer'
-              } transition-all duration-200 hover:scale-105`}
+              className={`relative flex-1 ${sizeClasses[size]} rounded-md overflow-hidden ${
+                (readonly && onClickWhenReadonly) || !readonly ? 'cursor-pointer' : ''
+              } transition-all duration-200 hover:scale-105 shadow-sm`}
               onClick={() => handleClick(position)}
               onMouseEnter={() => handleMouseEnter(position)}
               onMouseLeave={handleMouseLeave}
             >
               {/* Background */}
-              <div className="absolute inset-0 bg-muted" />
+              <div className="absolute inset-0 bg-muted/50" />
 
               {/* Fill */}
               <div
@@ -90,16 +113,16 @@ export const StarRating = ({
                 <Flag
                   size={flagSizes[size]}
                   className={`transition-colors ${
-                    isActive || isPartial ? 'text-white' : 'text-muted-foreground'
+                    isActive || isPartial ? 'text-white drop-shadow-sm' : 'text-muted-foreground'
                   }`}
                   fill={isActive || isPartial ? 'currentColor' : 'none'}
                 />
               </div>
 
               {/* Position number */}
-              <div className="absolute bottom-0 right-0 px-1">
+              <div className="absolute bottom-0.5 right-0.5 px-0.5">
                 <span className={`text-[10px] font-bold ${
-                  isActive || isPartial ? 'text-white' : 'text-muted-foreground'
+                  isActive || isPartial ? 'text-white/90' : 'text-muted-foreground/60'
                 }`}>
                   {position}
                 </span>
@@ -109,14 +132,14 @@ export const StarRating = ({
         })}
       </div>
 
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-muted-foreground">Rate this race</span>
-        {displayRating > 0 && (
-          <div className="flex items-center gap-2">
-            <span className="text-2xl font-bold text-racing-red">{displayRating.toFixed(1)}</span>
-            <span className="text-xs text-muted-foreground">/ 5.0</span>
-          </div>
-        )}
+      {/* Label */}
+      <div className="pt-0.5">
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+          {readonly
+            ? `Average Rating ${totalRatings > 0 ? `(${totalRatings.toLocaleString()} ${totalRatings === 1 ? 'rating' : 'ratings'})` : '(No ratings yet)'}`
+            : 'Rate this race'
+          }
+        </span>
       </div>
     </div>
   );

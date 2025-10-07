@@ -30,6 +30,7 @@ const RaceDetail = () => {
   const [allRaceLogs, setAllRaceLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedComments, setExpandedComments] = useState<string | null>(null);
+  const [logDialogOpen, setLogDialogOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -95,8 +96,20 @@ const RaceDetail = () => {
   // Use raceInfo from F1 API if no logs exist
   let race = null;
 
+  // Calculate average rating from all race logs
+  const calculateAverageRating = (raceName: string, raceYear: number) => {
+    const raceLogs = allRaceLogs.filter(l => l.raceName === raceName && l.raceYear === raceYear && l.rating);
+    if (raceLogs.length === 0) return { avgRating: 0, totalRatings: 0 };
+    const sum = raceLogs.reduce((acc, log) => acc + (log.rating || 0), 0);
+    return {
+      avgRating: sum / raceLogs.length,
+      totalRatings: raceLogs.length
+    };
+  };
+
   if (raceLog) {
     console.log('Using race log data:', raceLog);
+    const { avgRating, totalRatings } = calculateAverageRating(raceLog.raceName, raceLog.raceYear);
     race = {
       season: raceLog.raceYear,
       round: raceLog.round || 1,
@@ -105,12 +118,13 @@ const RaceDetail = () => {
       country: raceLog.raceLocation,
       countryCode: raceLog.countryCode || 'ae',
       date: raceLog.dateWatched?.toDate?.()?.toISOString() || new Date().toISOString(),
-      rating: raceLog.rating,
-      totalRatings: raceLog.likesCount || 0,
+      rating: avgRating,
+      totalRatings: totalRatings,
       watched: allRaceLogs.filter(l => l.raceName === raceLog.raceName && l.raceYear === raceLog.raceYear).length,
     };
   } else if (raceInfo) {
     console.log('Using F1 API data:', raceInfo);
+    const { avgRating, totalRatings } = calculateAverageRating(raceInfo.meeting_name, raceInfo.year);
     race = {
       season: raceInfo.year,
       round: raceInfo.round,
@@ -119,8 +133,8 @@ const RaceDetail = () => {
       country: raceInfo.country_name,
       countryCode: raceInfo.country_code || 'BRN',
       date: raceInfo.date_start,
-      rating: 0,
-      totalRatings: 0,
+      rating: avgRating,
+      totalRatings: totalRatings,
       watched: allRaceLogs.filter(l => l.raceName === raceInfo.meeting_name && l.raceYear === raceInfo.year).length,
     };
   }
@@ -267,11 +281,13 @@ const RaceDetail = () => {
                   <p className="text-base sm:text-lg md:text-xl text-muted-foreground">{race.season} • Round {race.round}</p>
                 </div>
 
-                <div className="flex items-center gap-1.5 sm:gap-2">
-                  <StarRating rating={race.rating} readonly />
-                  <span className="text-muted-foreground text-xs sm:text-sm">
-                    ({race.totalRatings.toLocaleString()} ratings)
-                  </span>
+                <div>
+                  <StarRating
+                    rating={race.rating}
+                    readonly
+                    totalRatings={race.totalRatings}
+                    onClickWhenReadonly={() => setLogDialogOpen(true)}
+                  />
                 </div>
 
                 <div className="flex flex-wrap gap-2">
@@ -282,6 +298,8 @@ const RaceDetail = () => {
                         <span className="hidden xs:inline">Log</span>
                       </Button>
                     }
+                    open={logDialogOpen}
+                    onOpenChange={setLogDialogOpen}
                   />
                   <AddToListDialog
                     raceYear={race.season}
@@ -481,30 +499,6 @@ const RaceDetail = () => {
 
           {/* Sidebar */}
           <div className="space-y-4 sm:space-y-6">
-            <Card className="p-4 sm:p-5 md:p-6 border-0 shadow-sm">
-              <h3 className="font-semibold text-base sm:text-lg mb-4 sm:mb-5">Stats</h3>
-              <div className="space-y-3 sm:space-y-4">
-                <div className="flex justify-between items-baseline">
-                  <span className="text-xs sm:text-sm text-muted-foreground">Watched by</span>
-                  <span className="font-bold text-xl sm:text-2xl">{race.watched.toLocaleString()}</span>
-                </div>
-                <div className="h-px bg-border"></div>
-                <div className="flex justify-between items-baseline">
-                  <span className="text-xs sm:text-sm text-muted-foreground">Average Rating</span>
-                  <div className="flex items-center gap-1.5 sm:gap-2">
-                    <Star className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-racing-red text-racing-red" />
-                    <span className="font-bold text-xl sm:text-2xl">{race.rating}</span>
-                    <span className="text-muted-foreground text-xs sm:text-sm">/5</span>
-                  </div>
-                </div>
-                <div className="h-px bg-border"></div>
-                <div className="flex justify-between items-baseline">
-                  <span className="text-xs sm:text-sm text-muted-foreground">Reviews</span>
-                  <span className="font-bold text-xl sm:text-2xl">{reviews.length}</span>
-                </div>
-              </div>
-            </Card>
-
             <Card className="p-4 sm:p-5 md:p-6 border-0 shadow-sm">
               <h3 className="font-semibold text-base sm:text-lg mb-3 sm:mb-4">Popular Tags</h3>
               <div className="flex flex-wrap gap-1.5 sm:gap-2">
