@@ -431,14 +431,14 @@ const RaceDetail = () => {
 
                           {/* Review with spoiler handling */}
                           {review.spoilerWarning && !revealedSpoilers.has(review.id) ? (
-                            <div className="relative mb-3 sm:mb-4">
+                            <div className="relative mb-3 sm:mb-4 min-h-[100px]">
                               <div className="text-sm sm:text-base leading-relaxed blur-sm select-none pointer-events-none">
                                 {review.review}
                               </div>
                               <div className="absolute inset-0 flex items-center justify-center">
                                 <button
                                   onClick={() => setRevealedSpoilers(new Set([...revealedSpoilers, review.id]))}
-                                  className="bg-racing-red hover:bg-racing-red/90 text-white px-4 py-2 rounded-lg font-medium shadow-lg flex items-center gap-2"
+                                  className="bg-racing-red hover:bg-racing-red/90 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-sm sm:text-base font-medium shadow-lg flex items-center gap-1.5 sm:gap-2"
                                 >
                                   ⚠️ Show Spoilers
                                 </button>

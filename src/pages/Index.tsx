@@ -100,19 +100,19 @@ const Index = () => {
         </section>
 
         {tagFilter && (
-          <div className="flex items-center gap-2 p-4 bg-racing-red/10 border border-racing-red/20 rounded-lg">
-            <span className="text-sm font-medium">Filtering by tag:</span>
-            <Badge variant="secondary" className="text-sm">
+          <div className="flex flex-wrap items-center gap-2 p-3 sm:p-4 bg-racing-red/10 border border-racing-red/20 rounded-lg">
+            <span className="text-xs sm:text-sm font-medium">Filtering by tag:</span>
+            <Badge variant="secondary" className="text-xs sm:text-sm">
               #{tagFilter}
             </Badge>
             <Button
               variant="ghost"
               size="sm"
-              className="ml-auto h-8"
+              className="ml-auto h-8 gap-1.5"
               onClick={() => navigate('/')}
             >
-              <X className="w-4 h-4" />
-              Clear filter
+              <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="text-xs sm:text-sm">Clear</span>
             </Button>
           </div>
         )}

@@ -182,14 +182,12 @@ const Profile = () => {
       <main className="container px-4 sm:px-6 py-6 sm:py-8">
         {/* Profile Header */}
         <div className="space-y-6 mb-6 sm:mb-8">
-          {/* Cover/Banner */}
-          <div className="h-48 sm:h-56 bg-gradient-to-r from-racing-red/20 to-racing-red/10 rounded-lg" />
-
           {/* Profile Info */}
-          <div className="-mt-16 sm:-mt-20 px-0 sm:px-6">
+          <div className="px-0 sm:px-6">
+            <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-lg p-4 sm:p-6">
             {/* Avatar */}
             <div className="flex items-end justify-between mb-4">
-              <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full border-4 border-background overflow-hidden bg-muted flex items-center justify-center shadow-lg">
+              <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full border-4 border-card overflow-hidden bg-muted flex items-center justify-center shadow-lg">
                 {profile?.photoURL ? (
                   <img
                     src={profile.photoURL}
@@ -223,12 +221,12 @@ const Profile = () => {
               <h1 className="text-2xl sm:text-3xl font-bold mb-1">
                 {profile?.name || 'Loading...'}
               </h1>
-              <p className="text-muted-foreground">
+              <p className="text-sm sm:text-base text-muted-foreground">
                 @{profile?.email?.split('@')[0] || 'user'}
               </p>
 
               {profile?.description && (
-                <p className="mt-3 text-base">
+                <p className="mt-3 text-sm sm:text-base">
                   {profile.description}
                 </p>
               )}
@@ -251,9 +249,9 @@ const Profile = () => {
             </div>
 
             {/* Time Spent Watching */}
-            <div className="mb-6 pb-6 border-b">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-muted-foreground">You've spent</span>
+            <div className="mb-6 py-3 px-4 bg-gradient-to-r from-racing-red/5 via-racing-red/10 to-racing-red/5 rounded-lg border border-racing-red/20">
+              <div className="flex items-center gap-1.5 flex-wrap text-sm sm:text-base">
+                <span className="text-foreground/80">{currentUser?.uid === (userId || currentUser?.uid) ? "You've" : `${profile?.name || 'They'} has`} spent</span>
                 {(() => {
                   const totalHours = stats.hoursSpent;
                   const months = Math.floor(totalHours / (24 * 30));
@@ -266,18 +264,18 @@ const Profile = () => {
                       {months > 0 && (
                         <>
                           <span className="font-bold text-racing-red">{months}</span>
-                          <span className="text-muted-foreground">{months === 1 ? 'month' : 'months'}</span>
+                          <span className="text-foreground/70">{months === 1 ? 'month' : 'months'}</span>
                         </>
                       )}
                       {days > 0 && (
                         <>
                           <span className="font-bold text-racing-red">{days}</span>
-                          <span className="text-muted-foreground">{days === 1 ? 'day' : 'days'}</span>
+                          <span className="text-foreground/70">{days === 1 ? 'day' : 'days'}</span>
                         </>
                       )}
                       <span className="font-bold text-racing-red">{hours}</span>
-                      <span className="text-muted-foreground">{hours === 1 ? 'hour' : 'hours'}</span>
-                      <span className="text-muted-foreground">watching GPs</span>
+                      <span className="text-foreground/70">{hours === 1 ? 'hour' : 'hours'}</span>
+                      <span className="text-foreground/80">watching GPs 🏎️</span>
                     </>
                   );
                 })()}
@@ -286,33 +284,34 @@ const Profile = () => {
 
             {/* Favourites */}
             {(statsDoc?.exists() && (statsDoc.data()?.favoriteDriver || statsDoc.data()?.favoriteCircuit || statsDoc.data()?.favoriteTeam)) && (
-              <div className="mb-6">
-                <h3 className="text-sm font-semibold mb-3">F1 Favorites</h3>
-                <div className="space-y-2 text-sm">
+              <Card className="p-4 sm:p-5 mb-6">
+                <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 flex items-center gap-2">
+                  <Heart className="w-4 h-4 sm:w-5 sm:h-5 text-racing-red fill-racing-red" />
+                  About {currentUser?.uid === (userId || currentUser?.uid) ? 'you' : profile?.name || 'them'}
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
                   {statsDoc.data()?.favoriteDriver && (
-                    <div className="flex items-center gap-2">
-                      <Heart className="w-4 h-4 text-racing-red" />
-                      <span className="text-muted-foreground">Driver:</span>
-                      <span className="font-semibold">{statsDoc.data().favoriteDriver}</span>
+                    <div className="p-2.5 sm:p-3 rounded-lg bg-muted/50 border border-border">
+                      <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">Favorite Driver</p>
+                      <p className="font-semibold text-xs sm:text-sm">{statsDoc.data().favoriteDriver}</p>
                     </div>
                   )}
                   {statsDoc.data()?.favoriteCircuit && (
-                    <div className="flex items-center gap-2">
-                      <Heart className="w-4 h-4 text-racing-red" />
-                      <span className="text-muted-foreground">Circuit:</span>
-                      <span className="font-semibold">{statsDoc.data().favoriteCircuit}</span>
+                    <div className="p-2.5 sm:p-3 rounded-lg bg-muted/50 border border-border">
+                      <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">Favorite Circuit</p>
+                      <p className="font-semibold text-xs sm:text-sm">{statsDoc.data().favoriteCircuit}</p>
                     </div>
                   )}
                   {statsDoc.data()?.favoriteTeam && (
-                    <div className="flex items-center gap-2">
-                      <Heart className="w-4 h-4 text-racing-red" />
-                      <span className="text-muted-foreground">Team:</span>
-                      <span className="font-semibold">{statsDoc.data().favoriteTeam}</span>
+                    <div className="p-2.5 sm:p-3 rounded-lg bg-muted/50 border border-border">
+                      <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">Favorite Team</p>
+                      <p className="font-semibold text-xs sm:text-sm">{statsDoc.data().favoriteTeam}</p>
                     </div>
                   )}
                 </div>
-              </div>
+              </Card>
             )}
+            </div>
           </div>
         </div>
 
