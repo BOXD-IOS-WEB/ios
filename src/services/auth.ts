@@ -13,7 +13,6 @@ import { auth, db, storage } from '@/lib/firebase';
 export interface UserProfile {
   id: string;
   name: string;
-  username: string;
   email: string;
   description: string;
   photoURL?: string;
@@ -22,77 +21,14 @@ export interface UserProfile {
   updated_at: Date;
 }
 
-export const checkUsernameAvailable = async (username: string): Promise<boolean> => {
-  try {
-    console.log('[checkUsernameAvailable] Checking username:', username);
-    console.log('[checkUsernameAvailable] Auth state:', auth.currentUser ? `authenticated (${auth.currentUser.uid})` : 'unauthenticated');
-
-    const normalizedUsername = username.toLowerCase().trim();
-    const usersRef = collection(db, 'users');
-    const q = query(usersRef, where('username', '==', normalizedUsername));
-
-    console.log('[checkUsernameAvailable] Executing query for username:', normalizedUsername);
-
-    // Force server query by using default source
-    const snapshot = await getDocs(q);
-
-    console.log('[checkUsernameAvailable] Query successful! Empty:', snapshot.empty, 'Size:', snapshot.size);
-
-    return snapshot.empty;
-  } catch (error: any) {
-    console.error('[checkUsernameAvailable] ERROR:', error.code, error.message);
-    console.error('[checkUsernameAvailable] Full error:', error);
-
-    // For any error, just return false (assume username taken) to allow signup to proceed
-    // The server-side check during account creation will be the source of truth
-    console.warn('[checkUsernameAvailable] Bypassing error, assuming username taken');
-    return false;
-  }
-};
-
-export const signUp = async (email: string, password: string, name: string, username: string) => {
+export const signUp = async (email: string, password: string, name: string) => {
   try {
     console.log('[signUp] Starting signup process for:', email);
-
-    // Try to check username, but don't block signup if check fails
-    try {
-      const isAvailable = await checkUsernameAvailable(username);
-      if (!isAvailable) {
-        throw new Error('Username is already taken');
-      }
-    } catch (checkError: any) {
-      console.warn('[signUp] Username check failed, proceeding with signup:', checkError.message);
-      // Continue with signup - we'll check again during account creation
-    }
 
     console.log('[signUp] Creating user account...');
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
     console.log('[signUp] User created with UID:', user.uid);
-
-    // Double-check username availability now that we're authenticated
-    console.log('[signUp] Verifying username availability after auth...');
-    try {
-      const isAvailableNow = await checkUsernameAvailable(username);
-      if (!isAvailableNow) {
-        // Check if username is actually taken by querying directly
-        const usersRef = collection(db, 'users');
-        const q = query(usersRef, where('username', '==', username.toLowerCase().trim()));
-        const existingUsers = await getDocs(q);
-
-        if (!existingUsers.empty && existingUsers.docs[0].id !== user.uid) {
-          // Username taken by someone else - delete the account and fail
-          console.error('[signUp] Username taken by another user, deleting account...');
-          await user.delete();
-          throw new Error('Username is already taken');
-        }
-        console.log('[signUp] Username check returned false but no conflicts found, proceeding...');
-      }
-    } catch (checkError: any) {
-      console.warn('[signUp] Post-auth username check failed, proceeding with signup:', checkError.message);
-      // Continue with signup - worst case, user gets created with duplicate username
-      // which can be handled later
-    }
 
     // Send verification email
     console.log('[signUp] Sending verification email to:', user.email);
@@ -109,7 +45,6 @@ export const signUp = async (email: string, password: string, name: string, user
     console.log('[signUp] Creating user profile document...');
     const userProfile: Omit<UserProfile, 'id'> = {
       name,
-      username: username.toLowerCase().trim(),
       email,
       description: '',
       photoURL: '',
@@ -148,19 +83,6 @@ export const resendVerificationEmail = async () => {
   const user = auth.currentUser;
   if (!user) throw new Error('No user logged in');
   await sendEmailVerification(user);
-};
-
-export const getUserByUsername = async (username: string): Promise<string | null> => {
-  const normalizedUsername = username.toLowerCase().trim();
-  const usersRef = collection(db, 'users');
-  const q = query(usersRef, where('username', '==', normalizedUsername));
-  const snapshot = await getDocs(q);
-
-  if (!snapshot.empty) {
-    const userDoc = snapshot.docs[0];
-    return userDoc.data().email;
-  }
-  return null;
 };
 
 export const signIn = async (email: string, password: string) => {

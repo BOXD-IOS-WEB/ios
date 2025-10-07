@@ -8,7 +8,6 @@ import { useToast } from '@/hooks/use-toast';
 import { doc, getDoc } from 'firebase/firestore';
 import { db, auth as firebaseAuth } from '@/lib/firebase';
 import { sendPasswordResetEmail } from 'firebase/auth';
-import { checkUsernameAvailable } from '@/services/auth';
 import {
   Dialog,
   DialogContent,
@@ -21,9 +20,6 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const [username, setUsername] = useState('');
-  const [usernameError, setUsernameError] = useState('');
-  const [checkingUsername, setCheckingUsername] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
@@ -33,53 +29,14 @@ const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleUsernameChange = async (value: string) => {
-    setUsername(value);
-    setUsernameError('');
-
-    if (value.length < 3) {
-      setUsernameError('Username must be at least 3 characters');
-      return;
-    }
-
-    if (!/^[a-zA-Z0-9_]+$/.test(value)) {
-      setUsernameError('Username can only contain letters, numbers, and underscores');
-      return;
-    }
-
-    setCheckingUsername(true);
-    try {
-      const available = await checkUsernameAvailable(value);
-      if (!available) {
-        setUsernameError('Username is already taken');
-      }
-    } catch (error: any) {
-      console.error('[Login] Error checking username:', error);
-      console.error('[Login] Error details:', error.message, error.code);
-      // Don't show error to user - let them proceed with signup
-      console.warn('[Login] Bypassing username check error - will verify during signup');
-    } finally {
-      setCheckingUsername(false);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (isSignUp && usernameError) {
-      toast({
-        title: 'Error',
-        description: usernameError,
-        variant: 'destructive',
-      });
-      return;
-    }
 
     setLoading(true);
 
     try {
       if (isSignUp) {
-        const userCredential = await signUp(email, password, name, username);
+        const userCredential = await signUp(email, password, name);
         toast({
           title: 'Account created successfully!',
           description: 'Please check your email to verify your account.',
@@ -168,38 +125,16 @@ const Login = () => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {isSignUp && (
-            <>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Name</label>
-                <Input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                  placeholder="Your name"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Username</label>
-                <Input
-                  type="text"
-                  value={username}
-                  onChange={(e) => handleUsernameChange(e.target.value)}
-                  required
-                  placeholder="username"
-                  className={usernameError ? 'border-red-500' : ''}
-                />
-                {checkingUsername && (
-                  <p className="text-xs text-muted-foreground">Checking availability...</p>
-                )}
-                {usernameError && (
-                  <p className="text-xs text-red-500">{usernameError}</p>
-                )}
-                {username && !usernameError && !checkingUsername && username.length >= 3 && (
-                  <p className="text-xs text-green-500">Username is available!</p>
-                )}
-              </div>
-            </>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Name</label>
+              <Input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                placeholder="Your name"
+              />
+            </div>
           )}
 
           <div className="space-y-2">
