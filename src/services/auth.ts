@@ -58,15 +58,31 @@ export const signUp = async (email: string, password: string, name: string, user
   try {
     console.log('[signUp] Starting signup process for:', email);
 
-    const isAvailable = await checkUsernameAvailable(username);
-    if (!isAvailable) {
-      throw new Error('Username is already taken');
+    // Try to check username, but don't block signup if check fails
+    try {
+      const isAvailable = await checkUsernameAvailable(username);
+      if (!isAvailable) {
+        throw new Error('Username is already taken');
+      }
+    } catch (checkError: any) {
+      console.warn('[signUp] Username check failed, proceeding with signup:', checkError.message);
+      // Continue with signup - we'll check again during account creation
     }
 
     console.log('[signUp] Creating user account...');
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
     console.log('[signUp] User created with UID:', user.uid);
+
+    // Double-check username availability now that we're authenticated
+    console.log('[signUp] Verifying username availability after auth...');
+    const isAvailableNow = await checkUsernameAvailable(username);
+    if (!isAvailableNow) {
+      // Username taken - delete the account and fail
+      console.error('[signUp] Username taken, deleting account...');
+      await user.delete();
+      throw new Error('Username is already taken');
+    }
 
     // Send verification email
     console.log('[signUp] Sending verification email to:', user.email);
