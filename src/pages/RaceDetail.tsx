@@ -336,53 +336,94 @@ const RaceDetail = () => {
 
             {/* Reviews */}
             <div>
-              <h2 className="text-2xl font-bold mb-4">
-                Reviews ({reviews.length})
+              <h2 className="text-2xl font-bold mb-6">
+                Reviews <span className="text-muted-foreground font-normal">({reviews.length})</span>
               </h2>
 
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {reviews.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No reviews yet. Be the first to review this race!
+                  <div className="text-center py-12 text-muted-foreground">
+                    <MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                    <p>No reviews yet. Be the first to review this race!</p>
                   </div>
                 ) : (
                   reviews.map((review) => (
-                    <Card key={review.id} className="p-6 space-y-4">
-                      <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center font-bold">
-                          {review.username?.[0]?.toUpperCase() || 'U'}
+                    <Card key={review.id} className="p-0 overflow-hidden border-0 shadow-sm hover:shadow-md transition-shadow">
+                      <div className="flex">
+                        {/* Left stripe with rating */}
+                        <div className="w-20 bg-gradient-to-b from-racing-red/10 to-racing-red/5 flex flex-col items-center justify-start pt-6 gap-2">
+                          <div className="w-14 h-14 rounded-full bg-muted border-2 border-background shadow-sm flex items-center justify-center font-bold text-lg">
+                            {review.username?.[0]?.toUpperCase() || 'U'}
+                          </div>
+                          <div className="flex flex-col items-center">
+                            {[...Array(5)].map((_, i) => (
+                              <Star
+                                key={i}
+                                className={`w-3 h-3 ${
+                                  i < review.rating
+                                    ? 'fill-racing-red text-racing-red'
+                                    : 'text-muted stroke-muted'
+                                }`}
+                              />
+                            ))}
+                          </div>
                         </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="font-semibold">{review.username}</span>
-                            <div className="flex items-center gap-1">
-                              <Star className="w-4 h-4 fill-racing-red text-racing-red" />
-                              <span className="text-sm font-semibold">{review.rating}</span>
-                            </div>
-                            <span className="text-xs text-muted-foreground ml-auto">
-                              {review.dateWatched?.toDate?.()?.toLocaleDateString() || 'Recently'}
+
+                        {/* Main content */}
+                        <div className="flex-1 p-6">
+                          <div className="flex items-baseline gap-2 mb-3">
+                            <span className="font-semibold text-lg hover:text-racing-red transition-colors cursor-pointer">
+                              {review.username}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {review.dateWatched?.toDate?.()?.toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric'
+                              }) || 'Recently'}
                             </span>
                           </div>
-                          <p className="text-sm mb-3">{review.review}</p>
-                          <div className="flex items-center gap-4">
-                            <div className="flex gap-2">
-                              {review.tags?.map((tag: string) => (
-                                <Badge key={tag} variant="secondary">{tag}</Badge>
+
+                          <div className="text-base leading-relaxed mb-4 text-foreground/90">
+                            {review.review}
+                          </div>
+
+                          {/* Tags */}
+                          {review.tags && review.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mb-4">
+                              {review.tags.map((tag: string) => (
+                                <Badge
+                                  key={tag}
+                                  variant="secondary"
+                                  className="text-xs hover:bg-racing-red/10 transition-colors cursor-pointer"
+                                >
+                                  {tag}
+                                </Badge>
                               ))}
                             </div>
-                            <div className="flex items-center gap-4 text-sm text-muted-foreground ml-auto">
-                              <button
-                                className="flex items-center gap-1 hover:text-foreground transition-colors"
-                                onClick={() => review.id && handleLikeReview(review.id)}
-                              >
-                                <Heart className={`w-4 h-4 ${review.likedBy?.includes(auth.currentUser?.uid || '') ? 'fill-red-500 text-red-500' : ''}`} />
-                                {review.likesCount || 0}
-                              </button>
-                              <button className="flex items-center gap-1 hover:text-foreground">
-                                <MessageSquare className="w-4 h-4" />
-                                {review.commentsCount || 0}
-                              </button>
-                            </div>
+                          )}
+
+                          {/* Actions */}
+                          <div className="flex items-center gap-6 pt-3 border-t">
+                            <button
+                              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-racing-red transition-colors group"
+                              onClick={() => review.id && handleLikeReview(review.id)}
+                            >
+                              <Heart className={`w-4 h-4 group-hover:scale-110 transition-transform ${
+                                review.likedBy?.includes(auth.currentUser?.uid || '')
+                                  ? 'fill-racing-red text-racing-red'
+                                  : ''
+                              }`} />
+                              <span className="font-medium">
+                                {review.likesCount > 0 ? review.likesCount : 'Like'}
+                              </span>
+                            </button>
+                            <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group">
+                              <MessageSquare className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                              <span className="font-medium">
+                                {review.commentsCount > 0 ? `${review.commentsCount} ${review.commentsCount === 1 ? 'comment' : 'comments'}` : 'Comment'}
+                              </span>
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -397,31 +438,45 @@ const RaceDetail = () => {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            <Card className="p-6">
-              <h3 className="font-semibold mb-4">Stats</h3>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Watched by</span>
-                  <span className="font-semibold">{race.watched.toLocaleString()}</span>
+            <Card className="p-6 border-0 shadow-sm">
+              <h3 className="font-semibold text-lg mb-5">Stats</h3>
+              <div className="space-y-4">
+                <div className="flex justify-between items-baseline">
+                  <span className="text-sm text-muted-foreground">Watched by</span>
+                  <span className="font-bold text-2xl">{race.watched.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Average Rating</span>
-                  <span className="font-semibold">{race.rating}/5</span>
+                <div className="h-px bg-border"></div>
+                <div className="flex justify-between items-baseline">
+                  <span className="text-sm text-muted-foreground">Average Rating</span>
+                  <div className="flex items-center gap-2">
+                    <Star className="w-4 h-4 fill-racing-red text-racing-red" />
+                    <span className="font-bold text-2xl">{race.rating}</span>
+                    <span className="text-muted-foreground text-sm">/5</span>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Reviews</span>
-                  <span className="font-semibold">{reviews.length}</span>
+                <div className="h-px bg-border"></div>
+                <div className="flex justify-between items-baseline">
+                  <span className="text-sm text-muted-foreground">Reviews</span>
+                  <span className="font-bold text-2xl">{reviews.length}</span>
                 </div>
               </div>
             </Card>
 
-            <Card className="p-6">
-              <h3 className="font-semibold mb-4">Popular Tags</h3>
+            <Card className="p-6 border-0 shadow-sm">
+              <h3 className="font-semibold text-lg mb-4">Popular Tags</h3>
               <div className="flex flex-wrap gap-2">
-                <Badge variant="secondary">overtake</Badge>
-                <Badge variant="secondary">late-drama</Badge>
-                <Badge variant="secondary">season-finale</Badge>
-                <Badge variant="secondary">sunset</Badge>
+                <Badge variant="secondary" className="hover:bg-racing-red/10 transition-colors cursor-pointer">
+                  overtake
+                </Badge>
+                <Badge variant="secondary" className="hover:bg-racing-red/10 transition-colors cursor-pointer">
+                  late-drama
+                </Badge>
+                <Badge variant="secondary" className="hover:bg-racing-red/10 transition-colors cursor-pointer">
+                  season-finale
+                </Badge>
+                <Badge variant="secondary" className="hover:bg-racing-red/10 transition-colors cursor-pointer">
+                  sunset
+                </Badge>
               </div>
             </Card>
           </div>
