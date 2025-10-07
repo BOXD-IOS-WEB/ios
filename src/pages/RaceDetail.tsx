@@ -7,7 +7,7 @@ import { StarRating } from "@/components/StarRating";
 import { AddToListDialog } from "@/components/AddToListDialog";
 import { Plus, Heart, Bookmark, Share2, Eye, Star, MessageSquare, List } from "lucide-react";
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { addToWatchlist, removeFromWatchlist } from "@/services/watchlist";
 import { toggleLike } from "@/services/likes";
@@ -17,6 +17,7 @@ import { auth } from "@/lib/firebase";
 
 const RaceDetail = () => {
   const { id, season, round } = useParams();
+  const navigate = useNavigate();
   const year = season;
   console.log('[RaceDetail] URL Params:', { id, season, year, round });
 
@@ -325,6 +326,10 @@ const RaceDetail = () => {
                     open={logDialogOpen}
                     onOpenChange={setLogDialogOpen}
                     onSuccess={loadRaceData}
+                    defaultCircuit={race.circuit}
+                    defaultRaceName={race.gpName}
+                    defaultYear={race.season}
+                    defaultCountryCode={race.countryCode}
                   />
                   <AddToListDialog
                     raceYear={race.season}

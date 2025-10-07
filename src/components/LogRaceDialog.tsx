@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,9 +28,24 @@ interface LogRaceDialogProps {
   onOpenChange?: (open: boolean) => void;
   existingLog?: any; // Existing log data for editing
   editMode?: boolean;
+  defaultCircuit?: string; // Pre-fill circuit
+  defaultRaceName?: string; // Pre-fill race name
+  defaultYear?: number; // Pre-fill year
+  defaultCountryCode?: string; // Pre-fill country code
 }
 
-export const LogRaceDialog = ({ trigger, onSuccess, open: controlledOpen, onOpenChange, existingLog, editMode = false }: LogRaceDialogProps) => {
+export const LogRaceDialog = ({
+  trigger,
+  onSuccess,
+  open: controlledOpen,
+  onOpenChange,
+  existingLog,
+  editMode = false,
+  defaultCircuit,
+  defaultRaceName,
+  defaultYear,
+  defaultCountryCode,
+}: LogRaceDialogProps) => {
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
   const setOpen = onOpenChange || setInternalOpen;
@@ -97,9 +112,27 @@ export const LogRaceDialog = ({ trigger, onSuccess, open: controlledOpen, onOpen
     }
   }, [editMode, existingLog]);
 
+  // Pre-fill with default values when dialog opens
+  useEffect(() => {
+    if (open && !editMode) {
+      // Find the matching circuit from the circuits array
+      const matchingCircuit = allCircuits.find(c =>
+        c.location === defaultCircuit || c.name === defaultRaceName
+      );
+
+      if (matchingCircuit) {
+        setRaceName(matchingCircuit.name);
+        setRaceLocation(matchingCircuit.location);
+        setCountryCode(getCountryCodeFromName(matchingCircuit.country));
+      }
+
+      if (defaultYear) setRaceYear(defaultYear);
+    }
+  }, [open, defaultRaceName, defaultCircuit, defaultYear, defaultCountryCode, editMode]);
+
   const suggestedTags = ["rain", "safety-car", "overtake", "pitstop-chaos", "attended", "late-drama", "dnf"];
 
-  const circuits = [
+  const allCircuits = [
     { name: "Monaco Grand Prix", location: "Circuit de Monaco", country: "Monaco" },
     { name: "Italian Grand Prix", location: "Autodromo Nazionale di Monza", country: "Italy" },
     { name: "British Grand Prix", location: "Silverstone Circuit", country: "United Kingdom" },
@@ -124,7 +157,22 @@ export const LogRaceDialog = ({ trigger, onSuccess, open: controlledOpen, onOpen
     { name: "French Grand Prix", location: "Circuit Paul Ricard", country: "France" },
     { name: "Portuguese Grand Prix", location: "Algarve International Circuit", country: "Portugal" },
     { name: "Turkish Grand Prix", location: "Istanbul Park", country: "Turkey" },
-  ].sort((a, b) => a.name.localeCompare(b.name));
+  ];
+
+  // Sort circuits with default circuit at the top
+  const circuits = useMemo(() => {
+    const sorted = [...allCircuits].sort((a, b) => a.name.localeCompare(b.name));
+    if (defaultCircuit || defaultRaceName) {
+      const defaultIndex = sorted.findIndex(c =>
+        c.location === defaultCircuit || c.name === defaultRaceName
+      );
+      if (defaultIndex > -1) {
+        const [defaultCircuitItem] = sorted.splice(defaultIndex, 1);
+        return [defaultCircuitItem, ...sorted];
+      }
+    }
+    return sorted;
+  }, [defaultCircuit, defaultRaceName]);
 
   const addCompanion = (name: string) => {
     if (name && companions.length < 2 && !companions.includes(name)) {
@@ -316,12 +364,37 @@ export const LogRaceDialog = ({ trigger, onSuccess, open: controlledOpen, onOpen
 
             <div className="space-y-2">
               <Label className="text-xs font-medium text-muted-foreground">Year *</Label>
-              <Input
-                type="number"
-                value={raceYear}
-                onChange={(e) => setRaceYear(parseInt(e.target.value))}
-                className="border-border/50 focus:border-racing-red max-w-xs"
-              />
+              <Select
+                value={raceYear.toString()}
+                onValueChange={(value) => setRaceYear(parseInt(value))}
+              >
+                <SelectTrigger className="border-border/50 hover:border-racing-red max-w-xs">
+                  <SelectValue placeholder="Select year..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {(() => {
+                    const currentYear = new Date().getFullYear();
+                    const years = Array.from({ length: 10 }, (_, i) => currentYear - i);
+
+                    // Put default year at the top if it exists and is different from current year
+                    if (defaultYear && defaultYear !== currentYear && !years.includes(defaultYear)) {
+                      years.unshift(defaultYear);
+                    } else if (defaultYear && defaultYear !== years[0]) {
+                      const index = years.indexOf(defaultYear);
+                      if (index > -1) {
+                        years.splice(index, 1);
+                        years.unshift(defaultYear);
+                      }
+                    }
+
+                    return years.map((year) => (
+                      <SelectItem key={year} value={year.toString()}>
+                        {year}
+                      </SelectItem>
+                    ));
+                  })()}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

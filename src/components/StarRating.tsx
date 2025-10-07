@@ -20,7 +20,10 @@ export const StarRating = ({
 }: StarRatingProps) => {
   const [hoverRating, setHoverRating] = useState(0);
 
-  const handleClick = (value: number) => {
+  const handleClick = (value: number, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
     if (readonly && onClickWhenReadonly) {
       onClickWhenReadonly();
     } else if (!readonly && onRatingChange) {
@@ -29,18 +32,19 @@ export const StarRating = ({
   };
 
   const handleMouseEnter = (value: number) => {
-    if (!readonly) {
+    // Disable hover on touch devices to prevent conflicts
+    if (!readonly && !('ontouchstart' in window)) {
       setHoverRating(value);
     }
   };
 
   const handleMouseLeave = () => {
-    if (!readonly) {
+    if (!readonly && !('ontouchstart' in window)) {
       setHoverRating(0);
     }
   };
 
-  const displayRating = hoverRating || rating;
+  const displayRating = readonly ? rating : (hoverRating || rating);
 
   const sizeClasses = {
     sm: "h-8",
@@ -71,14 +75,6 @@ export const StarRating = ({
 
   return (
     <div className="space-y-2">
-      {/* Rating Display */}
-      {(readonly || displayRating > 0) && (
-        <div className="flex items-baseline justify-center sm:justify-start gap-1.5 mb-1">
-          <span className="text-3xl sm:text-4xl font-bold text-racing-red">{displayRating.toFixed(1)}</span>
-          <span className="text-lg sm:text-xl font-medium text-muted-foreground">/ 5.0</span>
-        </div>
-      )}
-
       {/* Flags */}
       <div className="flex items-center gap-2 sm:gap-2.5">
         {[1, 2, 3, 4, 5].map((position) => {
@@ -94,21 +90,25 @@ export const StarRating = ({
               } ${
                 (readonly && onClickWhenReadonly) || !readonly ? 'cursor-pointer' : ''
               }`}
-              onClick={() => handleClick(position)}
+              onClick={(e) => handleClick(position, e)}
               onMouseEnter={() => handleMouseEnter(position)}
               onMouseLeave={handleMouseLeave}
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                handleClick(position, e as any);
+              }}
             >
               {/* Background */}
-              <div className="absolute inset-0 bg-muted/60" />
+              <div className="absolute inset-0 bg-muted/60 pointer-events-none" />
 
               {/* Fill */}
               <div
-                className={`absolute inset-0 ${getRatingColor(position)}`}
+                className={`absolute inset-0 ${getRatingColor(position)} pointer-events-none`}
                 style={{ width: `${fillPercentage}%` }}
               />
 
               {/* Flag icon */}
-              <div className="absolute inset-0 flex items-center justify-center">
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <Flag
                   size={flagSizes[size]}
                   className={isActive || isPartial ? 'text-black' : 'text-muted-foreground'}
@@ -118,7 +118,7 @@ export const StarRating = ({
               </div>
 
               {/* Position number */}
-              <div className="absolute bottom-1 right-1">
+              <div className="absolute bottom-1 right-1 pointer-events-none">
                 <span className={`text-[10px] sm:text-xs font-bold ${
                   isActive || isPartial ? 'text-black/80' : 'text-muted-foreground/70'
                 }`}>
@@ -129,6 +129,14 @@ export const StarRating = ({
           );
         })}
       </div>
+
+      {/* Rating Display */}
+      {(readonly || displayRating > 0) && (
+        <div className="flex items-baseline justify-center sm:justify-start gap-1.5">
+          <span className="text-3xl sm:text-4xl font-bold text-racing-red">{displayRating.toFixed(1)}</span>
+          <span className="text-lg sm:text-xl font-medium text-muted-foreground">/ 5.0</span>
+        </div>
+      )}
 
       {/* Label */}
       <div className="pt-0.5 text-center sm:text-left">
