@@ -267,9 +267,9 @@ const RaceDetail = () => {
                   <p className="text-base sm:text-lg md:text-xl text-muted-foreground">{race.season} • Round {race.round}</p>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 sm:gap-2">
                   <StarRating rating={race.rating} readonly />
-                  <span className="text-muted-foreground text-sm">
+                  <span className="text-muted-foreground text-xs sm:text-sm">
                     ({race.totalRatings.toLocaleString()} ratings)
                   </span>
                 </div>
@@ -320,16 +320,16 @@ const RaceDetail = () => {
 
                 <div className="grid grid-cols-2 gap-3 md:gap-4 pt-3 md:pt-4">
                   <div>
-                    <p className="text-sm text-muted-foreground">Circuit</p>
-                    <p className="font-semibold">{race.circuit}</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">Circuit</p>
+                    <p className="text-sm sm:text-base font-semibold">{race.circuit}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Country</p>
-                    <p className="font-semibold">{race.country}</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">Country</p>
+                    <p className="text-sm sm:text-base font-semibold">{race.country}</p>
                   </div>
                   <div className="col-span-2">
-                    <p className="text-sm text-muted-foreground">Date</p>
-                    <p className="font-semibold">
+                    <p className="text-xs sm:text-sm text-muted-foreground">Date</p>
+                    <p className="text-sm sm:text-base font-semibold">
                       {new Date(race.date).toLocaleDateString('en-US', {
                         weekday: 'long',
                         year: 'numeric',
@@ -344,15 +344,15 @@ const RaceDetail = () => {
 
             {/* Reviews */}
             <div>
-              <h2 className="text-2xl font-bold mb-6">
+              <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6">
                 Reviews <span className="text-muted-foreground font-normal">({reviews.length})</span>
               </h2>
 
-              <div className="space-y-6">
+              <div className="space-y-4 md:space-y-6">
                 {reviews.length === 0 ? (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                    <p>No reviews yet. Be the first to review this race!</p>
+                  <div className="text-center py-8 sm:py-12 text-muted-foreground">
+                    <MessageSquare className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 sm:mb-3 opacity-50" />
+                    <p className="text-sm sm:text-base">No reviews yet. Be the first to review this race!</p>
                   </div>
                 ) : (
                   reviews.map((review) => (
@@ -408,18 +408,18 @@ const RaceDetail = () => {
                             </span>
                           </div>
 
-                          <div className="text-base leading-relaxed mb-4 text-foreground/90">
+                          <div className="text-sm sm:text-base leading-relaxed mb-3 sm:mb-4 text-foreground/90">
                             {review.review}
                           </div>
 
                           {/* Tags */}
                           {review.tags && review.tags.length > 0 && (
-                            <div className="flex flex-wrap gap-2 mb-4">
+                            <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-3 sm:mb-4">
                               {review.tags.map((tag: string) => (
                                 <Badge
                                   key={tag}
                                   variant="secondary"
-                                  className="text-xs hover:bg-racing-red/10 transition-colors cursor-pointer"
+                                  className="text-[10px] sm:text-xs hover:bg-racing-red/10 transition-colors cursor-pointer"
                                 >
                                   {tag}
                                 </Badge>
@@ -428,12 +428,12 @@ const RaceDetail = () => {
                           )}
 
                           {/* Actions */}
-                          <div className="flex flex-wrap items-center gap-4 sm:gap-6 pt-3 border-t">
+                          <div className="flex flex-wrap items-center gap-3 sm:gap-4 md:gap-6 pt-2.5 sm:pt-3 border-t">
                             <button
-                              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-racing-red transition-colors group"
+                              className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground hover:text-racing-red transition-colors group"
                               onClick={() => review.id && handleLikeReview(review.id)}
                             >
-                              <Heart className={`w-4 h-4 group-hover:scale-110 transition-transform ${
+                              <Heart className={`w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover:scale-110 transition-transform ${
                                 review.likedBy?.includes(auth.currentUser?.uid || '')
                                   ? 'fill-racing-red text-racing-red'
                                   : ''
@@ -443,10 +443,10 @@ const RaceDetail = () => {
                               </span>
                             </button>
                             <button
-                              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group"
+                              className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors group"
                               onClick={() => setExpandedComments(expandedComments === review.id ? null : review.id)}
                             >
-                              <MessageSquare className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                              <MessageSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover:scale-110 transition-transform" />
                               <span className="font-medium">
                                 {review.commentsCount > 0 ? `${review.commentsCount} ${review.commentsCount === 1 ? 'comment' : 'comments'}` : 'Comment'}
                               </span>
@@ -455,7 +455,7 @@ const RaceDetail = () => {
 
                           {/* Comments Section */}
                           {expandedComments === review.id && review.id && (
-                            <div className="mt-4 pt-4 border-t">
+                            <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t">
                               <Comments raceLogId={review.id} />
                             </div>
                           )}
@@ -471,44 +471,44 @@ const RaceDetail = () => {
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
-            <Card className="p-6 border-0 shadow-sm">
-              <h3 className="font-semibold text-lg mb-5">Stats</h3>
-              <div className="space-y-4">
+          <div className="space-y-4 sm:space-y-6">
+            <Card className="p-4 sm:p-5 md:p-6 border-0 shadow-sm">
+              <h3 className="font-semibold text-base sm:text-lg mb-4 sm:mb-5">Stats</h3>
+              <div className="space-y-3 sm:space-y-4">
                 <div className="flex justify-between items-baseline">
-                  <span className="text-sm text-muted-foreground">Watched by</span>
-                  <span className="font-bold text-2xl">{race.watched.toLocaleString()}</span>
+                  <span className="text-xs sm:text-sm text-muted-foreground">Watched by</span>
+                  <span className="font-bold text-xl sm:text-2xl">{race.watched.toLocaleString()}</span>
                 </div>
                 <div className="h-px bg-border"></div>
                 <div className="flex justify-between items-baseline">
-                  <span className="text-sm text-muted-foreground">Average Rating</span>
-                  <div className="flex items-center gap-2">
-                    <Star className="w-4 h-4 fill-racing-red text-racing-red" />
-                    <span className="font-bold text-2xl">{race.rating}</span>
-                    <span className="text-muted-foreground text-sm">/5</span>
+                  <span className="text-xs sm:text-sm text-muted-foreground">Average Rating</span>
+                  <div className="flex items-center gap-1.5 sm:gap-2">
+                    <Star className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-racing-red text-racing-red" />
+                    <span className="font-bold text-xl sm:text-2xl">{race.rating}</span>
+                    <span className="text-muted-foreground text-xs sm:text-sm">/5</span>
                   </div>
                 </div>
                 <div className="h-px bg-border"></div>
                 <div className="flex justify-between items-baseline">
-                  <span className="text-sm text-muted-foreground">Reviews</span>
-                  <span className="font-bold text-2xl">{reviews.length}</span>
+                  <span className="text-xs sm:text-sm text-muted-foreground">Reviews</span>
+                  <span className="font-bold text-xl sm:text-2xl">{reviews.length}</span>
                 </div>
               </div>
             </Card>
 
-            <Card className="p-6 border-0 shadow-sm">
-              <h3 className="font-semibold text-lg mb-4">Popular Tags</h3>
-              <div className="flex flex-wrap gap-2">
-                <Badge variant="secondary" className="hover:bg-racing-red/10 transition-colors cursor-pointer">
+            <Card className="p-4 sm:p-5 md:p-6 border-0 shadow-sm">
+              <h3 className="font-semibold text-base sm:text-lg mb-3 sm:mb-4">Popular Tags</h3>
+              <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                <Badge variant="secondary" className="text-xs hover:bg-racing-red/10 transition-colors cursor-pointer">
                   overtake
                 </Badge>
-                <Badge variant="secondary" className="hover:bg-racing-red/10 transition-colors cursor-pointer">
+                <Badge variant="secondary" className="text-xs hover:bg-racing-red/10 transition-colors cursor-pointer">
                   late-drama
                 </Badge>
-                <Badge variant="secondary" className="hover:bg-racing-red/10 transition-colors cursor-pointer">
+                <Badge variant="secondary" className="text-xs hover:bg-racing-red/10 transition-colors cursor-pointer">
                   season-finale
                 </Badge>
-                <Badge variant="secondary" className="hover:bg-racing-red/10 transition-colors cursor-pointer">
+                <Badge variant="secondary" className="text-xs hover:bg-racing-red/10 transition-colors cursor-pointer">
                   sunset
                 </Badge>
               </div>

@@ -4,6 +4,7 @@ import {
   addDoc,
   deleteDoc,
   getDocs,
+  getDoc,
   query,
   where,
   Timestamp,
@@ -103,13 +104,49 @@ export const isFollowing = async (userId: string): Promise<boolean> => {
 };
 
 export const getFollowers = async (userId: string) => {
+  console.log('[getFollowers] Fetching followers for user:', userId);
   const q = query(followsCollection, where('followingId', '==', userId));
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Follow));
+
+  console.log('[getFollowers] Found', snapshot.docs.length, 'follow documents');
+
+  // Get the actual user data for each follower
+  const followerIds = snapshot.docs.map(doc => doc.data().followerId);
+  const followers = await Promise.all(
+    followerIds.map(async (followerId) => {
+      const userDoc = await getDoc(doc(db, 'users', followerId));
+      if (userDoc.exists()) {
+        return { id: userDoc.id, ...userDoc.data() };
+      }
+      return null;
+    })
+  );
+
+  const validFollowers = followers.filter(f => f !== null);
+  console.log('[getFollowers] Returning', validFollowers.length, 'valid followers');
+  return validFollowers;
 };
 
 export const getFollowing = async (userId: string) => {
+  console.log('[getFollowing] Fetching following for user:', userId);
   const q = query(followsCollection, where('followerId', '==', userId));
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Follow));
+
+  console.log('[getFollowing] Found', snapshot.docs.length, 'follow documents');
+
+  // Get the actual user data for each followed user
+  const followingIds = snapshot.docs.map(doc => doc.data().followingId);
+  const following = await Promise.all(
+    followingIds.map(async (followingId) => {
+      const userDoc = await getDoc(doc(db, 'users', followingId));
+      if (userDoc.exists()) {
+        return { id: userDoc.id, ...userDoc.data() };
+      }
+      return null;
+    })
+  );
+
+  const validFollowing = following.filter(f => f !== null);
+  console.log('[getFollowing] Returning', validFollowing.length, 'valid following');
+  return validFollowing;
 };
