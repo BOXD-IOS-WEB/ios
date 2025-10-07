@@ -71,7 +71,8 @@ const Index = () => {
           {/* Content */}
           <div className="relative z-10">
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
-              Track every <span className="text-racing-red">race</span> you watch.
+              <span className="hidden sm:inline">Track every <span className="text-racing-red">race</span> you watch.</span>
+              <span className="sm:hidden">Track every <span className="text-racing-red">race.</span></span>
             </h1>
             <p className="text-sm sm:text-base md:text-lg text-white max-w-xl mx-auto px-4" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.8), 0 0 16px rgba(0,0,0,0.6)' }}>
               BoxBoxd lets you log, rate and review every F1 race. Keep a diary and connect with fellow fans. 🏎️
