@@ -61,4 +61,17 @@ setPersistence(auth, browserLocalPersistence).catch((error) => {
   console.error('Error setting auth persistence:', error);
 });
 
+// Debug: Log auth state changes (per article recommendation)
+auth.onAuthStateChanged((user) => {
+  if (user) {
+    console.log('[Firebase Auth] ✅ User signed in:', {
+      uid: user.uid,
+      email: user.email,
+      emailVerified: user.emailVerified
+    });
+  } else {
+    console.log('[Firebase Auth] ❌ No user signed in');
+  }
+});
+
 export default app;
