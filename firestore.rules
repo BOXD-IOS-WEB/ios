@@ -33,7 +33,7 @@ service cloud.firestore {
     // User stats
     match /userStats/{userId} {
       allow read: if true;
-      allow write: if isOwner(userId);
+      allow write: if isAuthenticated();
     }
 
     // Race logs

@@ -44,30 +44,46 @@ export const createNotification = async (notification: Omit<Notification, 'id' |
 };
 
 export const getUserNotifications = async (userId: string, limitCount: number = 20) => {
-  const q = query(
-    notificationsCollection,
-    where('userId', '==', userId),
-    orderBy('createdAt', 'desc'),
-    limit(limitCount)
-  );
+  try {
+    const q = query(
+      notificationsCollection,
+      where('userId', '==', userId),
+      orderBy('createdAt', 'desc'),
+      limit(limitCount)
+    );
 
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data(),
-    createdAt: doc.data().createdAt?.toDate()
-  } as Notification));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      createdAt: doc.data().createdAt?.toDate()
+    } as Notification));
+  } catch (error: any) {
+    console.error('[Notifications] Error fetching notifications:', error);
+    if (error.code === 'permission-denied') {
+      console.error('[Notifications] Permission denied for userId:', userId);
+    }
+    return [];
+  }
 };
 
 export const getUnreadNotificationsCount = async (userId: string) => {
-  const q = query(
-    notificationsCollection,
-    where('userId', '==', userId),
-    where('isRead', '==', false)
-  );
+  try {
+    const q = query(
+      notificationsCollection,
+      where('userId', '==', userId),
+      where('isRead', '==', false)
+    );
 
-  const snapshot = await getDocs(q);
-  return snapshot.size;
+    const snapshot = await getDocs(q);
+    return snapshot.size;
+  } catch (error: any) {
+    console.error('[Notifications] Error fetching unread count:', error);
+    if (error.code === 'permission-denied') {
+      console.error('[Notifications] Permission denied for userId:', userId);
+    }
+    return 0;
+  }
 };
 
 export const markNotificationAsRead = async (notificationId: string) => {
