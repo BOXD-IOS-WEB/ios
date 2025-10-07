@@ -53,8 +53,10 @@ const Login = () => {
       if (!available) {
         setUsernameError('Username is already taken');
       }
-    } catch (error) {
-      console.error('Error checking username:', error);
+    } catch (error: any) {
+      console.error('[Login] Error checking username:', error);
+      console.error('[Login] Error details:', error.message, error.code);
+      setUsernameError(error.message || 'Error checking username availability');
     } finally {
       setCheckingUsername(false);
     }
