@@ -1,6 +1,6 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, setPersistence, browserLocalPersistence } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, initializeFirestore, memoryLocalCache } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
@@ -16,7 +16,15 @@ const firebaseConfig = {
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 export const auth = getAuth(app);
-export const db = getFirestore(app);
+
+// Initialize Firestore with memory-only cache (no persistence)
+// This ensures rules are checked against the server, not cached locally
+export const db = !getApps().length
+  ? initializeFirestore(app, {
+      localCache: memoryLocalCache()
+    })
+  : getFirestore(app);
+
 export const storage = getStorage(app);
 
 // Debug logging

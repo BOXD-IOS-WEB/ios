@@ -1,0 +1,13 @@
+{
+  "structuredQuery": {
+    "from": [{"collectionId": "users"}],
+    "where": {
+      "fieldFilter": {
+        "field": {"fieldPath": "username"},
+        "op": "EQUAL",
+        "value": {"stringValue": "testuser"}
+      }
+    },
+    "limit": 1
+  }
+}
