@@ -19,6 +19,19 @@ export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 
+// Debug logging
+console.log('[Firebase] Configuration:', {
+  projectId: firebaseConfig.projectId,
+  authDomain: firebaseConfig.authDomain,
+  databaseURL: db._databaseId?.database || '(default)'
+});
+
+console.log('[Firebase] Firestore instance:', {
+  app: db.app.name,
+  type: db.type,
+  toJSON: db.toJSON()
+});
+
 // Enable auth persistence
 setPersistence(auth, browserLocalPersistence).catch((error) => {
   console.error('Error setting auth persistence:', error);
