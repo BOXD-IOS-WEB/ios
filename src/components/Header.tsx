@@ -100,8 +100,8 @@ export const Header = () => {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center">
-        <div className="flex items-center gap-2 sm:gap-8 flex-1">
+      <div className="container flex h-16 items-center px-4">
+        <div className="flex items-center gap-4 sm:gap-6 flex-1">
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger asChild className="md:hidden">
               <Button variant="ghost" size="icon">
@@ -139,8 +139,8 @@ export const Header = () => {
             </div>
           </a>
 
-          <nav className="hidden md:flex items-center gap-4 lg:gap-6 text-sm font-medium">
-            <a href="/" className="text-foreground hover:text-primary transition-colors">
+          <nav className="hidden md:flex items-center gap-6 lg:gap-8 text-sm font-medium ml-4">
+            <a href="/" className="text-foreground hover:text-racing-red transition-colors">
               Home
             </a>
             <a href="/explore" className="text-muted-foreground hover:text-foreground transition-colors">
@@ -155,13 +155,10 @@ export const Header = () => {
             <a href="/watchlist" className="text-muted-foreground hover:text-foreground transition-colors">
               Watchlist
             </a>
-            <a href="/profile" className="text-muted-foreground hover:text-foreground transition-colors">
-              Profile
-            </a>
           </nav>
         </div>
 
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-3 flex-shrink-0">
           <form onSubmit={handleSearch} className="relative hidden md:block">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input

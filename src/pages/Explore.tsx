@@ -147,6 +147,7 @@ const Explore = () => {
                     key={year}
                     variant={selectedSeason === year ? "default" : "outline"}
                     onClick={() => setSelectedSeason(year)}
+                    className="min-w-[4rem]"
                   >
                     {year}
                   </Button>
@@ -239,8 +240,16 @@ const Explore = () => {
                     onClick={() => window.location.href = `/race/${review.id}`}
                   >
                     <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center font-bold">
-                        {review.username?.[0]?.toUpperCase() || 'U'}
+                      <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center font-bold overflow-hidden">
+                        {review.userAvatar ? (
+                          <img
+                            src={review.userAvatar}
+                            alt={review.username}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span>{review.username?.[0]?.toUpperCase() || 'U'}</span>
+                        )}
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">

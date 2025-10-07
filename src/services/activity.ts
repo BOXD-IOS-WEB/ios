@@ -6,7 +6,9 @@ import {
   where,
   orderBy,
   limit,
-  Timestamp
+  Timestamp,
+  doc,
+  getDoc
 } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { getFollowing } from './follows';
@@ -29,11 +31,26 @@ export const createActivity = async (activity: Omit<Activity, 'id' | 'createdAt'
   const user = auth.currentUser;
   if (!user) throw new Error('User not authenticated');
 
+  // Fetch user's profile from Firestore to get the latest photoURL
+  let userAvatar = user.photoURL || '';
+  let username = user.displayName || user.email?.split('@')[0] || 'User';
+
+  try {
+    const userDoc = await getDoc(doc(db, 'users', user.uid));
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      userAvatar = userData.photoURL || user.photoURL || '';
+      username = userData.name || username;
+    }
+  } catch (error) {
+    console.error('Error fetching user profile for activity:', error);
+  }
+
   const newActivity = {
     ...activity,
     userId: user.uid,
-    username: user.displayName || user.email?.split('@')[0] || 'User',
-    userAvatar: user.photoURL || '',
+    username,
+    userAvatar,
     createdAt: Timestamp.now()
   };
 
@@ -49,7 +66,32 @@ export const getUserActivity = async (userId: string, limitCount: number = 20) =
     limit(limitCount)
   );
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Activity));
+
+  // Fetch user profile once for this user
+  let userAvatar = '';
+  let username = 'User';
+
+  try {
+    const userDoc = await getDoc(doc(db, 'users', userId));
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      userAvatar = userData.photoURL || '';
+      username = userData.name || username;
+    }
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+  }
+
+  return snapshot.docs.map(docSnapshot => {
+    const data = docSnapshot.data();
+    return {
+      id: docSnapshot.id,
+      ...data,
+      username: data.username || username,
+      userAvatar: data.userAvatar || userAvatar,
+      createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt)
+    } as Activity;
+  });
 };
 
 export const getFollowingActivity = async (limitCount: number = 50) => {
@@ -70,7 +112,39 @@ export const getFollowingActivity = async (limitCount: number = 50) => {
     limit(limitCount)
   );
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Activity));
+
+  // Fetch user profiles for activities missing userAvatar
+  const activities = await Promise.all(
+    snapshot.docs.map(async (docSnapshot) => {
+      const data = docSnapshot.data();
+      let userAvatar = data.userAvatar || '';
+      let username = data.username || 'User';
+
+      // If userAvatar is missing or empty, fetch from users collection
+      if (!userAvatar && data.userId) {
+        try {
+          const userDoc = await getDoc(doc(db, 'users', data.userId));
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            userAvatar = userData.photoURL || '';
+            username = userData.name || username;
+          }
+        } catch (error) {
+          console.error('Error fetching user profile for activity:', error);
+        }
+      }
+
+      return {
+        id: docSnapshot.id,
+        ...data,
+        username,
+        userAvatar,
+        createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt)
+      } as Activity;
+    })
+  );
+
+  return activities;
 };
 
 export const getGlobalActivity = async (limitCount: number = 50) => {
@@ -80,5 +154,37 @@ export const getGlobalActivity = async (limitCount: number = 50) => {
     limit(limitCount)
   );
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Activity));
+
+  // Fetch user profiles for activities missing userAvatar
+  const activities = await Promise.all(
+    snapshot.docs.map(async (docSnapshot) => {
+      const data = docSnapshot.data();
+      let userAvatar = data.userAvatar || '';
+      let username = data.username || 'User';
+
+      // If userAvatar is missing or empty, fetch from users collection
+      if (!userAvatar && data.userId) {
+        try {
+          const userDoc = await getDoc(doc(db, 'users', data.userId));
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            userAvatar = userData.photoURL || '';
+            username = userData.name || username;
+          }
+        } catch (error) {
+          console.error('Error fetching user profile for activity:', error);
+        }
+      }
+
+      return {
+        id: docSnapshot.id,
+        ...data,
+        username,
+        userAvatar,
+        createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt)
+      } as Activity;
+    })
+  );
+
+  return activities;
 };

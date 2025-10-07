@@ -13,10 +13,11 @@ interface AddToListDialogProps {
   raceYear: number;
   raceName: string;
   raceLocation: string;
+  countryCode?: string;
   onSuccess?: () => void;
 }
 
-export const AddToListDialog = ({ trigger, raceYear, raceName, raceLocation, onSuccess }: AddToListDialogProps) => {
+export const AddToListDialog = ({ trigger, raceYear, raceName, raceLocation, countryCode, onSuccess }: AddToListDialogProps) => {
   const [open, setOpen] = useState(false);
   const [lists, setLists] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -67,6 +68,7 @@ export const AddToListDialog = ({ trigger, raceYear, raceName, raceLocation, onS
         raceYear,
         raceName,
         raceLocation,
+        countryCode,
         order: 0,
         note: ''
       };

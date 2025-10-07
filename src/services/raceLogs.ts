@@ -77,6 +77,21 @@ export const createRaceLog = async (raceLog: Omit<RaceLog, 'id' | 'createdAt' | 
       rating: raceLog.rating,
     });
 
+    // Fetch user's profile from Firestore to get the latest photoURL and username
+    let userAvatar = user.photoURL || '';
+    let username = raceLog.username || user.displayName || user.email?.split('@')[0] || 'User';
+
+    try {
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        userAvatar = userData.photoURL || user.photoURL || '';
+        username = userData.name || username;
+      }
+    } catch (error) {
+      console.error('Error fetching user profile for race log:', error);
+    }
+
     // Convert Date to Timestamp if needed
     const dateWatchedTimestamp = raceLog.dateWatched instanceof Date
       ? Timestamp.fromDate(raceLog.dateWatched)
@@ -84,6 +99,8 @@ export const createRaceLog = async (raceLog: Omit<RaceLog, 'id' | 'createdAt' | 
 
     const newLog = {
       ...raceLog,
+      username,
+      userAvatar,
       dateWatched: dateWatchedTimestamp,
       userId: user.uid,
       createdAt: Timestamp.now(),

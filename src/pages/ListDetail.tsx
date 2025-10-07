@@ -3,10 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { RaceCard } from "@/components/RaceCard";
-import { Heart, MessageSquare, Share2, Edit, Trash2, Lock, Globe } from "lucide-react";
+import { AddRaceToListDialog } from "@/components/AddRaceToListDialog";
+import { Heart, MessageSquare, Share2, Edit, Trash2, Lock, Globe, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getListById, deleteList } from "@/services/lists";
+import { getRacesBySeason } from "@/services/f1Api";
 import { auth } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -37,6 +39,48 @@ const ListDetail = () => {
     try {
       const listData = await getListById(listId);
       if (listData) {
+        // Enrich race data with F1 API info for proper navigation
+        if (listData.races && listData.races.length > 0) {
+          const yearMap = new Map<number, any[]>();
+
+          // Group races by year
+          listData.races.forEach(race => {
+            if (!yearMap.has(race.raceYear)) {
+              yearMap.set(race.raceYear, []);
+            }
+            yearMap.get(race.raceYear)!.push(race);
+          });
+
+          // Fetch F1 data for each year
+          const enrichedRaces = await Promise.all(
+            listData.races.map(async (race) => {
+              try {
+                const yearRaces = await getRacesBySeason(race.raceYear);
+                const matchedRace = yearRaces.find(r =>
+                  r.meeting_name.toLowerCase().includes(race.raceName.toLowerCase()) ||
+                  race.raceName.toLowerCase().includes(r.meeting_name.toLowerCase())
+                );
+
+                return {
+                  ...race,
+                  round: matchedRace?.round || 1,
+                  countryCode: race.countryCode || matchedRace?.country_code,
+                  date: matchedRace?.date_start || '',
+                };
+              } catch (error) {
+                console.warn(`Failed to fetch F1 data for ${race.raceName}:`, error);
+                return {
+                  ...race,
+                  round: 1,
+                  date: '',
+                };
+              }
+            })
+          );
+
+          listData.races = enrichedRaces;
+        }
+
         setList(listData);
       } else {
         toast({
@@ -165,6 +209,19 @@ const ListDetail = () => {
             </div>
 
             <div className="flex gap-2">
+              {isOwner && listId && (
+                <AddRaceToListDialog
+                  listId={listId}
+                  onSuccess={loadList}
+                  trigger={
+                    <Button className="gap-2">
+                      <Plus className="w-4 h-4" />
+                      Add Race
+                    </Button>
+                  }
+                />
+              )}
+
               <Button variant="outline" size="icon" onClick={handleShare}>
                 <Share2 className="w-4 h-4" />
               </Button>
@@ -230,13 +287,13 @@ const ListDetail = () => {
                       {race.order + 1}
                     </div>
                     <RaceCard
-                      id={`${race.raceYear}-${race.raceName}`}
                       season={race.raceYear}
-                      round={1}
+                      round={race.round}
                       gpName={race.raceName}
                       circuit={race.raceLocation}
-                      date=""
+                      date={race.date}
                       watched={false}
+                      country={race.countryCode}
                     />
                     {race.note && (
                       <Card className="mt-2 p-2">
@@ -248,10 +305,31 @@ const ListDetail = () => {
             </div>
           </div>
         ) : (
-          <div className="text-center py-12 text-muted-foreground">
-            <p>This list is empty</p>
-            {isOwner && <p className="text-sm mt-2">Add races to your list!</p>}
-          </div>
+          <Card className="p-12 text-center border-dashed border-2">
+            <div className="max-w-md mx-auto">
+              <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                <Plus className="w-10 h-10 text-muted-foreground" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">No races yet</h3>
+              <p className="text-muted-foreground mb-6">
+                {isOwner
+                  ? "Start adding races to build your collection"
+                  : "This list doesn't have any races yet"}
+              </p>
+              {isOwner && listId && (
+                <AddRaceToListDialog
+                  listId={listId}
+                  onSuccess={loadList}
+                  trigger={
+                    <Button size="lg" className="gap-2">
+                      <Plus className="w-5 h-5" />
+                      Add Your First Race
+                    </Button>
+                  }
+                />
+              )}
+            </div>
+          </Card>
         )}
       </main>
     </div>

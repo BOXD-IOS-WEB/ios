@@ -108,15 +108,15 @@ const Diary = () => {
       <Header />
       
       <main className="container py-8">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-4xl font-bold mb-2">Your Diary</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-3xl sm:text-4xl font-bold mb-2">Your Diary</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">
               {logs.length} races logged • {calculateTotalHoursWatched(rawLogs).toFixed(1)} hours of F1
             </p>
           </div>
-          
-          <div className="flex gap-2">
+
+          <div className="flex gap-2 self-start sm:self-auto">
             <div className="flex gap-1 bg-muted rounded-lg p-1">
               <Button
                 size="sm"

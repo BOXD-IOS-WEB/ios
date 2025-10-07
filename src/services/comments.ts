@@ -9,7 +9,8 @@ import {
   orderBy,
   Timestamp,
   updateDoc,
-  increment
+  increment,
+  getDoc
 } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 
@@ -31,11 +32,26 @@ export const addComment = async (raceLogId: string, content: string) => {
   const user = auth.currentUser;
   if (!user) throw new Error('User not authenticated');
 
+  // Fetch user's profile from Firestore to get the latest photoURL
+  let userAvatar = user.photoURL || '';
+  let username = user.displayName || user.email?.split('@')[0] || 'User';
+
+  try {
+    const userDoc = await getDoc(doc(db, 'users', user.uid));
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      userAvatar = userData.photoURL || user.photoURL || '';
+      username = userData.name || username;
+    }
+  } catch (error) {
+    console.error('Error fetching user profile for comment:', error);
+  }
+
   const newComment = {
     raceLogId,
     userId: user.uid,
-    username: user.displayName || user.email?.split('@')[0] || 'User',
-    userAvatar: user.photoURL || '',
+    username,
+    userAvatar,
     content,
     createdAt: Timestamp.now(),
     likesCount: 0,

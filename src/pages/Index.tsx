@@ -55,20 +55,35 @@ const Index = () => {
       
       <main className="container py-8 space-y-12">
         {/* Hero Section */}
-        <section className="text-center space-y-4 py-8 md:py-12 px-4">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold">
-            Track every <span className="text-racing-red">race</span> you watch.
-          </h1>
-          <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto px-4">
-            BoxBoxd lets you log, rate, and review every F1 race. Keep a diary, share lists, and connect with fellow fans.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 pt-4">
-            <Button size="lg" className="gap-2 w-full sm:w-auto" onClick={() => navigate('/diary')}>
-              Get Racing <ArrowRight className="w-4 h-4" />
-            </Button>
-            <Button size="lg" variant="outline" className="w-full sm:w-auto" onClick={() => navigate('/explore')}>
-              Pit Stop
-            </Button>
+        <section className="relative text-center space-y-4 py-16 md:py-24 px-4 rounded-2xl overflow-hidden">
+          {/* Background Image */}
+          <div
+            className="absolute inset-0 z-0"
+            style={{
+              backgroundImage: 'url(/ferrari-f1.jpg)',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              opacity: 0.35,
+              filter: 'grayscale(0%)'
+            }}
+          />
+
+          {/* Content */}
+          <div className="relative z-10">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
+              Track every <span className="text-racing-red">race</span> you watch.
+            </h1>
+            <p className="text-sm sm:text-base md:text-lg text-white max-w-xl mx-auto px-4" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.8), 0 0 16px rgba(0,0,0,0.6)' }}>
+              BoxBoxd lets you log, rate and review every F1 race. Keep a diary and connect with fellow fans. 🏎️
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 pt-6">
+              <Button size="lg" className="gap-2 w-full sm:w-auto" onClick={() => navigate('/diary')}>
+                Get Racing <ArrowRight className="w-4 h-4" />
+              </Button>
+              <Button size="lg" variant="outline" className="w-full sm:w-auto" onClick={() => navigate('/explore')}>
+                Pit Stop
+              </Button>
+            </div>
           </div>
         </section>
 
@@ -161,6 +176,7 @@ const Index = () => {
                   date={race.dateWatched?.toDate?.()?.toISOString() || ''}
                   rating={race.rating}
                   watched={true}
+                  country={race.countryCode}
                 />
               ))}
             </div>

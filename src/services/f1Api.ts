@@ -155,7 +155,7 @@ export const getRaceByYearAndRound = async (year: number, round: number): Promis
   return race || null;
 };
 
-const getCountryCodeFromName = (country: string): string => {
+export const getCountryCodeFromName = (country: string): string => {
   const countryMap: { [key: string]: string } = {
     'Australia': 'AUS',
     'Austria': 'AUT',

@@ -6,6 +6,7 @@ import { Bell, RefreshCw } from "lucide-react";
 import { useState, useEffect } from "react";
 import { auth } from "@/lib/firebase";
 import { getUserWatchlist } from "@/services/watchlist";
+import { getRacesBySeason } from "@/services/f1Api";
 import { onAuthStateChanged } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -45,7 +46,28 @@ const Watchlist = () => {
       const items = await getUserWatchlist(user.uid);
       console.log('[Watchlist Page] Received items:', items.length);
 
-      const formattedRaces = items.map(item => {
+      // Group items by year to minimize API calls
+      const yearMap = new Map<number, any[]>();
+      items.forEach(item => {
+        if (!yearMap.has(item.raceYear)) {
+          yearMap.set(item.raceYear, []);
+        }
+        yearMap.get(item.raceYear)!.push(item);
+      });
+
+      // Fetch F1 data for each year
+      const yearRacesMap = new Map<number, any[]>();
+      for (const year of yearMap.keys()) {
+        try {
+          const races = await getRacesBySeason(year);
+          yearRacesMap.set(year, races);
+        } catch (error) {
+          console.warn(`[Watchlist Page] Failed to fetch F1 data for year ${year}:`, error);
+          yearRacesMap.set(year, []);
+        }
+      }
+
+      const formattedRaces = items.map((item, index) => {
         // Handle both Timestamp and Date objects
         let dateString: string;
         if (item.raceDate && typeof item.raceDate === 'object' && 'toDate' in item.raceDate) {
@@ -59,13 +81,21 @@ const Watchlist = () => {
           dateString = item.raceDate.toString();
         }
 
+        // Try to find the race in F1 API data to get the correct round number
+        const yearRaces = yearRacesMap.get(item.raceYear) || [];
+        const matchedRace = yearRaces.find(r =>
+          r.meeting_name.toLowerCase().includes(item.raceName.toLowerCase()) ||
+          item.raceName.toLowerCase().includes(r.meeting_name.toLowerCase())
+        );
+
         const formattedRace = {
-          id: item.id,
+          // Don't pass id so RaceCard uses season/round for navigation
           season: item.raceYear,
-          round: 1,
+          round: matchedRace?.round || index + 1, // Use F1 API round if available, otherwise use index
           gpName: item.raceName,
           circuit: item.raceLocation,
           date: dateString,
+          country: matchedRace?.country_code,
         };
 
         console.log('[Watchlist Page] Formatted race:', formattedRace);

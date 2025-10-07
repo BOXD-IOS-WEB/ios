@@ -104,6 +104,7 @@ export const RaceCard = ({
           raceName: gpName,
           raceLocation: circuit,
           raceDate: new Date(date),
+          countryCode: country,
           notes: '',
           reminderEnabled: false,
         });
@@ -180,6 +181,7 @@ export const RaceCard = ({
               raceYear={season}
               raceName={gpName}
               raceLocation={circuit}
+              countryCode={country}
               trigger={
                 <Button
                   size="icon"

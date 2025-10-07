@@ -78,7 +78,7 @@ const Search = () => {
       <main className="container py-8">
         <div className="max-w-4xl mx-auto space-y-8">
           <div>
-            <h1 className="text-4xl font-bold mb-6">Search</h1>
+            <h1 className="text-3xl sm:text-4xl font-bold mb-6">Search</h1>
 
             <form onSubmit={handleSearch} className="relative">
               <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
@@ -138,20 +138,27 @@ const Search = () => {
                     {userResults.length > 0 && (
                       <div className="space-y-4">
                         <h2 className="text-xl font-semibold">Users</h2>
-                        <div className="space-y-2">
+                        <div className="grid gap-3">
                           {userResults.map((result) => (
                             <Card
                               key={result.id}
-                              className="p-4 hover:bg-muted/50 cursor-pointer transition-colors"
+                              className="p-4 hover:ring-2 hover:ring-racing-red cursor-pointer transition-all"
                               onClick={() => navigate(`/user/${result.id}`)}
                             >
-                              <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
-                                  <User className="w-6 h-6" />
+                              <div className="flex items-center gap-4">
+                                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-racing-red/20 to-racing-red/5 flex items-center justify-center overflow-hidden border-2 border-background shadow-sm">
+                                  {result.metadata?.photoURL ? (
+                                    <img src={result.metadata.photoURL} alt={result.title} className="w-full h-full object-cover" />
+                                  ) : (
+                                    <span className="text-lg font-bold">{result.title.charAt(0).toUpperCase()}</span>
+                                  )}
                                 </div>
-                                <div>
-                                  <p className="font-semibold">{result.title}</p>
+                                <div className="flex-1">
+                                  <p className="font-semibold text-lg">{result.title}</p>
                                   <p className="text-sm text-muted-foreground">{result.subtitle}</p>
+                                  {result.metadata?.description && (
+                                    <p className="text-sm text-muted-foreground mt-1 line-clamp-1">{result.metadata.description}</p>
+                                  )}
                                 </div>
                               </div>
                             </Card>
@@ -224,20 +231,27 @@ const Search = () => {
                     <p>No users found for "{query}"</p>
                   </div>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="grid gap-3">
                     {userResults.map((result) => (
                       <Card
                         key={result.id}
-                        className="p-4 hover:bg-muted/50 cursor-pointer transition-colors"
+                        className="p-4 hover:ring-2 hover:ring-racing-red cursor-pointer transition-all"
                         onClick={() => navigate(`/user/${result.id}`)}
                       >
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
-                            <User className="w-6 h-6" />
+                        <div className="flex items-center gap-4">
+                          <div className="w-14 h-14 rounded-full bg-gradient-to-br from-racing-red/20 to-racing-red/5 flex items-center justify-center overflow-hidden border-2 border-background shadow-sm">
+                            {result.metadata?.photoURL ? (
+                              <img src={result.metadata.photoURL} alt={result.title} className="w-full h-full object-cover" />
+                            ) : (
+                              <span className="text-lg font-bold">{result.title.charAt(0).toUpperCase()}</span>
+                            )}
                           </div>
-                          <div>
-                            <p className="font-semibold">{result.title}</p>
+                          <div className="flex-1">
+                            <p className="font-semibold text-lg">{result.title}</p>
                             <p className="text-sm text-muted-foreground">{result.subtitle}</p>
+                            {result.metadata?.description && (
+                              <p className="text-sm text-muted-foreground mt-1 line-clamp-1">{result.metadata.description}</p>
+                            )}
                           </div>
                         </div>
                       </Card>

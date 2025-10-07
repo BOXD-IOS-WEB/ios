@@ -18,6 +18,7 @@ export interface RaceListItem {
   raceYear: number;
   raceName: string;
   raceLocation: string;
+  countryCode?: string;
   order: number;
   note: string;
 }

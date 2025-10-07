@@ -5,11 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { Trash2, Download, Mail } from "lucide-react";
+import { Trash2, Download, Mail, Heart } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { auth } from "@/lib/firebase";
 import { deleteUser, EmailAuthProvider, reauthenticateWithCredential, updatePassword } from "firebase/auth";
-import { doc, deleteDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { doc, deleteDoc, collection, query, where, getDocs, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { resendVerificationEmail } from "@/services/auth";
 
@@ -39,6 +39,29 @@ const Settings = () => {
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [pushNotifications, setPushNotifications] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [favoriteDriver, setFavoriteDriver] = useState("");
+  const [favoriteCircuit, setFavoriteCircuit] = useState("");
+  const [favoriteTeam, setFavoriteTeam] = useState("");
+
+  useEffect(() => {
+    const loadFavorites = async () => {
+      if (!user) return;
+
+      try {
+        const statsDoc = await getDoc(doc(db, "userStats", user.uid));
+        if (statsDoc.exists()) {
+          const data = statsDoc.data();
+          setFavoriteDriver(data.favoriteDriver || "");
+          setFavoriteCircuit(data.favoriteCircuit || "");
+          setFavoriteTeam(data.favoriteTeam || "");
+        }
+      } catch (error) {
+        console.error("Error loading favorites:", error);
+      }
+    };
+
+    loadFavorites();
+  }, [user]);
 
   const handleChangePassword = async () => {
     if (!user || !currentPassword || !newPassword) {
@@ -187,21 +210,47 @@ const Settings = () => {
     });
   };
 
+  const handleSaveFavorites = async () => {
+    if (!user) return;
+
+    setLoading(true);
+    try {
+      await updateDoc(doc(db, "userStats", user.uid), {
+        favoriteDriver,
+        favoriteCircuit,
+        favoriteTeam,
+      });
+
+      toast({
+        title: "Favorites saved",
+        description: "Your F1 favorites have been updated",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
 
       <main className="container py-8 max-w-4xl">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">Settings</h1>
-          <p className="text-muted-foreground">Manage your account and preferences</p>
+          <h1 className="text-3xl sm:text-4xl font-bold mb-2">Settings</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">Manage your account and preferences</p>
         </div>
 
         <div className="space-y-6">
           {/* Account Section */}
           <Card className="p-6 space-y-6">
             <div>
-              <h2 className="text-2xl font-bold mb-1">Account</h2>
+              <h2 className="text-xl sm:text-2xl font-bold mb-1">Account</h2>
               <p className="text-sm text-muted-foreground">
                 Manage your account settings
               </p>
@@ -266,10 +315,64 @@ const Settings = () => {
             </div>
           </Card>
 
+          {/* F1 Favorites Section */}
+          <Card className="p-6 space-y-6">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-bold mb-1 flex items-center gap-2">
+                <Heart className="w-5 h-5 sm:w-6 sm:h-6 text-racing-red" />
+                F1 Favorites
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Set your favorite driver, circuit, and team
+              </p>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="favoriteDriver">Favorite Driver</Label>
+                <Input
+                  id="favoriteDriver"
+                  value={favoriteDriver}
+                  onChange={(e) => setFavoriteDriver(e.target.value)}
+                  placeholder="e.g., Pierre Gasly"
+                  maxLength={50}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="favoriteCircuit">Favorite Circuit</Label>
+                <Input
+                  id="favoriteCircuit"
+                  value={favoriteCircuit}
+                  onChange={(e) => setFavoriteCircuit(e.target.value)}
+                  placeholder="e.g., Marina Bay"
+                  maxLength={50}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="favoriteTeam">Favorite Team</Label>
+                <Input
+                  id="favoriteTeam"
+                  value={favoriteTeam}
+                  onChange={(e) => setFavoriteTeam(e.target.value)}
+                  placeholder="e.g., Alpine"
+                  maxLength={50}
+                />
+              </div>
+
+              <Button onClick={handleSaveFavorites} disabled={loading}>
+                Save Favorites
+              </Button>
+            </div>
+          </Card>
+
           {/* Privacy Section */}
           <Card className="p-6 space-y-6">
             <div>
-              <h2 className="text-2xl font-bold mb-1">Privacy</h2>
+              <h2 className="text-xl sm:text-2xl font-bold mb-1">Privacy</h2>
               <p className="text-sm text-muted-foreground">
                 Control who can see your content
               </p>
@@ -303,7 +406,7 @@ const Settings = () => {
           {/* Notifications Section */}
           <Card className="p-6 space-y-6">
             <div>
-              <h2 className="text-2xl font-bold mb-1">Notifications</h2>
+              <h2 className="text-xl sm:text-2xl font-bold mb-1">Notifications</h2>
               <p className="text-sm text-muted-foreground">
                 Choose what you want to be notified about
               </p>
@@ -363,7 +466,7 @@ const Settings = () => {
           {/* Data & Privacy Section */}
           <Card className="p-6 space-y-6">
             <div>
-              <h2 className="text-2xl font-bold mb-1">Data & Privacy</h2>
+              <h2 className="text-xl sm:text-2xl font-bold mb-1">Data & Privacy</h2>
               <p className="text-sm text-muted-foreground">
                 Manage your data and privacy settings
               </p>
@@ -399,7 +502,7 @@ const Settings = () => {
           {/* Danger Zone */}
           <Card className="p-6 space-y-6 border-destructive">
             <div>
-              <h2 className="text-2xl font-bold mb-1 text-destructive">Danger Zone</h2>
+              <h2 className="text-xl sm:text-2xl font-bold mb-1 text-destructive">Danger Zone</h2>
               <p className="text-sm text-muted-foreground">
                 Irreversible actions
               </p>

@@ -17,6 +17,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { createRaceLog } from "@/services/raceLogs";
 import { createActivity } from "@/services/activity";
 import { getUserProfile } from "@/services/auth";
+import { getCountryCodeFromName } from "@/services/f1Api";
 import { useToast } from "@/hooks/use-toast";
 import { Timestamp } from "firebase/firestore";
 
@@ -43,6 +44,7 @@ export const LogRaceDialog = ({ trigger, onSuccess }: LogRaceDialogProps) => {
   const [visibility, setVisibility] = useState<'public' | 'private' | 'friends'>('public');
   const [loading, setLoading] = useState(false);
   const [username, setUsername] = useState("");
+  const [countryCode, setCountryCode] = useState<string | undefined>(undefined);
 
   const { user } = useAuth();
   const { toast } = useToast();
@@ -146,6 +148,7 @@ export const LogRaceDialog = ({ trigger, onSuccess }: LogRaceDialogProps) => {
         raceYear,
         raceName,
         raceLocation,
+        countryCode,
         dateWatched: date, // Pass Date object, it will be converted to Timestamp in createRaceLog
         sessionType,
         watchMode,
@@ -176,6 +179,7 @@ export const LogRaceDialog = ({ trigger, onSuccess }: LogRaceDialogProps) => {
       // Reset form
       setRaceName("");
       setRaceLocation("");
+      setCountryCode(undefined);
       setRating(0);
       setReview("");
       setTags([]);
@@ -228,6 +232,7 @@ export const LogRaceDialog = ({ trigger, onSuccess }: LogRaceDialogProps) => {
                     if (circuit) {
                       setRaceLocation(circuit.location);
                       setRaceName(circuit.name);
+                      setCountryCode(getCountryCodeFromName(circuit.country));
                     }
                   }}
                 >

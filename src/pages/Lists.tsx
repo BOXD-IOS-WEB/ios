@@ -64,39 +64,75 @@ const Lists = () => {
         {loading ? (
           <div className="text-center py-12 text-muted-foreground">Loading...</div>
         ) : lists.length > 0 ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 gap-6">
             {lists.map((list, idx) => (
               <Card
                 key={idx}
-                className="p-6 space-y-4 hover:ring-2 hover:ring-primary transition-all cursor-pointer"
+                className="group overflow-hidden border-0 shadow-md hover:shadow-xl transition-all cursor-pointer"
                 onClick={() => navigate(`/list/${list.id}`)}
               >
-                <div className="flex items-start gap-3">
-                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <List className="w-6 h-6 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-lg mb-1">{list.title}</h3>
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {list.description}
-                    </p>
+                {/* Header with gradient background */}
+                <div className="relative bg-gradient-to-br from-racing-red/10 via-background to-background p-6 pb-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="font-bold text-2xl mb-2 group-hover:text-racing-red transition-colors">
+                        {list.title}
+                      </h3>
+                      <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                        {list.description}
+                      </p>
+
+                      {/* Author info */}
+                      <div className="flex items-center gap-2 text-sm">
+                        <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-xs font-bold">
+                          {list.username?.[0]?.toUpperCase() || 'U'}
+                        </div>
+                        <span className="font-medium">{list.username}</span>
+                      </div>
+                    </div>
+
+                    <div className="w-16 h-16 bg-gradient-to-br from-racing-red/20 to-racing-red/5 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <List className="w-8 h-8 text-racing-red" />
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <span>{list.races?.length || 0} races</span>
-                  <div className="flex items-center gap-1">
-                    <Heart className="w-4 h-4" />
-                    {list.likesCount || 0}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <MessageSquare className="w-4 h-4" />
-                    {list.commentsCount || 0}
-                  </div>
-                </div>
+                {/* Stats section */}
+                <div className="px-6 py-4 bg-muted/30 border-t">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-6 text-sm">
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-8 h-8 bg-background rounded-lg flex items-center justify-center">
+                          <span className="font-bold text-lg">{list.races?.length || 0}</span>
+                        </div>
+                        <span className="text-muted-foreground">races</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-muted-foreground hover:text-racing-red transition-colors">
+                        <Heart className="w-4 h-4" />
+                        <span className="font-medium">{list.likesCount || 0}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors">
+                        <MessageSquare className="w-4 h-4" />
+                        <span className="font-medium">{list.commentsCount || 0}</span>
+                      </div>
+                    </div>
 
-                <div className="pt-2 border-t">
-                  <p className="text-xs text-muted-foreground">by {list.username}</p>
+                    {/* Tags preview */}
+                    {list.tags && list.tags.length > 0 && (
+                      <div className="flex gap-1">
+                        {list.tags.slice(0, 2).map((tag: string, tagIdx: number) => (
+                          <Badge key={tagIdx} variant="secondary" className="text-xs">
+                            {tag}
+                          </Badge>
+                        ))}
+                        {list.tags.length > 2 && (
+                          <Badge variant="secondary" className="text-xs">
+                            +{list.tags.length - 2}
+                          </Badge>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </Card>
             ))}

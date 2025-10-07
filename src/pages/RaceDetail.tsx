@@ -29,6 +29,7 @@ const RaceDetail = () => {
   const [raceInfo, setRaceInfo] = useState<any>(null);
   const [allRaceLogs, setAllRaceLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedComments, setExpandedComments] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -169,12 +170,15 @@ const RaceDetail = () => {
     }
   };
 
-  const reviews = allRaceLogs.filter(log =>
-    log.raceName === raceLog.raceName &&
-    log.raceYear === raceLog.raceYear &&
-    log.review &&
-    log.review.length > 0
-  );
+  const reviews = allRaceLogs.filter(log => {
+    if (!raceLog && !raceInfo) return false;
+    const targetRaceName = raceLog?.raceName || raceInfo?.meeting_name;
+    const targetRaceYear = raceLog?.raceYear || raceInfo?.year;
+    return log.raceName === targetRaceName &&
+      log.raceYear === targetRaceYear &&
+      log.review &&
+      log.review.length > 0;
+  });
 
   const handleLikeReview = async (reviewId: string) => {
     try {
@@ -240,8 +244,8 @@ const RaceDetail = () => {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Poster & Info */}
-            <div className="flex gap-6">
-              <div className="w-64 aspect-[2/3] bg-gradient-to-br from-racing-red/20 to-background rounded-lg overflow-hidden relative">
+            <div className="flex flex-col md:flex-row gap-6">
+              <div className="w-full md:w-64 aspect-[2/3] md:aspect-[2/3] bg-gradient-to-br from-racing-red/20 to-background rounded-lg overflow-hidden relative">
                 <div className="w-full h-full flex flex-col items-center justify-center p-4 space-y-4">
                   <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white/20 shadow-lg">
                     <img
@@ -259,8 +263,8 @@ const RaceDetail = () => {
 
               <div className="flex-1 space-y-4">
                 <div>
-                  <h1 className="text-4xl font-bold mb-2">{race.gpName}</h1>
-                  <p className="text-xl text-muted-foreground">{race.season} • Round {race.round}</p>
+                  <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2">{race.gpName}</h1>
+                  <p className="text-base sm:text-lg md:text-xl text-muted-foreground">{race.season} • Round {race.round}</p>
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -283,6 +287,7 @@ const RaceDetail = () => {
                     raceYear={race.season}
                     raceName={race.gpName}
                     raceLocation={race.circuit}
+                    countryCode={race.countryCode}
                     trigger={
                       <Button variant="outline" className="gap-2">
                         <List className="w-4 h-4" />
@@ -298,10 +303,12 @@ const RaceDetail = () => {
                     <Eye className={`w-4 h-4 ${isInWatchlist ? 'fill-current' : ''}`} />
                     {isInWatchlist ? 'In Watchlist' : 'Add to Watchlist'}
                   </Button>
-                  <Button variant="outline" className="gap-2" onClick={handleLikeRace}>
-                    <Heart className={`w-4 h-4 ${isLiked ? 'fill-red-500 text-red-500' : ''}`} />
-                    {isLiked ? 'Liked' : 'Like'}
-                  </Button>
+                  {id && (
+                    <Button variant="outline" className="gap-2" onClick={handleLikeRace}>
+                      <Heart className={`w-4 h-4 ${isLiked ? 'fill-red-500 text-red-500' : ''}`} />
+                      {isLiked ? 'Liked' : 'Like'}
+                    </Button>
+                  )}
                   <Button variant="outline" size="icon" onClick={handleBookmark}>
                     <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-current' : ''}`} />
                   </Button>
@@ -351,15 +358,23 @@ const RaceDetail = () => {
                     <Card key={review.id} className="p-0 overflow-hidden border-0 shadow-sm hover:shadow-md transition-shadow">
                       <div className="flex">
                         {/* Left stripe with rating */}
-                        <div className="w-20 bg-gradient-to-b from-racing-red/10 to-racing-red/5 flex flex-col items-center justify-start pt-6 gap-2">
-                          <div className="w-14 h-14 rounded-full bg-muted border-2 border-background shadow-sm flex items-center justify-center font-bold text-lg">
-                            {review.username?.[0]?.toUpperCase() || 'U'}
+                        <div className="w-16 sm:w-20 bg-gradient-to-b from-racing-red/10 to-racing-red/5 flex flex-col items-center justify-start pt-4 sm:pt-6 gap-2">
+                          <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-full bg-muted border-2 border-background shadow-sm flex items-center justify-center font-bold text-sm sm:text-lg overflow-hidden">
+                            {review.userAvatar ? (
+                              <img
+                                src={review.userAvatar}
+                                alt={review.username}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <span>{review.username?.[0]?.toUpperCase() || 'U'}</span>
+                            )}
                           </div>
                           <div className="flex flex-col items-center">
                             {[...Array(5)].map((_, i) => (
                               <Star
                                 key={i}
-                                className={`w-3 h-3 ${
+                                className={`w-2.5 h-2.5 sm:w-3 sm:h-3 ${
                                   i < review.rating
                                     ? 'fill-racing-red text-racing-red'
                                     : 'text-muted stroke-muted'
@@ -370,17 +385,25 @@ const RaceDetail = () => {
                         </div>
 
                         {/* Main content */}
-                        <div className="flex-1 p-6">
-                          <div className="flex items-baseline gap-2 mb-3">
-                            <span className="font-semibold text-lg hover:text-racing-red transition-colors cursor-pointer">
+                        <div className="flex-1 p-4 sm:p-6">
+                          <div className="flex flex-wrap items-baseline gap-2 mb-3">
+                            <span className="font-semibold text-base sm:text-lg hover:text-racing-red transition-colors cursor-pointer">
                               {review.username}
                             </span>
                             <span className="text-xs text-muted-foreground">
-                              {review.dateWatched?.toDate?.()?.toLocaleDateString('en-US', {
-                                month: 'short',
-                                day: 'numeric',
-                                year: 'numeric'
-                              }) || 'Recently'}
+                              {review.dateWatched instanceof Date
+                                ? review.dateWatched.toLocaleDateString('en-US', {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    year: 'numeric'
+                                  })
+                                : review.createdAt instanceof Date
+                                  ? review.createdAt.toLocaleDateString('en-US', {
+                                      month: 'short',
+                                      day: 'numeric',
+                                      year: 'numeric'
+                                    })
+                                  : 'Recently'}
                             </span>
                           </div>
 
@@ -404,7 +427,7 @@ const RaceDetail = () => {
                           )}
 
                           {/* Actions */}
-                          <div className="flex items-center gap-6 pt-3 border-t">
+                          <div className="flex flex-wrap items-center gap-4 sm:gap-6 pt-3 border-t">
                             <button
                               className="flex items-center gap-2 text-sm text-muted-foreground hover:text-racing-red transition-colors group"
                               onClick={() => review.id && handleLikeReview(review.id)}
@@ -418,13 +441,23 @@ const RaceDetail = () => {
                                 {review.likesCount > 0 ? review.likesCount : 'Like'}
                               </span>
                             </button>
-                            <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group">
+                            <button
+                              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group"
+                              onClick={() => setExpandedComments(expandedComments === review.id ? null : review.id)}
+                            >
                               <MessageSquare className="w-4 h-4 group-hover:scale-110 transition-transform" />
                               <span className="font-medium">
                                 {review.commentsCount > 0 ? `${review.commentsCount} ${review.commentsCount === 1 ? 'comment' : 'comments'}` : 'Comment'}
                               </span>
                             </button>
                           </div>
+
+                          {/* Comments Section */}
+                          {expandedComments === review.id && review.id && (
+                            <div className="mt-4 pt-4 border-t">
+                              <Comments raceLogId={review.id} />
+                            </div>
+                          )}
                         </div>
                       </div>
                     </Card>

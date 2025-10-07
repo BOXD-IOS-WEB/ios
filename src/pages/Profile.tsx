@@ -10,6 +10,9 @@ import { useEffect, useState } from "react";
 import { auth } from "@/lib/firebase";
 import { getUserProfile, getUserRaceLogs, calculateTotalHoursWatched } from "@/services/raceLogs";
 import { followUser, unfollowUser, isFollowing, getFollowers, getFollowing } from "@/services/follows";
+import { getUserLists } from "@/services/lists";
+import { getUserWatchlist } from "@/services/watchlist";
+import { collection, query, where, getDocs } from "firebase/firestore";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
@@ -39,6 +42,9 @@ const Profile = () => {
   const [following, setFollowing] = useState<any[]>([]);
   const [followersLoading, setFollowersLoading] = useState(false);
   const [statsDoc, setStatsDoc] = useState<any>(null);
+  const [lists, setLists] = useState<any[]>([]);
+  const [watchlist, setWatchlist] = useState<any[]>([]);
+  const [likes, setLikes] = useState<any[]>([]);
 
   const loadProfile = async () => {
     const targetUserId = userId || currentUser?.uid;
@@ -54,8 +60,8 @@ const Profile = () => {
         setProfile({ id: profileDoc.id, ...profileDoc.data() });
       } else {
         setProfile({
-          name: user?.displayName || user?.email?.split('@')[0] || 'User',
-          email: user?.email,
+          name: currentUser?.displayName || currentUser?.email?.split('@')[0] || 'User',
+          email: currentUser?.email,
           description: 'F1 fan',
         });
       }
@@ -89,18 +95,50 @@ const Profile = () => {
         country: log.countryCode,
       })));
 
-      if (user && targetUserId !== user.uid) {
+      if (currentUser && targetUserId !== currentUser.uid) {
         const following = await isFollowing(targetUserId);
         setFollowingUser(following);
       }
 
-      // Load followers and following
-      const [followersList, followingList] = await Promise.all([
+      // Load followers, following, lists, watchlist, and likes
+      const [followersList, followingList, userLists, userWatchlist] = await Promise.all([
         getFollowers(targetUserId),
-        getFollowing(targetUserId)
+        getFollowing(targetUserId),
+        getUserLists(targetUserId).catch(() => []),
+        getUserWatchlist(targetUserId).catch(() => []),
       ]);
+
       setFollowers(followersList);
       setFollowing(followingList);
+      setLists(userLists);
+      setWatchlist(userWatchlist);
+
+      // Load likes (race logs that user has liked)
+      try {
+        const likesQuery = query(
+          collection(db, 'likes'),
+          where('userId', '==', targetUserId)
+        );
+        const likesSnapshot = await getDocs(likesQuery);
+        const likedRaceLogIds = likesSnapshot.docs.map(doc => doc.data().raceLogId);
+
+        // Fetch the actual race logs
+        if (likedRaceLogIds.length > 0) {
+          const raceLogsQuery = query(
+            collection(db, 'raceLogs'),
+            where('__name__', 'in', likedRaceLogIds.slice(0, 10)) // Firestore limit
+          );
+          const raceLogsSnapshot = await getDocs(raceLogsQuery);
+          const likedLogs = raceLogsSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
+          setLikes(likedLogs);
+        }
+      } catch (error) {
+        console.error('Error loading likes:', error);
+        setLikes([]);
+      }
     } catch (error) {
       console.error('Error loading profile:', error);
     } finally {
@@ -145,139 +183,136 @@ const Profile = () => {
         {/* Profile Header */}
         <div className="space-y-6 mb-8">
           {/* Cover/Banner */}
-          <div className="h-48 sm:h-64 bg-gradient-to-br from-racing-red via-racing-red/40 to-racing-red/10 rounded-lg relative overflow-hidden">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(255,255,255,0.1),transparent)] opacity-50" />
-            <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:20px_20px]" />
-          </div>
+          <div className="h-48 sm:h-56 bg-gradient-to-r from-racing-red/20 to-racing-red/10 rounded-lg" />
 
           {/* Profile Info */}
-          <div className="flex flex-col md:flex-row gap-6 items-start -mt-20 sm:-mt-24 relative px-4">
+          <div className="-mt-16 sm:-mt-20 px-4 sm:px-6">
             {/* Avatar */}
-            <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full border-4 border-background overflow-hidden bg-gradient-to-br from-racing-red/30 to-primary/10 flex items-center justify-center shadow-2xl ring-4 ring-racing-red/20">
-              {profile?.photoURL ? (
-                <img
-                  src={profile.photoURL}
-                  alt={profile?.name || 'User'}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="text-4xl sm:text-5xl font-bold text-racing-red">
-                  {(profile?.name || profile?.email?.split('@')[0] || 'U').charAt(0).toUpperCase()}
-                </div>
+            <div className="flex items-end justify-between mb-4">
+              <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full border-4 border-background overflow-hidden bg-muted flex items-center justify-center shadow-lg">
+                {profile?.photoURL ? (
+                  <img
+                    src={profile.photoURL}
+                    alt={profile?.name || 'User'}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="text-4xl sm:text-5xl font-bold">
+                    {(profile?.name || profile?.email?.split('@')[0] || 'U').charAt(0).toUpperCase()}
+                  </div>
+                )}
+              </div>
+
+              <div className="mb-2">
+                {currentUser?.uid === (userId || currentUser?.uid) ? (
+                  <EditProfileDialog profile={profile} onSuccess={loadProfile} />
+                ) : (
+                  <Button
+                    onClick={handleFollowToggle}
+                    disabled={followLoading}
+                    variant={followingUser ? "outline" : "default"}
+                  >
+                    {followingUser ? 'Unfollow' : 'Follow'}
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Name and Bio */}
+            <div className="mb-6">
+              <h1 className="text-2xl sm:text-3xl font-bold mb-1">
+                {profile?.name || 'Loading...'}
+              </h1>
+              <p className="text-muted-foreground">
+                @{profile?.email?.split('@')[0] || 'user'}
+              </p>
+
+              {profile?.description && (
+                <p className="mt-3 text-base">
+                  {profile.description}
+                </p>
               )}
             </div>
 
-            <div className="flex-1 pt-12 sm:pt-16 md:pt-14 w-full">
-              <Card className="p-6 bg-gradient-to-br from-card via-card to-card/80 border-racing-red/10">
-                <div className="flex flex-col gap-4">
-                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <h1 className="text-2xl sm:text-3xl font-bold break-words bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text">
-                        {profile?.name || 'Loading...'}
-                      </h1>
-                      <p className="text-sm sm:text-base text-muted-foreground mt-1">
-                        @{profile?.email?.split('@')[0] || 'user'}
-                      </p>
-                    </div>
+            {/* Stats */}
+            <div className="flex flex-wrap gap-4 sm:gap-6 text-sm mb-6">
+              <div>
+                <span className="font-bold">{stats.racesWatched}</span>{' '}
+                <span className="text-muted-foreground">Races</span>
+              </div>
+              <div>
+                <span className="font-bold">{stats.followers}</span>{' '}
+                <span className="text-muted-foreground">Followers</span>
+              </div>
+              <div>
+                <span className="font-bold">{stats.following}</span>{' '}
+                <span className="text-muted-foreground">Following</span>
+              </div>
+            </div>
 
-                    <div className="flex gap-2">
-                      {currentUser?.uid === (userId || currentUser?.uid) ? (
-                        <EditProfileDialog profile={profile} onSuccess={loadProfile} />
-                      ) : (
-                        <Button
-                          className="gap-2"
-                          onClick={handleFollowToggle}
-                          disabled={followLoading}
-                          variant={followingUser ? "outline" : "default"}
-                        >
-                          {followingUser ? (
-                            <>
-                              <UserMinus className="w-4 h-4" />
-                              Unfollow
-                            </>
-                          ) : (
-                            <>
-                              <UserPlus className="w-4 h-4" />
-                              Follow
-                            </>
-                          )}
-                        </Button>
+            {/* Time Spent Watching */}
+            <div className="mb-6 pb-6 border-b">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-muted-foreground">You've spent</span>
+                {(() => {
+                  const totalHours = stats.hoursSpent;
+                  const months = Math.floor(totalHours / (24 * 30));
+                  const remainingAfterMonths = totalHours % (24 * 30);
+                  const days = Math.floor(remainingAfterMonths / 24);
+                  const hours = remainingAfterMonths % 24;
+
+                  return (
+                    <>
+                      {months > 0 && (
+                        <>
+                          <span className="font-bold text-racing-red">{months}</span>
+                          <span className="text-muted-foreground">{months === 1 ? 'month' : 'months'}</span>
+                        </>
                       )}
-                    </div>
-                  </div>
+                      {days > 0 && (
+                        <>
+                          <span className="font-bold text-racing-red">{days}</span>
+                          <span className="text-muted-foreground">{days === 1 ? 'day' : 'days'}</span>
+                        </>
+                      )}
+                      <span className="font-bold text-racing-red">{hours}</span>
+                      <span className="text-muted-foreground">{hours === 1 ? 'hour' : 'hours'}</span>
+                      <span className="text-muted-foreground">watching GPs</span>
+                    </>
+                  );
+                })()}
+              </div>
+            </div>
 
-                  {profile?.description && (
-                    <p className="text-sm sm:text-base text-muted-foreground border-l-2 border-racing-red/30 pl-4 py-2">
-                      {profile.description}
-                    </p>
-                  )}
-                </div>
-              </Card>
-
-              {/* Stats */}
-              <Card className="grid grid-cols-3 sm:grid-cols-6 gap-4 sm:gap-6 mt-6 p-6 bg-gradient-to-br from-card to-card/50 border-racing-red/20">
-                <div className="text-center group cursor-pointer">
-                  <div className="text-2xl sm:text-3xl font-bold bg-gradient-to-br from-racing-red to-racing-red/60 bg-clip-text text-transparent group-hover:from-racing-red group-hover:to-racing-red transition-all">
-                    {stats.racesWatched}
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-1">Races</div>
-                </div>
-                <div className="text-center group cursor-pointer">
-                  <div className="text-2xl sm:text-3xl font-bold bg-gradient-to-br from-racing-red to-racing-red/60 bg-clip-text text-transparent group-hover:from-racing-red group-hover:to-racing-red transition-all">
-                    {stats.hoursSpent}h
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-1">Hours</div>
-                </div>
-                <div className="text-center group cursor-pointer">
-                  <div className="text-2xl sm:text-3xl font-bold bg-gradient-to-br from-racing-red to-racing-red/60 bg-clip-text text-transparent group-hover:from-racing-red group-hover:to-racing-red transition-all">
-                    {stats.reviews}
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-1">Reviews</div>
-                </div>
-                <div className="text-center group cursor-pointer">
-                  <div className="text-2xl sm:text-3xl font-bold bg-gradient-to-br from-racing-red to-racing-red/60 bg-clip-text text-transparent group-hover:from-racing-red group-hover:to-racing-red transition-all">
-                    {stats.lists}
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-1">Lists</div>
-                </div>
-                <div className="text-center group cursor-pointer">
-                  <div className="text-2xl sm:text-3xl font-bold bg-gradient-to-br from-racing-red to-racing-red/60 bg-clip-text text-transparent group-hover:from-racing-red group-hover:to-racing-red transition-all">
-                    {stats.followers}
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-1">Followers</div>
-                </div>
-                <div className="text-center group cursor-pointer">
-                  <div className="text-2xl sm:text-3xl font-bold bg-gradient-to-br from-racing-red to-racing-red/60 bg-clip-text text-transparent group-hover:from-racing-red group-hover:to-racing-red transition-all">
-                    {stats.following}
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-1">Following</div>
-                </div>
-              </Card>
-
-              {/* Favourites */}
-              {(statsDoc?.exists() && (statsDoc.data()?.favoriteDriver || statsDoc.data()?.favoriteCircuit || statsDoc.data()?.favoriteTeam)) && (
-                <div className="flex flex-wrap gap-4 mt-6">
+            {/* Favourites */}
+            {(statsDoc?.exists() && (statsDoc.data()?.favoriteDriver || statsDoc.data()?.favoriteCircuit || statsDoc.data()?.favoriteTeam)) && (
+              <div className="mb-6">
+                <h3 className="text-sm font-semibold mb-3">F1 Favorites</h3>
+                <div className="space-y-2 text-sm">
                   {statsDoc.data()?.favoriteDriver && (
-                    <Badge variant="secondary" className="gap-2 py-2 px-3">
-                      <Heart className="w-4 h-4 fill-red-500 text-red-500" />
-                      Favorite Driver: {statsDoc.data().favoriteDriver}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Heart className="w-4 h-4 text-racing-red" />
+                      <span className="text-muted-foreground">Driver:</span>
+                      <span className="font-semibold">{statsDoc.data().favoriteDriver}</span>
+                    </div>
                   )}
                   {statsDoc.data()?.favoriteCircuit && (
-                    <Badge variant="secondary" className="gap-2 py-2 px-3">
-                      <Heart className="w-4 h-4 fill-red-500 text-red-500" />
-                      Favorite Circuit: {statsDoc.data().favoriteCircuit}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Heart className="w-4 h-4 text-racing-red" />
+                      <span className="text-muted-foreground">Circuit:</span>
+                      <span className="font-semibold">{statsDoc.data().favoriteCircuit}</span>
+                    </div>
                   )}
                   {statsDoc.data()?.favoriteTeam && (
-                    <Badge variant="secondary" className="gap-2 py-2 px-3">
-                      <Heart className="w-4 h-4 fill-red-500 text-red-500" />
-                      Favorite Team: {statsDoc.data().favoriteTeam}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Heart className="w-4 h-4 text-racing-red" />
+                      <span className="text-muted-foreground">Team:</span>
+                      <span className="font-semibold">{statsDoc.data().favoriteTeam}</span>
+                    </div>
                   )}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -387,27 +422,97 @@ const Profile = () => {
           </TabsContent>
 
           <TabsContent value="lists">
-            <EmptyState
-              icon={List}
-              title="No lists yet"
-              description="Create custom lists to organize your favorite races"
-            />
+            {loading ? (
+              <div className="text-center py-12 text-muted-foreground">Loading...</div>
+            ) : lists.length > 0 ? (
+              <div className="grid md:grid-cols-2 gap-4">
+                {lists.map((list) => (
+                  <Card
+                    key={list.id}
+                    className="p-6 hover:ring-2 hover:ring-racing-red transition-all cursor-pointer"
+                    onClick={() => navigate(`/list/${list.id}`)}
+                  >
+                    <div className="flex items-start gap-3 mb-3">
+                      <div className="w-12 h-12 bg-gradient-to-br from-racing-red/20 to-racing-red/5 rounded-xl flex items-center justify-center">
+                        <List className="w-6 h-6 text-racing-red" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-bold text-lg">{list.title}</h3>
+                        <p className="text-sm text-muted-foreground line-clamp-2">{list.description}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground pt-3 border-t">
+                      <span>{list.races?.length || 0} races</span>
+                      <div className="flex items-center gap-1">
+                        <Heart className="w-4 h-4" />
+                        {list.likesCount || 0}
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <EmptyState
+                icon={List}
+                title="No lists yet"
+                description="Create custom lists to organize your favorite races"
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="watchlist">
-            <EmptyState
-              icon={Eye}
-              title="Watchlist is empty"
-              description="Add races to your watchlist to keep track of what you want to watch"
-            />
+            {loading ? (
+              <div className="text-center py-12 text-muted-foreground">Loading...</div>
+            ) : watchlist.length > 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                {watchlist.map((item, idx) => (
+                  <RaceCard
+                    key={idx}
+                    season={item.raceYear}
+                    round={idx + 1}
+                    gpName={item.raceName}
+                    circuit={item.raceLocation}
+                    date={item.raceDate?.toDate?.()?.toISOString() || new Date().toISOString()}
+                    country={item.countryCode}
+                  />
+                ))}
+              </div>
+            ) : (
+              <EmptyState
+                icon={Eye}
+                title="Watchlist is empty"
+                description="Add races to your watchlist to keep track of what you want to watch"
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="likes">
-            <EmptyState
-              icon={Heart}
-              title="No likes yet"
-              description="Like reviews and lists to show your appreciation"
-            />
+            {loading ? (
+              <div className="text-center py-12 text-muted-foreground">Loading...</div>
+            ) : likes.length > 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                {likes.map((log) => (
+                  <RaceCard
+                    key={log.id}
+                    id={log.id}
+                    season={log.raceYear}
+                    round={log.round || 1}
+                    gpName={log.raceName}
+                    circuit={log.raceLocation}
+                    date={log.dateWatched?.toDate?.()?.toISOString() || new Date().toISOString()}
+                    rating={log.rating}
+                    watched={true}
+                    country={log.countryCode}
+                  />
+                ))}
+              </div>
+            ) : (
+              <EmptyState
+                icon={Heart}
+                title="No likes yet"
+                description="Like reviews and lists to show your appreciation"
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="followers">

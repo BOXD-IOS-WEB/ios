@@ -18,6 +18,7 @@ export interface WatchlistItem {
   raceName: string;
   raceLocation: string;
   raceDate: Date | Timestamp;
+  countryCode?: string;
   notes: string;
   reminderEnabled: boolean;
   createdAt: Date | Timestamp;
