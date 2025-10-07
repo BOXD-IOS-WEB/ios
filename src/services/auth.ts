@@ -25,8 +25,9 @@ export interface UserProfile {
 export const checkUsernameAvailable = async (username: string): Promise<boolean> => {
   try {
     console.log('[checkUsernameAvailable] Checking username:', username);
-    console.log('[checkUsernameAvailable] Auth state:', auth.currentUser ? 'authenticated' : 'unauthenticated');
-    console.log('[checkUsernameAvailable] Database type:', db.type);
+    console.log('[checkUsernameAvailable] Auth state:', auth.currentUser ? `authenticated (${auth.currentUser.uid})` : 'unauthenticated');
+    console.log('[checkUsernameAvailable] Database:', db);
+    console.log('[checkUsernameAvailable] Database _settings:', (db as any)._settings);
 
     const normalizedUsername = username.toLowerCase().trim();
     const usersRef = collection(db, 'users');
@@ -51,11 +52,13 @@ export const checkUsernameAvailable = async (username: string): Promise<boolean>
     console.error('[checkUsernameAvailable] Error code:', error.code);
     console.error('[checkUsernameAvailable] Error message:', error.message);
     console.error('[checkUsernameAvailable] Error stack:', error.stack);
+    console.error('[checkUsernameAvailable] Error customData:', error.customData);
 
     // If we get a permission error, we can't check - assume not available for safety
     if (error.code === 'permission-denied') {
-      console.warn('[checkUsernameAvailable] ⚠️ Permission denied - Rules are deployed but SDK may be caching old rules');
-      console.warn('[checkUsernameAvailable] ⚠️ Try: 1) Clear browser cache, 2) Use incognito mode, 3) Try different browser');
+      console.error('[checkUsernameAvailable] ⚠️ PERMISSION DENIED ERROR');
+      console.error('[checkUsernameAvailable] ⚠️ This should NOT happen with current rules');
+      console.error('[checkUsernameAvailable] ⚠️ Please copy the FULL console output and share it');
       throw new Error('Unable to verify username. Please clear your browser cache and try again.');
     }
 

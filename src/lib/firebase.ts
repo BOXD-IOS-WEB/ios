@@ -13,18 +13,23 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase only if it hasn't been initialized yet
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+let app: any;
+let db: any;
+
+if (!getApps().length) {
+  app = initializeApp(firebaseConfig);
+  // Initialize Firestore with memory-only cache (no persistence)
+  // This ensures rules are checked against the server, not cached locally
+  db = initializeFirestore(app, {
+    localCache: memoryLocalCache()
+  });
+} else {
+  app = getApp();
+  db = getFirestore(app);
+}
 
 export const auth = getAuth(app);
-
-// Initialize Firestore with memory-only cache (no persistence)
-// This ensures rules are checked against the server, not cached locally
-export const db = !getApps().length
-  ? initializeFirestore(app, {
-      localCache: memoryLocalCache()
-    })
-  : getFirestore(app);
-
+export { db };
 export const storage = getStorage(app);
 
 // Debug logging
