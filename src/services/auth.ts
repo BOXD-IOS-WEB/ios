@@ -31,43 +31,67 @@ export const checkUsernameAvailable = async (username: string): Promise<boolean>
 };
 
 export const signUp = async (email: string, password: string, name: string, username: string) => {
-  const isAvailable = await checkUsernameAvailable(username);
-  if (!isAvailable) {
-    throw new Error('Username is already taken');
+  try {
+    console.log('[signUp] Starting signup process for:', email);
+
+    const isAvailable = await checkUsernameAvailable(username);
+    if (!isAvailable) {
+      throw new Error('Username is already taken');
+    }
+
+    console.log('[signUp] Creating user account...');
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+    console.log('[signUp] User created with UID:', user.uid);
+
+    // Send verification email
+    console.log('[signUp] Sending verification email to:', user.email);
+    try {
+      await sendEmailVerification(user);
+      console.log('[signUp] Verification email sent successfully!');
+    } catch (emailError: any) {
+      console.error('[signUp] Failed to send verification email:', emailError);
+      console.error('[signUp] Error code:', emailError.code);
+      console.error('[signUp] Error message:', emailError.message);
+      // Don't throw - continue with account creation even if email fails
+    }
+
+    console.log('[signUp] Creating user profile document...');
+    const userProfile: Omit<UserProfile, 'id'> = {
+      name,
+      username: username.toLowerCase().trim(),
+      email,
+      description: '',
+      photoURL: '',
+      created_at: Timestamp.now() as any,
+      updated_at: Timestamp.now() as any
+    };
+
+    await setDoc(doc(db, 'users', user.uid), userProfile);
+    console.log('[signUp] User profile created');
+
+    console.log('[signUp] Creating user stats document...');
+    const userStats = {
+      racesWatched: 0,
+      reviewsCount: 0,
+      listsCount: 0,
+      followersCount: 0,
+      followingCount: 0,
+      totalHoursWatched: 0,
+      favoriteDriver: '',
+      favoriteCircuit: '',
+      favoriteTeam: ''
+    };
+
+    await setDoc(doc(db, 'userStats', user.uid), userStats);
+    console.log('[signUp] User stats created');
+    console.log('[signUp] Signup completed successfully!');
+
+    return user;
+  } catch (error: any) {
+    console.error('[signUp] Signup failed:', error);
+    throw error;
   }
-  const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-  const user = userCredential.user;
-
-  // Send verification email
-  await sendEmailVerification(user);
-
-  const userProfile: Omit<UserProfile, 'id'> = {
-    name,
-    username: username.toLowerCase().trim(),
-    email,
-    description: '',
-    photoURL: '',
-    created_at: Timestamp.now() as any,
-    updated_at: Timestamp.now() as any
-  };
-
-  await setDoc(doc(db, 'users', user.uid), userProfile);
-
-  const userStats = {
-    racesWatched: 0,
-    reviewsCount: 0,
-    listsCount: 0,
-    followersCount: 0,
-    followingCount: 0,
-    totalHoursWatched: 0,
-    favoriteDriver: '',
-    favoriteCircuit: '',
-    favoriteTeam: ''
-  };
-
-  await setDoc(doc(db, 'userStats', user.uid), userStats);
-
-  return user;
 };
 
 export const resendVerificationEmail = async () => {
