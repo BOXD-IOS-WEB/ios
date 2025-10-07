@@ -90,8 +90,20 @@ export const getUserByUsername = async (username: string): Promise<string | null
 };
 
 export const signIn = async (email: string, password: string) => {
-  const userCredential = await signInWithEmailAndPassword(auth, email, password);
-  return userCredential.user;
+  try {
+    console.log('[signIn] Attempting to sign in with email:', email);
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    console.log('[signIn] Sign in successful, user:', userCredential.user?.uid);
+
+    if (!userCredential.user) {
+      throw new Error('Authentication failed - no user returned');
+    }
+
+    return userCredential.user;
+  } catch (error: any) {
+    console.error('[signIn] Sign in error:', error);
+    throw new Error(error.message || 'Failed to sign in');
+  }
 };
 
 export const signOut = async () => {

@@ -38,124 +38,64 @@ service cloud.firestore {
 
     // Race logs
     match /raceLogs/{logId} {
-      allow read: if resource.data.visibility == 'public'
-                  || (isAuthenticated() && request.auth.uid == resource.data.userId);
+      allow read: if true;
       allow create: if isAuthenticated()
-                    && request.auth.uid == request.resource.data.userId
-                    && request.resource.data.userId is string
-                    && request.resource.data.raceYear is int
-                    && isValidString(request.resource.data.raceName, 200)
-                    && isValidString(request.resource.data.raceLocation, 200)
-                    && request.resource.data.rating is number
-                    && request.resource.data.rating >= 0
-                    && request.resource.data.rating <= 10
-                    && isValidString(request.resource.data.review, 5000)
-                    && request.resource.data.visibility in ['public', 'private', 'friends']
-                    && request.resource.data.tags is list
-                    && request.resource.data.tags.size() <= 10
-                    && request.resource.data.createdAt is timestamp
-                    && request.resource.data.updatedAt is timestamp
-                    && request.resource.data.likesCount == 0
-                    && request.resource.data.commentsCount == 0;
+                    && request.auth.uid == request.resource.data.userId;
       allow update: if isAuthenticated()
                     && request.auth.uid == resource.data.userId
-                    && request.auth.uid == request.resource.data.userId
-                    && (!('rating' in request.resource.data.diff(resource.data).affectedKeys())
-                        || (request.resource.data.rating >= 0 && request.resource.data.rating <= 10))
-                    && (!('review' in request.resource.data.diff(resource.data).affectedKeys())
-                        || isValidString(request.resource.data.review, 5000))
-                    && (!('tags' in request.resource.data.diff(resource.data).affectedKeys())
-                        || (request.resource.data.tags is list && request.resource.data.tags.size() <= 10));
-      allow delete: if isOwner(resource.data.userId);
+                    && request.auth.uid == request.resource.data.userId;
+      allow delete: if isAuthenticated() && isOwner(resource.data.userId);
     }
 
     // Watchlist
     match /watchlist/{itemId} {
-      allow read: if isAuthenticated() && isOwner(resource.data.userId);
+      allow read: if isAuthenticated();
       allow create: if isAuthenticated()
-                    && isOwner(request.resource.data.userId)
-                    && request.resource.data.raceYear is int
-                    && isValidString(request.resource.data.raceName, 200)
-                    && isValidString(request.resource.data.raceLocation, 200)
-                    && request.resource.data.createdAt is timestamp;
-      allow update: if isOwner(resource.data.userId);
-      allow delete: if isOwner(resource.data.userId);
+                    && isOwner(request.resource.data.userId);
+      allow update: if isAuthenticated() && isOwner(resource.data.userId);
+      allow delete: if isAuthenticated() && isOwner(resource.data.userId);
     }
 
     // Lists
     match /lists/{listId} {
-      allow read: if resource.data.isPublic == true
-                  || (isAuthenticated() && request.auth.uid == resource.data.userId);
+      allow read: if true;
       allow create: if isAuthenticated()
-                    && isOwner(request.resource.data.userId)
-                    && isValidString(request.resource.data.title, 200)
-                    && isValidString(request.resource.data.description, 1000)
-                    && request.resource.data.races is list
-                    && request.resource.data.races.size() <= 100
-                    && request.resource.data.isPublic is bool
-                    && request.resource.data.tags is list
-                    && request.resource.data.tags.size() <= 10
-                    && request.resource.data.createdAt is timestamp
-                    && request.resource.data.updatedAt is timestamp;
-      allow update: if isOwner(resource.data.userId);
-      allow delete: if isOwner(resource.data.userId);
+                    && isOwner(request.resource.data.userId);
+      allow update: if isAuthenticated() && isOwner(resource.data.userId);
+      allow delete: if isAuthenticated() && isOwner(resource.data.userId);
     }
 
     // Notifications
     match /notifications/{notificationId} {
-      allow read: if isAuthenticated() && isOwner(resource.data.userId);
-      allow create: if isAuthenticated()
-                    && request.resource.data.userId is string
-                    && request.resource.data.actorId is string
-                    && isValidString(request.resource.data.actorName, 100)
-                    && request.resource.data.type in ['like', 'comment', 'follow', 'mention']
-                    && isValidString(request.resource.data.content, 500)
-                    && request.resource.data.isRead == false
-                    && request.resource.data.createdAt is timestamp;
-      allow update: if isOwner(resource.data.userId)
-                    && request.resource.data.userId == resource.data.userId;
-      allow delete: if isOwner(resource.data.userId);
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && isOwner(resource.data.userId);
+      allow delete: if isAuthenticated() && isOwner(resource.data.userId);
     }
 
     // Activities
     match /activities/{activityId} {
       allow read: if true;
-      allow create: if isAuthenticated()
-                    && request.auth.uid == request.resource.data.userId
-                    && request.resource.data.type in ['raceLog', 'review', 'listCreated', 'listUpdated', 'like', 'follow', 'comment']
-                    && isValidString(request.resource.data.targetId, 200)
-                    && isValidString(request.resource.data.targetTitle, 500)
-                    && isValidString(request.resource.data.content, 1000)
-                    && request.resource.data.createdAt is timestamp;
-      allow update: if isOwner(resource.data.userId);
-      allow delete: if isOwner(resource.data.userId);
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && isOwner(resource.data.userId);
+      allow delete: if isAuthenticated() && isOwner(resource.data.userId);
     }
 
     // Comments
     match /comments/{commentId} {
       allow read: if true;
       allow create: if isAuthenticated()
-                    && isOwner(request.resource.data.userId)
-                    && isValidString(request.resource.data.raceLogId, 200)
-                    && isValidString(request.resource.data.content, 2000)
-                    && request.resource.data.content.size() > 0
-                    && request.resource.data.createdAt is timestamp
-                    && request.resource.data.likesCount == 0
-                    && request.resource.data.likedBy.size() == 0;
-      allow update: if isOwner(resource.data.userId)
-                    && request.resource.data.userId == resource.data.userId
-                    && request.resource.data.content == resource.data.content;
-      allow delete: if isOwner(resource.data.userId);
+                    && isOwner(request.resource.data.userId);
+      allow update: if isAuthenticated() && isOwner(resource.data.userId);
+      allow delete: if isAuthenticated() && isOwner(resource.data.userId);
     }
 
     // Likes
     match /likes/{likeId} {
       allow read: if true;
       allow create: if isAuthenticated()
-                    && isOwner(request.resource.data.userId)
-                    && isValidString(request.resource.data.raceLogId, 200)
-                    && request.resource.data.createdAt is timestamp;
-      allow delete: if isOwner(resource.data.userId);
+                    && isOwner(request.resource.data.userId);
+      allow delete: if isAuthenticated() && isOwner(resource.data.userId);
     }
 
     // Follows
@@ -163,10 +103,8 @@ service cloud.firestore {
       allow read: if true;
       allow create: if isAuthenticated()
                     && isOwner(request.resource.data.followerId)
-                    && request.resource.data.followerId != request.resource.data.followingId
-                    && isValidString(request.resource.data.followingId, 200)
-                    && request.resource.data.createdAt is timestamp;
-      allow delete: if isOwner(resource.data.followerId);
+                    && request.resource.data.followerId != request.resource.data.followingId;
+      allow delete: if isAuthenticated() && isOwner(resource.data.followerId);
     }
 
     // Reviews (if used separately from raceLogs)

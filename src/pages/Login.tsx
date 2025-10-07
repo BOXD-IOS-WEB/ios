@@ -83,15 +83,28 @@ const Login = () => {
         });
         navigate('/onboarding');
       } else {
+        console.log('[Login] Starting sign in...');
         const user = await signIn(email, password);
+        console.log('[Login] Sign in successful, user:', user?.uid);
+
+        if (!user) {
+          throw new Error('Sign in failed - no user returned');
+        }
+
         toast({ title: 'Welcome back!' });
 
+        console.log('[Login] Fetching user document...');
         const userDoc = await getDoc(doc(db, 'users', user.uid));
+        console.log('[Login] User document exists:', userDoc.exists());
+
         const userData = userDoc.data();
+        console.log('[Login] User data:', userData);
 
         if (!userDoc.exists() || !userData?.onboardingCompleted) {
+          console.log('[Login] Redirecting to onboarding');
           navigate('/onboarding');
         } else {
+          console.log('[Login] Redirecting to home');
           navigate('/');
         }
       }
