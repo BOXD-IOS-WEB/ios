@@ -244,10 +244,10 @@ const RaceDetail = () => {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Poster & Info */}
-            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
-              <div className="w-32 sm:w-48 md:w-64 aspect-square sm:aspect-[3/4] md:aspect-[2/3] bg-gradient-to-br from-racing-red/20 to-background rounded-lg overflow-hidden relative flex-shrink-0">
-                <div className="w-full h-full flex flex-col items-center justify-center p-2 sm:p-3 md:p-4 space-y-2 sm:space-y-3 md:space-y-4">
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 md:w-24 md:h-24 rounded-full overflow-hidden border-2 sm:border-3 md:border-4 border-white/20 shadow-lg">
+            <div className="flex flex-col md:flex-row gap-4 md:gap-6">
+              <div className="w-full md:w-56 lg:w-64 aspect-[16/9] md:aspect-[2/3] bg-gradient-to-br from-racing-red/20 to-background rounded-lg overflow-hidden relative">
+                <div className="w-full h-full flex flex-col items-center justify-center p-4 md:p-6 space-y-3 md:space-y-4">
+                  <div className="w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 rounded-full overflow-hidden border-3 md:border-4 border-white/20 shadow-lg">
                     <img
                       src={flagUrl}
                       alt={race.country}
@@ -255,13 +255,13 @@ const RaceDetail = () => {
                     />
                   </div>
                   <div className="text-center">
-                    <div className="text-lg sm:text-2xl md:text-3xl font-bold">{race.season}</div>
-                    <div className="text-[10px] sm:text-xs md:text-sm mt-1 sm:mt-2 font-medium line-clamp-2 px-1">{race.gpName}</div>
+                    <div className="text-2xl md:text-3xl font-bold">{race.season}</div>
+                    <div className="text-sm md:text-base mt-2 font-medium line-clamp-2">{race.gpName}</div>
                   </div>
                 </div>
               </div>
 
-              <div className="flex-1 space-y-3 sm:space-y-4">
+              <div className="flex-1 space-y-3 md:space-y-4">
                 <div>
                   <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2">{race.gpName}</h1>
                   <p className="text-base sm:text-lg md:text-xl text-muted-foreground">{race.season} • Round {race.round}</p>
@@ -318,18 +318,18 @@ const RaceDetail = () => {
                   </Button>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 sm:gap-4 pt-3 sm:pt-4">
+                <div className="grid grid-cols-2 gap-3 md:gap-4 pt-3 md:pt-4">
                   <div>
-                    <p className="text-xs sm:text-sm text-muted-foreground">Circuit</p>
-                    <p className="text-sm sm:text-base font-semibold">{race.circuit}</p>
+                    <p className="text-sm text-muted-foreground">Circuit</p>
+                    <p className="font-semibold">{race.circuit}</p>
                   </div>
                   <div>
-                    <p className="text-xs sm:text-sm text-muted-foreground">Country</p>
-                    <p className="text-sm sm:text-base font-semibold">{race.country}</p>
+                    <p className="text-sm text-muted-foreground">Country</p>
+                    <p className="font-semibold">{race.country}</p>
                   </div>
                   <div className="col-span-2">
-                    <p className="text-xs sm:text-sm text-muted-foreground">Date</p>
-                    <p className="text-sm sm:text-base font-semibold">
+                    <p className="text-sm text-muted-foreground">Date</p>
+                    <p className="font-semibold">
                       {new Date(race.date).toLocaleDateString('en-US', {
                         weekday: 'long',
                         year: 'numeric',
