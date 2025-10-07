@@ -239,8 +239,8 @@ const RaceDetail = () => {
     <div className="min-h-screen bg-background">
       <Header />
       
-      <main className="container py-8">
-        <div className="grid lg:grid-cols-3 gap-8">
+      <main className="container px-4 sm:px-6 py-6 sm:py-8">
+        <div className="grid lg:grid-cols-3 gap-6 sm:gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Poster & Info */}
@@ -277,9 +277,9 @@ const RaceDetail = () => {
                 <div className="flex flex-wrap gap-2">
                   <LogRaceDialog
                     trigger={
-                      <Button className="gap-2">
+                      <Button size="sm" className="gap-2">
                         <Plus className="w-4 h-4" />
-                        Log
+                        <span className="hidden xs:inline">Log</span>
                       </Button>
                     }
                   />
@@ -289,24 +289,25 @@ const RaceDetail = () => {
                     raceLocation={race.circuit}
                     countryCode={race.countryCode}
                     trigger={
-                      <Button variant="outline" className="gap-2">
+                      <Button size="sm" variant="outline" className="gap-2">
                         <List className="w-4 h-4" />
-                        Add to List
+                        <span className="hidden sm:inline">Add to List</span>
                       </Button>
                     }
                   />
                   <Button
+                    size="sm"
                     variant="outline"
                     className="gap-2"
                     onClick={handleWatchlistToggle}
                   >
                     <Eye className={`w-4 h-4 ${isInWatchlist ? 'fill-current' : ''}`} />
-                    {isInWatchlist ? 'In Watchlist' : 'Add to Watchlist'}
+                    <span className="hidden sm:inline">{isInWatchlist ? 'In Watchlist' : 'Watchlist'}</span>
                   </Button>
                   {id && (
-                    <Button variant="outline" className="gap-2" onClick={handleLikeRace}>
+                    <Button size="sm" variant="outline" className="gap-2" onClick={handleLikeRace}>
                       <Heart className={`w-4 h-4 ${isLiked ? 'fill-red-500 text-red-500' : ''}`} />
-                      {isLiked ? 'Liked' : 'Like'}
+                      <span className="hidden xs:inline">{isLiked ? 'Liked' : 'Like'}</span>
                     </Button>
                   )}
                   <Button variant="outline" size="icon" onClick={handleBookmark}>

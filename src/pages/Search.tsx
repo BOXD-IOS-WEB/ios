@@ -75,8 +75,8 @@ const Search = () => {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="container py-8">
-        <div className="max-w-4xl mx-auto space-y-8">
+      <main className="container px-4 sm:px-6 py-6 sm:py-8">
+        <div className="max-w-4xl mx-auto space-y-6 sm:space-y-8">
           <div>
             <h1 className="text-3xl sm:text-4xl font-bold mb-6">Search</h1>
 
@@ -115,7 +115,7 @@ const Search = () => {
                     {raceResults.length > 0 && (
                       <div className="space-y-4">
                         <h2 className="text-xl font-semibold">Races</h2>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
                           {raceResults.map((result) => {
                             const posterUrl = getPosterUrl(result.metadata?.circuit_short_name || result.metadata?.circuit_key);
                             return (

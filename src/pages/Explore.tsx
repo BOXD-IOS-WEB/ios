@@ -104,9 +104,9 @@ const Explore = () => {
     <div className="min-h-screen bg-background">
       <Header />
       
-      <main className="container py-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">Explore</h1>
+      <main className="container px-4 sm:px-6 py-6 sm:py-8">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-3xl sm:text-4xl font-bold mb-2">Explore</h1>
           <p className="text-muted-foreground">
             Discover trending races, top reviews, and popular lists from the community
           </p>
@@ -165,7 +165,7 @@ const Explore = () => {
               ) : (
                 <>
                   <p className="text-xs text-muted-foreground mb-2">Showing {seasonRaces.length} races for {selectedSeason}</p>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
                     {seasonRaces.map((race) => {
                       console.log('Rendering race card in Explore:', race.meeting_name, race);
                       return (

@@ -53,9 +53,9 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <Header />
       
-      <main className="container py-8 space-y-12">
+      <main className="container px-4 sm:px-6 py-6 sm:py-8 space-y-8 sm:space-y-12">
         {/* Hero Section */}
-        <section className="relative text-center space-y-4 py-16 md:py-24 px-4 rounded-2xl overflow-hidden">
+        <section className="relative text-center space-y-4 py-12 sm:py-16 md:py-24 px-4 sm:px-6 rounded-xl sm:rounded-2xl overflow-hidden">
           {/* Background Image */}
           <div
             className="absolute inset-0 z-0"
@@ -88,7 +88,7 @@ const Index = () => {
           </div>
         </section>
 
-        <section className="space-y-6 px-4">
+        <section className="space-y-4 sm:space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h2 className="text-xl sm:text-2xl font-bold">Current Season</h2>
@@ -106,7 +106,7 @@ const Index = () => {
           ) : currentRaces.length > 0 ? (
             <>
               <p className="text-xs text-muted-foreground mb-2">Showing {currentRaces.length} races</p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
                 {currentRaces.map((race) => {
                   console.log('Rendering race card:', race.meeting_name, race);
                   const posterUrl = getPosterUrl(race.circuit_short_name || race.circuit_key);
@@ -130,10 +130,10 @@ const Index = () => {
           )}
         </section>
 
-        <section className="space-y-6">
+        <section className="space-y-4 sm:space-y-6">
           <div>
-            <h2 className="text-2xl font-bold">Activity</h2>
-            <p className="text-muted-foreground">See what the community is watching</p>
+            <h2 className="text-xl sm:text-2xl font-bold">Activity</h2>
+            <p className="text-sm sm:text-base text-muted-foreground">See what the community is watching</p>
           </div>
 
           <Tabs defaultValue={auth.currentUser ? "following" : "global"}>
@@ -156,16 +156,16 @@ const Index = () => {
           </Tabs>
         </section>
 
-        <section className="space-y-6">
+        <section className="space-y-4 sm:space-y-6">
           <div>
-            <h2 className="text-2xl font-bold">Recently Logged</h2>
-            <p className="text-muted-foreground">Latest races logged by the community</p>
+            <h2 className="text-xl sm:text-2xl font-bold">Recently Logged</h2>
+            <p className="text-sm sm:text-base text-muted-foreground">Latest races logged by the community</p>
           </div>
 
           {loading ? (
             <div className="text-center py-12 text-muted-foreground">Loading...</div>
           ) : popularRaces.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
               {popularRaces.map((race) => (
                 <RaceCard
                   key={race.id}

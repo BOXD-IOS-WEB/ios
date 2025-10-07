@@ -179,14 +179,14 @@ const Profile = () => {
     <div className="min-h-screen bg-background">
       <Header />
       
-      <main className="container py-8">
+      <main className="container px-4 sm:px-6 py-6 sm:py-8">
         {/* Profile Header */}
-        <div className="space-y-6 mb-8">
+        <div className="space-y-6 mb-6 sm:mb-8">
           {/* Cover/Banner */}
           <div className="h-48 sm:h-56 bg-gradient-to-r from-racing-red/20 to-racing-red/10 rounded-lg" />
 
           {/* Profile Info */}
-          <div className="-mt-16 sm:-mt-20 px-4 sm:px-6">
+          <div className="-mt-16 sm:-mt-20 px-0 sm:px-6">
             {/* Avatar */}
             <div className="flex items-end justify-between mb-4">
               <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full border-4 border-background overflow-hidden bg-muted flex items-center justify-center shadow-lg">
@@ -353,7 +353,7 @@ const Profile = () => {
             {loading ? (
               <div className="text-center py-12 text-muted-foreground">Loading...</div>
             ) : logs.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
                 {logs.map((race, idx) => (
                   <RaceCard key={idx} {...race} />
                 ))}
@@ -464,7 +464,7 @@ const Profile = () => {
             {loading ? (
               <div className="text-center py-12 text-muted-foreground">Loading...</div>
             ) : watchlist.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
                 {watchlist.map((item, idx) => (
                   <RaceCard
                     key={idx}
@@ -490,7 +490,7 @@ const Profile = () => {
             {loading ? (
               <div className="text-center py-12 text-muted-foreground">Loading...</div>
             ) : likes.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
                 {likes.map((log) => (
                   <RaceCard
                     key={log.id}
