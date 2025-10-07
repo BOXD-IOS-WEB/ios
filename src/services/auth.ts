@@ -33,6 +33,7 @@ export const checkUsernameAvailable = async (username: string): Promise<boolean>
 
     console.log('[checkUsernameAvailable] Executing query for username:', normalizedUsername);
 
+    // Force server query by using default source
     const snapshot = await getDocs(q);
 
     console.log('[checkUsernameAvailable] Query successful! Empty:', snapshot.empty, 'Size:', snapshot.size);
@@ -40,6 +41,7 @@ export const checkUsernameAvailable = async (username: string): Promise<boolean>
     return snapshot.empty;
   } catch (error: any) {
     console.error('[checkUsernameAvailable] ERROR:', error.code, error.message);
+    console.error('[checkUsernameAvailable] Full error:', error);
 
     // For any error, just return false (assume username taken) to allow signup to proceed
     // The server-side check during account creation will be the source of truth

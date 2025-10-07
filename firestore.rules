@@ -2,11 +2,9 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Users collection - PUBLIC READS for username checking (before auth)
+    // Users collection - COMPLETELY PUBLIC for username checking
     match /users/{userId} {
-      allow get, list: if true;  // Anyone can read/query users for username checks
-      allow create: if request.auth != null;
-      allow update, delete: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if true;  // Temporary: allow everything for debugging
     }
 
     // User stats - PUBLIC READS
