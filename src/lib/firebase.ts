@@ -1,6 +1,6 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, setPersistence, browserLocalPersistence } from 'firebase/auth';
-import { getFirestore, initializeFirestore, memoryLocalCache } from 'firebase/firestore';
+import { getFirestore, initializeFirestore, memoryLocalCache, clearIndexedDbPersistence } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
@@ -12,19 +12,30 @@ const firebaseConfig = {
   appId: "1:750144678811:web:47f55a4293e9b7e66dcf3e"
 };
 
-// Initialize Firebase only if it hasn't been initialized yet
-let app: any;
-let db: any;
+// Clear any cached Firestore data to force re-fetch of rules
+// This is a one-time fix for cached permission rules
+if (typeof window !== 'undefined' && !getApps().length) {
+  const dbName = `firestore/${firebaseConfig.projectId}/(default)`;
+  indexedDB.deleteDatabase(dbName).onsuccess = () => {
+    console.log('[Firebase] Cleared Firestore IndexedDB cache');
+  };
+}
 
-if (!getApps().length) {
-  app = initializeApp(firebaseConfig);
-  // Initialize Firestore with memory-only cache (no persistence)
-  // This ensures rules are checked against the server, not cached locally
+// Initialize Firebase
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+
+// IMPORTANT: Always use initializeFirestore on first init to disable cache
+// This fixes permission-denied errors caused by cached old rules
+let db: any;
+try {
+  // Try to initialize with no cache
   db = initializeFirestore(app, {
     localCache: memoryLocalCache()
   });
-} else {
-  app = getApp();
+  console.log('[Firebase] Initialized Firestore with memory cache');
+} catch (error: any) {
+  // If already initialized, get the existing instance
+  console.warn('[Firebase] Firestore already initialized, using existing instance');
   db = getFirestore(app);
 }
 
