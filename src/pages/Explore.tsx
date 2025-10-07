@@ -113,28 +113,32 @@ const Explore = () => {
         </div>
 
         <Tabs defaultValue="seasons" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="seasons" className="gap-2">
-              <History className="w-4 h-4" />
-              Browse Seasons
-            </TabsTrigger>
-            <TabsTrigger value="trending" className="gap-2">
-              <TrendingUp className="w-4 h-4" />
-              Trending
-            </TabsTrigger>
-            <TabsTrigger value="reviews" className="gap-2">
-              <Star className="w-4 h-4" />
-              Top Reviews
-            </TabsTrigger>
-            <TabsTrigger value="lists" className="gap-2">
-              <List className="w-4 h-4" />
-              Popular Lists
-            </TabsTrigger>
-            <TabsTrigger value="upcoming" className="gap-2">
-              <Calendar className="w-4 h-4" />
-              This Week in F1
-            </TabsTrigger>
-          </TabsList>
+          <div className="w-full overflow-x-auto">
+            <TabsList className="w-full sm:w-auto inline-flex">
+              <TabsTrigger value="seasons" className="gap-1 sm:gap-2 text-xs sm:text-sm whitespace-nowrap">
+                <History className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden xs:inline">Browse Seasons</span>
+                <span className="xs:hidden">Seasons</span>
+              </TabsTrigger>
+              <TabsTrigger value="trending" className="gap-1 sm:gap-2 text-xs sm:text-sm whitespace-nowrap">
+                <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" />
+                Trending
+              </TabsTrigger>
+              <TabsTrigger value="reviews" className="gap-1 sm:gap-2 text-xs sm:text-sm whitespace-nowrap">
+                <Star className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden xs:inline">Top </span>Reviews
+              </TabsTrigger>
+              <TabsTrigger value="lists" className="gap-1 sm:gap-2 text-xs sm:text-sm whitespace-nowrap">
+                <List className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden xs:inline">Popular </span>Lists
+              </TabsTrigger>
+              <TabsTrigger value="upcoming" className="gap-1 sm:gap-2 text-xs sm:text-sm whitespace-nowrap">
+                <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">This Week in F1</span>
+                <span className="sm:hidden">This Week</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="seasons" className="space-y-6">
             <div>

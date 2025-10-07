@@ -139,7 +139,8 @@ const Diary = () => {
               trigger={
                 <Button className="gap-2">
                   <Plus className="w-4 h-4" />
-                  Log Race
+                  <span className="hidden xs:inline">Log Race</span>
+                  <span className="xs:hidden">Log</span>
                 </Button>
               }
             />

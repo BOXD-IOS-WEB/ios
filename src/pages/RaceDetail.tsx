@@ -330,12 +330,21 @@ const RaceDetail = () => {
                   <div className="col-span-2">
                     <p className="text-xs sm:text-sm text-muted-foreground">Date</p>
                     <p className="text-sm sm:text-base font-semibold">
-                      {new Date(race.date).toLocaleDateString('en-US', {
-                        weekday: 'long',
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })}
+                      <span className="hidden sm:inline">
+                        {new Date(race.date).toLocaleDateString('en-US', {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </span>
+                      <span className="sm:hidden">
+                        {new Date(race.date).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric'
+                        })}
+                      </span>
                     </p>
                   </div>
                 </div>

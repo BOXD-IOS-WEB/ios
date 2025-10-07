@@ -13,6 +13,7 @@ import {
   getDoc
 } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
+import { createNotification } from './notifications';
 
 export interface Comment {
   id?: string;
@@ -63,6 +64,30 @@ export const addComment = async (raceLogId: string, content: string) => {
   await updateDoc(doc(db, 'raceLogs', raceLogId), {
     commentsCount: increment(1)
   });
+
+  // Create notification for the race log owner
+  try {
+    const raceLogDoc = await getDoc(doc(db, 'raceLogs', raceLogId));
+    if (raceLogDoc.exists()) {
+      const raceLogOwnerId = raceLogDoc.data().userId;
+      if (raceLogOwnerId && raceLogOwnerId !== user.uid) {
+        const raceName = raceLogDoc.data().raceName || 'your race log';
+
+        await createNotification({
+          userId: raceLogOwnerId,
+          type: 'comment',
+          actorId: user.uid,
+          actorName: username,
+          actorPhotoURL: userAvatar,
+          content: `commented on your review of ${raceName}`,
+          linkTo: `/race/${raceLogId}`,
+        });
+        console.log('[addComment] Notification created for comment');
+      }
+    }
+  } catch (error) {
+    console.error('[addComment] Failed to create notification:', error);
+  }
 
   return docRef.id;
 };

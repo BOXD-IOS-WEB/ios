@@ -13,6 +13,7 @@ import {
 } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { createActivity } from './activity';
+import { createNotification } from './notifications';
 
 export interface Follow {
   id?: string;
@@ -61,6 +62,27 @@ export const followUser = async (userIdToFollow: string) => {
     });
   } catch (error) {
     console.error('Failed to create activity:', error);
+  }
+
+  // Create notification for the followed user
+  try {
+    const followerDoc = await getDoc(doc(db, 'users', user.uid));
+    const followerData = followerDoc.exists() ? followerDoc.data() : {};
+    const followerName = followerData.name || user.displayName || user.email?.split('@')[0] || 'Someone';
+    const followerPhoto = followerData.photoURL || user.photoURL;
+
+    await createNotification({
+      userId: userIdToFollow,
+      type: 'follow',
+      actorId: user.uid,
+      actorName: followerName,
+      actorPhotoURL: followerPhoto,
+      content: 'started following you',
+      linkTo: `/user/${user.uid}`,
+    });
+    console.log('[followUser] Notification created for follow');
+  } catch (error) {
+    console.error('[followUser] Failed to create notification:', error);
   }
 };
 

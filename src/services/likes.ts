@@ -13,6 +13,7 @@ import {
 } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { createActivity } from './activity';
+import { createNotification } from './notifications';
 
 export interface Like {
   id?: string;
@@ -60,6 +61,31 @@ export const toggleLike = async (raceLogId: string) => {
         });
       } catch (error) {
         console.error('Failed to create activity:', error);
+      }
+
+      // Create notification for the race log owner
+      try {
+        const raceLogOwnerId = raceLogDoc.data().userId;
+        if (raceLogOwnerId && raceLogOwnerId !== user.uid) {
+          const likerDoc = await getDoc(doc(db, 'users', user.uid));
+          const likerData = likerDoc.exists() ? likerDoc.data() : {};
+          const likerName = likerData.name || user.displayName || user.email?.split('@')[0] || 'Someone';
+          const likerPhoto = likerData.photoURL || user.photoURL;
+          const raceName = raceLogDoc.data().raceName || 'your race log';
+
+          await createNotification({
+            userId: raceLogOwnerId,
+            type: 'like',
+            actorId: user.uid,
+            actorName: likerName,
+            actorPhotoURL: likerPhoto,
+            content: `liked your review of ${raceName}`,
+            linkTo: `/race/${raceLogId}`,
+          });
+          console.log('[toggleLike] Notification created for like');
+        }
+      } catch (error) {
+        console.error('[toggleLike] Failed to create notification:', error);
       }
     }
 

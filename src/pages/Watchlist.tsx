@@ -121,18 +121,18 @@ const Watchlist = () => {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="container py-8">
-        <div className="flex items-center justify-between mb-8">
+      <main className="container px-4 sm:px-6 py-6 sm:py-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
           <div>
-            <h1 className="text-4xl font-bold mb-2">Watchlist</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-3xl sm:text-4xl font-bold mb-2">Watchlist</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">
               {upcomingRaces.length} races on your watchlist
             </p>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex flex-col xs:flex-row gap-2 self-start sm:self-auto">
             <Select defaultValue="all">
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full xs:w-[140px] sm:w-[180px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -142,15 +142,17 @@ const Watchlist = () => {
               </SelectContent>
             </Select>
 
-            <Button variant="outline" className="gap-2" onClick={handleRefresh} disabled={loading}>
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" className="gap-2 flex-1 xs:flex-initial" onClick={handleRefresh} disabled={loading}>
+                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                <span className="hidden xs:inline">Refresh</span>
+              </Button>
 
-            <Button variant="outline" className="gap-2">
-              <Bell className="w-4 h-4" />
-              Notifications
-            </Button>
+              <Button variant="outline" className="gap-2 flex-1 xs:flex-initial">
+                <Bell className="w-4 h-4" />
+                <span className="hidden sm:inline">Notifications</span>
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -162,7 +164,7 @@ const Watchlist = () => {
             <p className="text-sm mt-2">Add races you want to watch!</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
             {upcomingRaces.map((race, idx) => (
               <RaceCard key={idx} {...race} showWatchlistButton={false} />
             ))}
