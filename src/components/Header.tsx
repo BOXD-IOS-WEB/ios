@@ -256,7 +256,7 @@ export const Header = () => {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button size="icon" variant="ghost" className="relative rounded-full md:w-11 md:h-11">
+              <Button size="icon" variant="ghost" className="relative rounded-full md:w-11 md:h-11 touch-manipulation">
                 {userPhotoURL ? (
                   <img
                     src={userPhotoURL}
@@ -270,17 +270,47 @@ export const Header = () => {
                 )}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => navigate('/profile')}>
+            <DropdownMenuContent align="end" className="touch-manipulation">
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate('/profile');
+                }}
+                onTouchEnd={(e) => {
+                  e.preventDefault();
+                  navigate('/profile');
+                }}
+                className="cursor-pointer"
+              >
                 <User className="w-4 h-4 mr-2" />
                 Profile
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate('/settings')}>
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate('/settings');
+                }}
+                onTouchEnd={(e) => {
+                  e.preventDefault();
+                  navigate('/settings');
+                }}
+                className="cursor-pointer"
+              >
                 <Settings className="w-4 h-4 mr-2" />
                 Settings
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleSignOut}>
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleSignOut();
+                }}
+                onTouchEnd={(e) => {
+                  e.preventDefault();
+                  handleSignOut();
+                }}
+                className="cursor-pointer"
+              >
                 <LogOut className="w-4 h-4 mr-2" />
                 Sign Out
               </DropdownMenuItem>
