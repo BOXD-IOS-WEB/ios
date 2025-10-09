@@ -100,8 +100,9 @@ export const RaceCard = ({
     }
   };
 
-  const handleWatchlistToggle = async (e: React.MouseEvent) => {
+  const handleWatchlistToggle = async (e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();
+    e.preventDefault();
     const user = auth.currentUser;
     if (!user) {
       toast({
@@ -152,7 +153,11 @@ export const RaceCard = ({
   return (
     <Card
       onClick={handleClick}
-      className="group relative overflow-hidden bg-card hover:ring-2 hover:ring-primary transition-all duration-200 cursor-pointer"
+      onTouchEnd={(e) => {
+        e.preventDefault();
+        handleClick();
+      }}
+      className="group relative overflow-hidden bg-card hover:ring-2 hover:ring-primary transition-all duration-200 cursor-pointer touch-manipulation"
     >
       {/* Poster */}
       <div className="aspect-square sm:aspect-[2/3] relative overflow-hidden bg-gradient-to-br from-racing-red/20 to-background">
@@ -216,8 +221,9 @@ export const RaceCard = ({
                 <Button
                   size="icon"
                   variant="secondary"
-                  className="h-6 w-6 sm:h-8 sm:w-8 bg-black/60 hover:bg-black/80 backdrop-blur-sm"
+                  className="h-6 w-6 sm:h-8 sm:w-8 bg-black/60 hover:bg-black/80 backdrop-blur-sm touch-manipulation"
                   onClick={(e) => e.stopPropagation()}
+                  onTouchEnd={(e) => e.stopPropagation()}
                 >
                   <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
                 </Button>
@@ -226,8 +232,9 @@ export const RaceCard = ({
             <Button
               size="icon"
               variant="secondary"
-              className="h-6 w-6 sm:h-8 sm:w-8 bg-black/60 hover:bg-black/80 backdrop-blur-sm"
+              className="h-6 w-6 sm:h-8 sm:w-8 bg-black/60 hover:bg-black/80 backdrop-blur-sm touch-manipulation"
               onClick={handleWatchlistToggle}
+              onTouchEnd={handleWatchlistToggle}
             >
               <Eye className={`w-3 h-3 sm:w-4 sm:h-4 ${isInWatchlist ? 'fill-white' : ''}`} />
             </Button>

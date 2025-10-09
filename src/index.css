@@ -103,10 +103,21 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
     font-feature-settings: 'liga' 1, 'calt' 1;
+    /* Better touch handling on iOS/iPad */
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
   }
 
   html {
     @apply dark;
+    /* Prevent double-tap zoom on iOS */
+    touch-action: manipulation;
+  }
+
+  /* Better button/interactive element touch handling */
+  button, a, [role="button"], [role="link"] {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
 }
 

@@ -110,22 +110,52 @@ export const Header = () => {
             </SheetTrigger>
             <SheetContent side="left" className="w-64">
               <nav className="flex flex-col gap-4 mt-8">
-                <a href="/" className="text-lg font-medium hover:text-racing-red transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                <a
+                  href="/"
+                  className="text-lg font-medium hover:text-racing-red transition-colors touch-manipulation py-2"
+                  onClick={() => setMobileMenuOpen(false)}
+                  onTouchEnd={() => setMobileMenuOpen(false)}
+                >
                   Home
                 </a>
-                <a href="/explore" className="text-lg font-medium hover:text-racing-red transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                <a
+                  href="/explore"
+                  className="text-lg font-medium hover:text-racing-red transition-colors touch-manipulation py-2"
+                  onClick={() => setMobileMenuOpen(false)}
+                  onTouchEnd={() => setMobileMenuOpen(false)}
+                >
                   Explore
                 </a>
-                <a href="/lists" className="text-lg font-medium hover:text-racing-red transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                <a
+                  href="/lists"
+                  className="text-lg font-medium hover:text-racing-red transition-colors touch-manipulation py-2"
+                  onClick={() => setMobileMenuOpen(false)}
+                  onTouchEnd={() => setMobileMenuOpen(false)}
+                >
                   Activity
                 </a>
-                <a href="/diary" className="text-lg font-medium hover:text-racing-red transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                <a
+                  href="/diary"
+                  className="text-lg font-medium hover:text-racing-red transition-colors touch-manipulation py-2"
+                  onClick={() => setMobileMenuOpen(false)}
+                  onTouchEnd={() => setMobileMenuOpen(false)}
+                >
                   Diary
                 </a>
-                <a href="/watchlist" className="text-lg font-medium hover:text-racing-red transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                <a
+                  href="/watchlist"
+                  className="text-lg font-medium hover:text-racing-red transition-colors touch-manipulation py-2"
+                  onClick={() => setMobileMenuOpen(false)}
+                  onTouchEnd={() => setMobileMenuOpen(false)}
+                >
                   Watchlist
                 </a>
-                <a href="/profile" className="text-lg font-medium hover:text-racing-red transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                <a
+                  href="/profile"
+                  className="text-lg font-medium hover:text-racing-red transition-colors touch-manipulation py-2"
+                  onClick={() => setMobileMenuOpen(false)}
+                  onTouchEnd={() => setMobileMenuOpen(false)}
+                >
                   Profile
                 </a>
               </nav>
