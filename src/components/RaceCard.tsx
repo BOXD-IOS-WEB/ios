@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { addToWatchlist, removeFromWatchlist, getUserWatchlist } from "@/services/watchlist";
 import { useToast } from "@/hooks/use-toast";
 import { auth } from "@/lib/firebase";
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import { AddToListDialog } from "@/components/AddToListDialog";
 
 interface RaceCardProps {
@@ -24,7 +24,7 @@ interface RaceCardProps {
   winner?: string;
 }
 
-export const RaceCard = ({
+const RaceCardComponent = ({
   season,
   round,
   gpName,
@@ -251,3 +251,5 @@ export const RaceCard = ({
     </Card>
   );
 };
+
+export const RaceCard = memo(RaceCardComponent);

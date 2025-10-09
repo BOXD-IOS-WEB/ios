@@ -21,36 +21,38 @@ const Index = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        console.log('Fetching current season races...');
         const f1Races = await getCurrentSeasonRaces();
-        console.log('Races fetched:', f1Races.length, 'races');
 
         if (Array.isArray(f1Races) && f1Races.length > 0) {
           const racesToShow = f1Races.slice(0, 6);
           setCurrentRaces(racesToShow);
 
-          // Fetch winners for past races (races that have already occurred)
+          // Fetch winners for past races (races that have already occurred) in parallel
           const today = new Date();
           const winnersMap: { [key: string]: string } = {};
 
-          for (const race of racesToShow) {
-            const raceDate = new Date(race.date_start);
-            // Only fetch winner if race is in the past
-            if (raceDate < today) {
+          const winnerPromises = racesToShow
+            .filter(race => new Date(race.date_start) < today)
+            .map(async (race) => {
               try {
                 const winner = await getRaceWinner(race.year, race.round);
                 if (winner) {
-                  winnersMap[`${race.year}-${race.round}`] = winner;
+                  return { key: `${race.year}-${race.round}`, winner };
                 }
               } catch (error) {
                 console.error(`Error fetching winner for ${race.year} round ${race.round}:`, error);
               }
+              return null;
+            });
+
+          const winnerResults = await Promise.all(winnerPromises);
+          winnerResults.forEach(result => {
+            if (result) {
+              winnersMap[result.key] = result.winner;
             }
-          }
+          });
 
           setWinners(winnersMap);
-        } else {
-          console.warn('No races returned from API');
         }
 
         try {
@@ -158,7 +160,6 @@ const Index = () => {
               <p className="text-xs text-muted-foreground mb-2">Showing {currentRaces.length} races</p>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
                 {currentRaces.map((race) => {
-                  console.log('Rendering race card:', race.meeting_name, race);
                   const posterUrl = getPosterUrl(race.circuit_short_name || race.circuit_key);
                   const winnerKey = `${race.year}-${race.round}`;
                   const winner = winners[winnerKey];

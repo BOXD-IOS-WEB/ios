@@ -86,9 +86,7 @@ const Explore = () => {
     const loadSeasonRaces = async () => {
       setSeasonLoading(true);
       try {
-        console.log(`Fetching races for season ${selectedSeason}...`);
         const races = await getRacesBySeason(selectedSeason);
-        console.log(`Fetched ${races.length} races for ${selectedSeason}`);
         setSeasonRaces(races);
       } catch (error) {
         console.error('Error loading season races:', error);
@@ -165,9 +163,7 @@ const Explore = () => {
                 <>
                   <p className="text-xs text-muted-foreground mb-2">Showing {seasonRaces.length} races for {selectedSeason}</p>
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
-                    {seasonRaces.map((race) => {
-                      console.log('Rendering race card in Explore:', race.meeting_name, race);
-                      return (
+                    {seasonRaces.map((race) => (
                         <RaceCard
                           key={race.meeting_key}
                           season={race.year}
@@ -177,8 +173,7 @@ const Explore = () => {
                           date={race.date_start}
                           country={race.country_code}
                         />
-                      );
-                    })}
+                    ))}
                   </div>
                 </>
               )}
