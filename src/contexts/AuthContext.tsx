@@ -25,12 +25,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthChange((user) => {
-      setUser(user);
+    console.log('[AuthProvider] Initializing auth listener...');
+
+    // Safety timeout - if auth doesn't respond in 10 seconds, stop loading
+    const timeout = setTimeout(() => {
+      console.warn('[AuthProvider] Timeout - auth not responding after 10s, setting loading to false');
       setLoading(false);
+    }, 10000);
+
+    const unsubscribe = onAuthChange((authUser) => {
+      clearTimeout(timeout);
+      console.log('[AuthProvider] Auth state changed:', authUser ? `User: ${authUser.uid}` : 'No user');
+      setUser(authUser);
+      setLoading(false);
+
+      // Log session info for debugging
+      if (authUser) {
+        console.log('[AuthProvider] Session info:', {
+          uid: authUser.uid,
+          email: authUser.email,
+          emailVerified: authUser.emailVerified,
+          lastSignInTime: authUser.metadata.lastSignInTime,
+          creationTime: authUser.metadata.creationTime
+        });
+      }
     });
 
-    return unsubscribe;
+    return () => {
+      console.log('[AuthProvider] Cleaning up auth listener');
+      clearTimeout(timeout);
+      unsubscribe();
+    };
   }, []);
 
   const value = {

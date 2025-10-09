@@ -45,5 +45,16 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>BoxBoxd needs access to your camera to take profile pictures and share race moments.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>BoxBoxd needs access to your photo library to select profile pictures and share race moments.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>BoxBoxd needs permission to save photos to your library.</string>
 </dict>
 </plist>

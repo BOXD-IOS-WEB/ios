@@ -111,63 +111,66 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="w-full max-w-md p-8 space-y-6">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold mb-2">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 md:p-8">
+      <Card className="w-full max-w-md md:max-w-lg lg:max-w-xl p-6 md:p-10 lg:p-12 space-y-6 md:space-y-8">
+        <div className="text-center space-y-2 md:space-y-3">
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-2 md:mb-4">
             <span className="text-foreground">BOX</span>
             <span className="text-racing-red">BOXD</span>
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-base md:text-lg text-muted-foreground">
             {isSignUp ? 'Create your account' : 'Welcome back'}
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
           {isSignUp && (
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Name</label>
+            <div className="space-y-2 md:space-y-3">
+              <label className="text-sm md:text-base font-medium">Name</label>
               <Input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
                 placeholder="Your name"
+                className="md:h-12 md:text-base"
               />
             </div>
           )}
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Email</label>
+          <div className="space-y-2 md:space-y-3">
+            <label className="text-sm md:text-base font-medium">Email</label>
             <Input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
               placeholder="your@email.com"
+              className="md:h-12 md:text-base"
             />
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Password</label>
+          <div className="space-y-2 md:space-y-3">
+            <label className="text-sm md:text-base font-medium">Password</label>
             <Input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               placeholder="••••••••"
+              className="md:h-12 md:text-base"
             />
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button type="submit" className="w-full md:h-12 md:text-base md:mt-4" disabled={loading}>
             {loading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Sign In'}
           </Button>
         </form>
 
-        <div className="text-center space-y-2">
+        <div className="text-center space-y-3 md:space-y-4">
           <button
             onClick={() => setIsSignUp(!isSignUp)}
-            className="text-sm text-muted-foreground hover:text-foreground block w-full"
+            className="text-sm md:text-base text-muted-foreground hover:text-foreground block w-full py-2"
           >
             {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
           </button>
@@ -175,7 +178,7 @@ const Login = () => {
           {!isSignUp && (
             <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
               <DialogTrigger asChild>
-                <button className="text-sm text-racing-red hover:underline">
+                <button className="text-sm md:text-base text-racing-red hover:underline py-2">
                   Forgot password?
                 </button>
               </DialogTrigger>
@@ -210,6 +213,26 @@ const Login = () => {
               </DialogContent>
             </Dialog>
           )}
+        </div>
+
+        {/* Footer */}
+        <div className="mt-8 text-center space-y-3">
+          <div className="flex flex-wrap justify-center gap-3 text-xs sm:text-sm">
+            <a href="/support" className="text-muted-foreground hover:text-racing-red transition-colors">
+              Support
+            </a>
+            <span className="text-muted-foreground">•</span>
+            <a href="/privacy-policy" className="text-muted-foreground hover:text-racing-red transition-colors">
+              Privacy Policy
+            </a>
+            <span className="text-muted-foreground">•</span>
+            <a href="/terms-of-service" className="text-muted-foreground hover:text-racing-red transition-colors">
+              Terms of Service
+            </a>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            © 2025 BoxBoxd. All rights reserved.
+          </p>
         </div>
       </Card>
     </div>

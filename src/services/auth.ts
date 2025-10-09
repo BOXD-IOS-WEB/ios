@@ -88,6 +88,18 @@ export const resendVerificationEmail = async () => {
 export const signIn = async (email: string, password: string) => {
   try {
     console.log('[signIn] Attempting to sign in with email:', email);
+
+    // Ensure persistence is set before signing in
+    // This is critical for maintaining session across app restarts
+    const { setPersistence, indexedDBLocalPersistence, browserLocalPersistence } = await import('firebase/auth');
+    try {
+      await setPersistence(auth, indexedDBLocalPersistence);
+      console.log('[signIn] Persistence set to IndexedDB');
+    } catch (persistError) {
+      console.warn('[signIn] IndexedDB persistence failed, using localStorage');
+      await setPersistence(auth, browserLocalPersistence);
+    }
+
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     console.log('[signIn] Sign in successful, user:', userCredential.user?.uid);
 

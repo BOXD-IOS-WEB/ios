@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth, setPersistence, browserLocalPersistence } from 'firebase/auth';
+import { getAuth, setPersistence, browserLocalPersistence, indexedDBLocalPersistence } from 'firebase/auth';
 import { getFirestore, initializeFirestore, memoryLocalCache, clearIndexedDbPersistence } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
@@ -15,10 +15,14 @@ const firebaseConfig = {
 // Clear any cached Firestore data to force re-fetch of rules
 // This is a one-time fix for cached permission rules
 if (typeof window !== 'undefined' && !getApps().length) {
-  const dbName = `firestore/${firebaseConfig.projectId}/(default)`;
-  indexedDB.deleteDatabase(dbName).onsuccess = () => {
-    console.log('[Firebase] Cleared Firestore IndexedDB cache');
-  };
+  try {
+    const dbName = `firestore/${firebaseConfig.projectId}/(default)`;
+    indexedDB.deleteDatabase(dbName).onsuccess = () => {
+      console.log('[Firebase] Cleared Firestore IndexedDB cache');
+    };
+  } catch (error) {
+    console.warn('[Firebase] Could not clear IndexedDB cache:', error);
+  }
 }
 
 // Initialize Firebase
@@ -56,10 +60,25 @@ console.log('[Firebase] Firestore instance:', {
   toJSON: db.toJSON()
 });
 
-// Enable auth persistence
-setPersistence(auth, browserLocalPersistence).catch((error) => {
-  console.error('Error setting auth persistence:', error);
-});
+// Enable auth persistence with fallback
+// Try IndexedDB first (more reliable), then fall back to localStorage
+const enablePersistence = async () => {
+  try {
+    // Try IndexedDB persistence first (more reliable on iOS/iPadOS)
+    await setPersistence(auth, indexedDBLocalPersistence);
+    console.log('[Firebase Auth] ✅ IndexedDB persistence enabled');
+  } catch (error: any) {
+    console.warn('[Firebase Auth] ⚠️ IndexedDB persistence failed, falling back to localStorage:', error);
+    try {
+      await setPersistence(auth, browserLocalPersistence);
+      console.log('[Firebase Auth] ✅ LocalStorage persistence enabled');
+    } catch (fallbackError) {
+      console.error('[Firebase Auth] ❌ Error setting auth persistence:', fallbackError);
+    }
+  }
+};
+
+enablePersistence();
 
 // Debug: Log auth state changes (per article recommendation)
 auth.onAuthStateChanged((user) => {
