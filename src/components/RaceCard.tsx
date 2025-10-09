@@ -141,11 +141,11 @@ export const RaceCard = ({
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center p-2 sm:p-4 space-y-2 sm:space-y-3">
             {flagUrl && (
-              <div className="w-10 h-10 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full overflow-hidden border-2 sm:border-3 border-white/20 shadow-lg flex items-center justify-center">
+              <div className="w-16 h-10 sm:w-20 sm:h-12 md:w-24 md:h-16 rounded overflow-hidden border-2 border-white/20 shadow-lg flex items-center justify-center">
                 <img
                   src={flagUrl}
                   alt={country || circuit}
-                  className="w-full h-full object-cover scale-110"
+                  className="w-full h-full object-cover"
                   onError={(e) => {
                     (e.target as HTMLImageElement).style.display = 'none';
                   }}
