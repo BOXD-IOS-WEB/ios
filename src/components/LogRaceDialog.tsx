@@ -17,7 +17,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { createRaceLog, updateRaceLog } from "@/services/raceLogs";
 import { createActivity } from "@/services/activity";
 import { getUserProfile } from "@/services/auth";
-import { getCountryCodeFromName } from "@/services/f1Api";
+import { getCountryCodeFromName, getRaceWinner } from "@/services/f1Api";
 import { useToast } from "@/hooks/use-toast";
 import { Timestamp } from "firebase/firestore";
 
@@ -66,6 +66,9 @@ export const LogRaceDialog = ({
   const [loading, setLoading] = useState(false);
   const [username, setUsername] = useState("");
   const [countryCode, setCountryCode] = useState<string | undefined>(undefined);
+  const [driverOfTheDay, setDriverOfTheDay] = useState("");
+  const [raceWinner, setRaceWinner] = useState<string>("");
+  const [loadingWinner, setLoadingWinner] = useState(false);
 
   const { user } = useAuth();
   const { toast } = useToast();
@@ -101,6 +104,8 @@ export const LogRaceDialog = ({
       setCompanions(existingLog.companions || []);
       setSpoiler(existingLog.hasSpoilers || false);
       setCountryCode(existingLog.countryCode);
+      setDriverOfTheDay(existingLog.driverOfTheDay || '');
+      setRaceWinner(existingLog.raceWinner || '');
 
       // Handle date conversion
       if (existingLog.dateWatched) {
@@ -131,6 +136,29 @@ export const LogRaceDialog = ({
   }, [open, defaultRaceName, defaultCircuit, defaultYear, defaultCountryCode, editMode]);
 
   const suggestedTags = ["rain", "safety-car", "overtake", "pitstop-chaos", "attended", "late-drama", "dnf"];
+
+  const drivers2025 = [
+    { id: "verstappen", name: "Max Verstappen", team: "Red Bull Racing" },
+    { id: "tsunoda", name: "Yuki Tsunoda", team: "Red Bull Racing" },
+    { id: "leclerc", name: "Charles Leclerc", team: "Ferrari" },
+    { id: "hamilton", name: "Lewis Hamilton", team: "Ferrari" },
+    { id: "russell", name: "George Russell", team: "Mercedes" },
+    { id: "antonelli", name: "Kimi Antonelli", team: "Mercedes" },
+    { id: "norris", name: "Lando Norris", team: "McLaren" },
+    { id: "piastri", name: "Oscar Piastri", team: "McLaren" },
+    { id: "alonso", name: "Fernando Alonso", team: "Aston Martin" },
+    { id: "stroll", name: "Lance Stroll", team: "Aston Martin" },
+    { id: "gasly", name: "Pierre Gasly", team: "Alpine" },
+    { id: "colapinto", name: "Franco Colapinto", team: "Alpine" },
+    { id: "albon", name: "Alex Albon", team: "Williams" },
+    { id: "sainz", name: "Carlos Sainz", team: "Williams" },
+    { id: "hadjar", name: "Isack Hadjar", team: "RB" },
+    { id: "lawson", name: "Liam Lawson", team: "RB" },
+    { id: "bearman", name: "Oliver Bearman", team: "Haas" },
+    { id: "ocon", name: "Esteban Ocon", team: "Haas" },
+    { id: "hulkenberg", name: "Nico Hülkenberg", team: "Sauber" },
+    { id: "bortoleto", name: "Gabriel Bortoleto", team: "Sauber" },
+  ];
 
   const allCircuits = [
     { name: "Monaco Grand Prix", location: "Circuit de Monaco", country: "Monaco" },
@@ -203,10 +231,10 @@ export const LogRaceDialog = ({
   };
 
   const handleSubmit = async () => {
-    if (!user || !raceName || !raceLocation) {
+    if (!user || !raceName || !raceLocation || !driverOfTheDay) {
       toast({
         title: "Missing fields",
-        description: "Please fill in race name and location",
+        description: "Please fill in race name, location, and driver of the day",
         variant: "destructive"
       });
       return;
@@ -239,6 +267,8 @@ export const LogRaceDialog = ({
         review,
         tags,
         companions,
+        driverOfTheDay,
+        raceWinner,
         mediaUrls: [],
         spoilerWarning: spoiler,
         visibility,
@@ -282,6 +312,8 @@ export const LogRaceDialog = ({
       setTags([]);
       setCompanions([]);
       setCompanionInput("");
+      setDriverOfTheDay("");
+      setRaceWinner("");
     } catch (error: any) {
       console.error('[LogRaceDialog] Error saving race log:', error);
       toast({
@@ -324,12 +356,34 @@ export const LogRaceDialog = ({
                 <Label className="text-xs font-medium text-muted-foreground">Select Circuit *</Label>
                 <Select
                   value={raceLocation}
-                  onValueChange={(value) => {
+                  onValueChange={async (value) => {
                     const circuit = circuits.find(c => c.location === value);
                     if (circuit) {
                       setRaceLocation(circuit.location);
                       setRaceName(circuit.name);
                       setCountryCode(getCountryCodeFromName(circuit.country));
+
+                      // Fetch race winner if we have a year
+                      if (raceYear) {
+                        setLoadingWinner(true);
+                        try {
+                          // Find the round number for this race
+                          const { getRacesBySeason } = await import('@/services/f1Api');
+                          const races = await getRacesBySeason(raceYear);
+                          const raceData = races.find(r => r.meeting_name === circuit.name);
+
+                          if (raceData && raceData.round) {
+                            const winner = await getRaceWinner(raceYear, raceData.round);
+                            if (winner) {
+                              setRaceWinner(winner);
+                            }
+                          }
+                        } catch (error) {
+                          console.error('Error fetching winner:', error);
+                        } finally {
+                          setLoadingWinner(false);
+                        }
+                      }
                     }
                   }}
                 >
@@ -356,6 +410,12 @@ export const LogRaceDialog = ({
                     <div className="flex-1">
                       <p className="font-semibold text-sm">{raceName}</p>
                       <p className="text-xs text-muted-foreground">{raceLocation}</p>
+                      {loadingWinner && (
+                        <p className="text-xs text-muted-foreground mt-1">Loading winner...</p>
+                      )}
+                      {raceWinner && !loadingWinner && (
+                        <p className="text-xs font-semibold text-racing-red mt-1">🏆 Winner: {raceWinner}</p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -473,6 +533,34 @@ export const LogRaceDialog = ({
               Your Rating
             </h3>
             <StarRating rating={rating} onRatingChange={setRating} />
+          </div>
+
+          {/* Driver of the Day Section */}
+          <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-lg p-6 space-y-4">
+            <h3 className="font-semibold text-sm uppercase tracking-wider text-racing-red flex items-center gap-2">
+              <div className="w-2 h-2 bg-racing-red rounded-full animate-pulse" />
+              Driver of the Day *
+            </h3>
+            <Select
+              value={driverOfTheDay}
+              onValueChange={setDriverOfTheDay}
+              required
+            >
+              <SelectTrigger className="border-border/50 hover:border-racing-red">
+                <SelectValue placeholder="Select a driver..." />
+              </SelectTrigger>
+              <SelectContent className="max-h-[300px]">
+                {drivers2025.map((driver) => (
+                  <SelectItem key={driver.id} value={driver.name}>
+                    <div className="flex flex-col">
+                      <span className="font-medium">{driver.name}</span>
+                      <span className="text-xs text-muted-foreground">{driver.team}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">Who impressed you most during this race?</p>
           </div>
 
           {/* Review Section */}

@@ -132,11 +132,6 @@ const Explore = () => {
                 <List className="w-3 h-3 sm:w-4 sm:h-4" />
                 Lists
               </TabsTrigger>
-              <TabsTrigger value="upcoming" className="gap-1 sm:gap-2 text-[11px] sm:text-sm whitespace-nowrap px-2 sm:px-3">
-                <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span className="hidden xs:inline">This Week</span>
-                <span className="xs:hidden">Week</span>
-              </TabsTrigger>
             </TabsList>
           </div>
 
@@ -193,7 +188,7 @@ const Explore = () => {
           <TabsContent value="trending" className="space-y-6">
             <div>
               <h2 className="text-2xl font-bold mb-4">Trending Races</h2>
-              <p className="text-muted-foreground mb-6">Most logged races this week</p>
+              <p className="text-muted-foreground mb-6">Most logged races recently</p>
               {loading ? (
                 <div className="text-center py-12 text-muted-foreground">Loading...</div>
               ) : trendingRaces.length === 0 ? (
@@ -226,7 +221,7 @@ const Explore = () => {
           <TabsContent value="reviews" className="space-y-4">
             <div>
               <h2 className="text-2xl font-bold mb-4">Top Reviews</h2>
-              <p className="text-muted-foreground mb-6">Most liked reviews this week</p>
+              <p className="text-muted-foreground mb-6">Most liked reviews recently</p>
 
               {loading ? (
                 <div className="text-center py-12 text-muted-foreground">Loading...</div>
@@ -312,37 +307,6 @@ const Explore = () => {
                         <span>❤️ {list.likesCount || 0} likes</span>
                       </div>
                     </Card>
-                  ))}
-                </div>
-              )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="upcoming">
-            <div>
-              <h2 className="text-2xl font-bold mb-4">This Week in F1</h2>
-              <p className="text-muted-foreground mb-6">Upcoming races to watch</p>
-
-              {loading ? (
-                <div className="text-center py-12 text-muted-foreground">Loading...</div>
-              ) : upcomingRaces.length === 0 ? (
-                <EmptyState
-                  icon={Calendar}
-                  title="No upcoming races this week"
-                  description="Check back later for the next F1 race weekend"
-                />
-              ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-                  {upcomingRaces.map((race) => (
-                    <RaceCard
-                      key={race.meeting_key}
-                      season={race.year}
-                      round={race.round}
-                      gpName={race.meeting_name}
-                      circuit={race.circuit_short_name}
-                      date={race.date_start}
-                      country={race.country_code}
-                    />
                   ))}
                 </div>
               )}

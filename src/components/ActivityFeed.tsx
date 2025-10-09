@@ -94,68 +94,81 @@ export const ActivityFeed = ({ feedType, limit = 50, initialShow = 10 }: Activit
   const hasMore = activities.length > showCount;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4 max-w-2xl mx-auto px-2 sm:px-0">
       {displayedActivities.map((activity) => (
-        <Card key={activity.id} className="p-4">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-              {activity.userAvatar ? (
-                <img
-                  src={activity.userAvatar}
-                  alt={activity.username}
-                  className="w-full h-full rounded-full object-cover"
-                />
-              ) : (
-                <span className="text-sm font-semibold">
-                  {activity.username.charAt(0).toUpperCase()}
-                </span>
-              )}
-            </div>
+        <Card key={activity.id} className="group hover:border-racing-red/30 transition-all relative overflow-hidden">
 
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-2">
-                {getActivityIcon(activity.type)}
-                <p className="text-sm">
-                  <Link to={`/user/${activity.userId}`} className="font-semibold hover:underline">
+          <div className="p-3 sm:p-4 md:p-5">
+            <div className="flex items-start gap-2 sm:gap-3">
+              {/* Avatar with racing ring */}
+              <Link to={`/user/${activity.userId}`} className="flex-shrink-0">
+                <div className="relative">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full bg-gradient-to-br from-racing-red/20 to-background flex items-center justify-center border-2 border-racing-red/30 group-hover:border-racing-red/50 transition-colors overflow-hidden">
+                    {activity.userAvatar ? (
+                      <img
+                        src={activity.userAvatar}
+                        alt={activity.username}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-xs sm:text-sm md:text-base font-bold">
+                        {activity.username.charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  {/* Activity type badge */}
+                  <div className="absolute -bottom-0.5 -right-0.5 sm:-bottom-1 sm:-right-1 w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-racing-red border-2 border-background flex items-center justify-center">
+                    <div className="w-3 h-3 sm:w-4 sm:h-4">
+                      {getActivityIcon(activity.type)}
+                    </div>
+                  </div>
+                </div>
+              </Link>
+
+              <div className="flex-1 min-w-0">
+                {/* Header */}
+                <div className="flex items-baseline gap-1.5 sm:gap-2 mb-1.5 sm:mb-2 flex-wrap">
+                  <Link to={`/user/${activity.userId}`} className="font-bold text-sm sm:text-base hover:text-racing-red transition-colors">
                     {activity.username}
                   </Link>
-                  {' '}
-                  <span className="text-muted-foreground">{getActivityText(activity)}</span>
+                  <span className="text-xs sm:text-sm text-muted-foreground">{getActivityText(activity)}</span>
                   {activity.targetType === 'raceLog' && (
-                    <>
-                      {' '}
-                      <Link to={getActivityLink(activity)} className="font-semibold hover:underline">
-                        a race
-                      </Link>
-                    </>
+                    <Link to={getActivityLink(activity)} className="text-xs sm:text-sm font-semibold text-racing-red hover:underline">
+                      a race
+                    </Link>
                   )}
                   {activity.targetType === 'list' && (
-                    <>
-                      {' '}
-                      <Link to={getActivityLink(activity)} className="font-semibold hover:underline">
-                        a list
-                      </Link>
-                    </>
+                    <Link to={getActivityLink(activity)} className="text-xs sm:text-sm font-semibold text-racing-red hover:underline">
+                      a list
+                    </Link>
                   )}
                   {activity.targetType === 'user' && activity.type === 'follow' && (
-                    <>
-                      {' '}
-                      <Link to={getActivityLink(activity)} className="font-semibold hover:underline">
-                        a user
-                      </Link>
-                    </>
+                    <Link to={getActivityLink(activity)} className="text-xs sm:text-sm font-semibold text-racing-red hover:underline">
+                      a user
+                    </Link>
                   )}
-                </p>
+                </div>
+
+                {/* Content */}
+                {activity.content && (
+                  <div className="mb-2 sm:mb-3 p-2 sm:p-3 bg-muted/30 rounded-lg border border-border/50">
+                    <p className="text-xs sm:text-sm leading-relaxed line-clamp-3 italic">"{activity.content}"</p>
+                  </div>
+                )}
+
+                {/* Footer */}
+                <div className="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs text-muted-foreground">
+                  <span className="flex items-center gap-0.5 sm:gap-1">
+                    <span>📅</span>
+                    {new Date(activity.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  </span>
+                  <span>•</span>
+                  <span className="flex items-center gap-0.5 sm:gap-1">
+                    <span>🕐</span>
+                    {new Date(activity.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
               </div>
-
-              {activity.content && (
-                <p className="text-sm text-muted-foreground mb-2 line-clamp-2">{activity.content}</p>
-              )}
-
-              <span className="text-xs text-muted-foreground">
-                {new Date(activity.createdAt).toLocaleDateString()} at{' '}
-                {new Date(activity.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </span>
             </div>
           </div>
         </Card>

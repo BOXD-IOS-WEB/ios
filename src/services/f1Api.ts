@@ -266,3 +266,29 @@ export const getCountryFlag = (countryCode: string): string => {
 export const getPosterUrl = (circuitName: string): string | null => {
   return null;
 };
+
+// Fetch race winner from Ergast API
+export const getRaceWinner = async (year: number, round: number): Promise<string | null> => {
+  try {
+    console.log(`[F1 API] Fetching race winner for ${year} round ${round}`);
+    const url = `${JOLPICA_BASE}/${year}/${round}/results/1.json`;
+    const response = await fetch(url);
+
+    if (response.ok) {
+      const data = await response.json();
+      const result = data.MRData?.RaceTable?.Races?.[0]?.Results?.[0];
+
+      if (result) {
+        const winner = `${result.Driver.givenName} ${result.Driver.familyName}`;
+        console.log(`[F1 API] Race winner: ${winner}`);
+        return winner;
+      }
+    }
+
+    console.warn(`[F1 API] No winner data found for ${year} round ${round}`);
+    return null;
+  } catch (error) {
+    console.error('[F1 API] Error fetching race winner:', error);
+    return null;
+  }
+};

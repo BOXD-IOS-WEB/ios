@@ -5,15 +5,25 @@ import { Badge } from "@/components/ui/badge";
 import { LogRaceDialog } from "@/components/LogRaceDialog";
 import { StarRating } from "@/components/StarRating";
 import { AddToListDialog } from "@/components/AddToListDialog";
-import { Plus, Heart, Bookmark, Share2, Eye, Star, MessageSquare, List } from "lucide-react";
+import { Plus, Heart, Bookmark, Share2, Eye, Star, MessageSquare, List, Edit, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { addToWatchlist, removeFromWatchlist } from "@/services/watchlist";
 import { toggleLike } from "@/services/likes";
-import { getCountryFlag, getRaceByYearAndRound } from "@/services/f1Api";
-import { getRaceLogById, getPublicRaceLogs } from "@/services/raceLogs";
+import { getCountryFlag, getRaceByYearAndRound, getRaceWinner } from "@/services/f1Api";
+import { getRaceLogById, getPublicRaceLogs, deleteRaceLog } from "@/services/raceLogs";
 import { auth } from "@/lib/firebase";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const RaceDetail = () => {
   const { id, season, round } = useParams();
@@ -31,6 +41,10 @@ const RaceDetail = () => {
   const [loading, setLoading] = useState(true);
   const [logDialogOpen, setLogDialogOpen] = useState(false);
   const [revealedSpoilers, setRevealedSpoilers] = useState<Set<string>>(new Set());
+  const [winner, setWinner] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [reviewToDelete, setReviewToDelete] = useState<string | null>(null);
+  const [editingReview, setEditingReview] = useState<any>(null);
   const { toast } = useToast();
 
   const loadRaceData = async () => {
@@ -66,6 +80,19 @@ const RaceDetail = () => {
         console.log('[RaceDetail] F1 API returned:', raceData);
         if (raceData) {
           setRaceInfo(raceData);
+
+          // Fetch winner if race is in the past
+          const raceDate = new Date(raceData.date_start);
+          if (raceDate < new Date()) {
+            try {
+              const raceWinner = await getRaceWinner(parseInt(year), parseInt(round));
+              if (raceWinner) {
+                setWinner(raceWinner);
+              }
+            } catch (error) {
+              console.error('[RaceDetail] Error fetching winner:', error);
+            }
+          }
         } else {
           console.error('[RaceDetail] F1 API returned null!');
         }
@@ -249,6 +276,35 @@ const RaceDetail = () => {
     }
   };
 
+  const handleDeleteReview = (reviewId: string) => {
+    setReviewToDelete(reviewId);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteReview = async () => {
+    if (!reviewToDelete) return;
+
+    try {
+      await deleteRaceLog(reviewToDelete);
+      toast({ title: "Review deleted successfully" });
+      await loadRaceData(); // Reload data
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setDeleteDialogOpen(false);
+      setReviewToDelete(null);
+    }
+  };
+
+  const handleEditReview = (review: any) => {
+    setEditingReview(review);
+    setLogDialogOpen(true);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -276,6 +332,16 @@ const RaceDetail = () => {
               </div>
 
               <div className="flex-1 space-y-3 md:space-y-4">
+                {winner && (
+                  <div className="p-3 bg-racing-red/10 border border-racing-red/20 rounded-lg">
+                    <p className="text-xs sm:text-sm text-muted-foreground mb-1">Race Winner</p>
+                    <p className="text-sm sm:text-base font-bold text-racing-red flex items-center gap-2">
+                      <span>🏆</span>
+                      <span>{winner}</span>
+                    </p>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-3 gap-3 md:gap-4 text-center sm:text-left">
                   <div>
                     <p className="text-xs sm:text-sm text-muted-foreground">Circuit</p>
@@ -324,12 +390,19 @@ const RaceDetail = () => {
                       </Button>
                     }
                     open={logDialogOpen}
-                    onOpenChange={setLogDialogOpen}
-                    onSuccess={loadRaceData}
+                    onOpenChange={(open) => {
+                      setLogDialogOpen(open);
+                      if (!open) setEditingReview(null);
+                    }}
+                    onSuccess={() => {
+                      loadRaceData();
+                      setEditingReview(null);
+                    }}
                     defaultCircuit={race.circuit}
                     defaultRaceName={race.gpName}
                     defaultYear={race.season}
                     defaultCountryCode={race.countryCode}
+                    existingLog={editingReview}
                   />
                   <AddToListDialog
                     raceYear={race.season}
@@ -434,6 +507,14 @@ const RaceDetail = () => {
                             </span>
                           </div>
 
+                          {/* Driver of the Day */}
+                          {review.driverOfTheDay && (
+                            <div className="flex items-center gap-2 mb-3 text-sm">
+                              <span className="text-muted-foreground">Driver of the Day:</span>
+                              <span className="font-semibold">🏆 {review.driverOfTheDay}</span>
+                            </div>
+                          )}
+
                           {/* Review with spoiler handling */}
                           {review.spoilerWarning && !revealedSpoilers.has(review.id) ? (
                             <div className="relative mb-3 sm:mb-4 min-h-[100px]">
@@ -491,7 +572,7 @@ const RaceDetail = () => {
                           )}
 
                           {/* Actions */}
-                          <div className="flex flex-wrap items-center gap-3 sm:gap-4 md:gap-6 pt-2.5 sm:pt-3 border-t">
+                          <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4 md:gap-6 pt-2.5 sm:pt-3 border-t">
                             <button
                               className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground hover:text-racing-red transition-colors group"
                               onClick={() => review.id && handleLikeReview(review.id)}
@@ -505,6 +586,26 @@ const RaceDetail = () => {
                                 {review.likesCount > 0 ? review.likesCount : 'Like'}
                               </span>
                             </button>
+
+                            {/* Edit & Delete buttons - only show for own reviews */}
+                            {auth.currentUser?.uid === review.userId && (
+                              <div className="flex items-center gap-2">
+                                <button
+                                  className="flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors"
+                                  onClick={() => handleEditReview(review)}
+                                >
+                                  <Edit className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                  <span className="hidden sm:inline">Edit</span>
+                                </button>
+                                <button
+                                  className="flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm text-muted-foreground hover:text-destructive transition-colors"
+                                  onClick={() => review.id && handleDeleteReview(review.id)}
+                                >
+                                  <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                                  <span className="hidden sm:inline">Delete</span>
+                                </button>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -535,6 +636,24 @@ const RaceDetail = () => {
           </div>
         </div>
       </main>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Review?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete your review. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteReview} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

@@ -99,7 +99,7 @@ export const getFollowingActivity = async (limitCount: number = 50) => {
   if (!user) throw new Error('User not authenticated');
 
   const following = await getFollowing(user.uid);
-  const followingIds = following.map(f => f.followingId);
+  const followingIds = following.map(f => f.followingId).filter(id => id !== undefined && id !== null);
 
   if (followingIds.length === 0) {
     return [];
@@ -110,13 +110,16 @@ export const getFollowingActivity = async (limitCount: number = 50) => {
   const batches: Activity[][] = [];
 
   for (let i = 0; i < followingIds.length; i += batchSize) {
-    const batch = followingIds.slice(i, i + batchSize);
+    const batch = followingIds.slice(i, i + batchSize).filter(id => id !== undefined && id !== null);
+
+    // Skip empty batches
+    if (batch.length === 0) continue;
 
     const q = query(
       activitiesCollection,
       where('userId', 'in', batch),
       orderBy('createdAt', 'desc'),
-      limit(limitCount)
+      limit(100) // Fetch more from each batch to ensure we get recent activities
     );
 
     const snapshot = await getDocs(q);

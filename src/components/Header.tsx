@@ -117,7 +117,7 @@ export const Header = () => {
                   Explore
                 </a>
                 <a href="/lists" className="text-lg font-medium hover:text-racing-red transition-colors" onClick={() => setMobileMenuOpen(false)}>
-                  Lists
+                  Activity
                 </a>
                 <a href="/diary" className="text-lg font-medium hover:text-racing-red transition-colors" onClick={() => setMobileMenuOpen(false)}>
                   Diary
@@ -147,7 +147,7 @@ export const Header = () => {
               Explore
             </a>
             <a href="/lists" className="text-muted-foreground hover:text-foreground transition-colors">
-              Lists
+              Activity
             </a>
             <a href="/diary" className="text-muted-foreground hover:text-foreground transition-colors">
               Diary

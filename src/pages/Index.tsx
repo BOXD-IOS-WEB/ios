@@ -1,15 +1,12 @@
 import { Header } from "@/components/Header";
 import { RaceCard } from "@/components/RaceCard";
-import { ActivityFeed } from "@/components/ActivityFeed";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getPublicRaceLogs } from "@/services/raceLogs";
-import { getCurrentSeasonRaces, getPosterUrl } from "@/services/f1Api";
+import { getCurrentSeasonRaces, getPosterUrl, getRaceWinner } from "@/services/f1Api";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { auth } from "@/lib/firebase";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -19,6 +16,7 @@ const Index = () => {
   const [popularRaces, setPopularRaces] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [winners, setWinners] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     const loadData = async () => {
@@ -28,7 +26,29 @@ const Index = () => {
         console.log('Races fetched:', f1Races.length, 'races');
 
         if (Array.isArray(f1Races) && f1Races.length > 0) {
-          setCurrentRaces(f1Races.slice(0, 6));
+          const racesToShow = f1Races.slice(0, 6);
+          setCurrentRaces(racesToShow);
+
+          // Fetch winners for past races (races that have already occurred)
+          const today = new Date();
+          const winnersMap: { [key: string]: string } = {};
+
+          for (const race of racesToShow) {
+            const raceDate = new Date(race.date_start);
+            // Only fetch winner if race is in the past
+            if (raceDate < today) {
+              try {
+                const winner = await getRaceWinner(race.year, race.round);
+                if (winner) {
+                  winnersMap[`${race.year}-${race.round}`] = winner;
+                }
+              } catch (error) {
+                console.error(`Error fetching winner for ${race.year} round ${race.round}:`, error);
+              }
+            }
+          }
+
+          setWinners(winnersMap);
         } else {
           console.warn('No races returned from API');
         }
@@ -86,7 +106,8 @@ const Index = () => {
               <span className="sm:hidden">Track every <span className="text-racing-red">race.</span></span>
             </h1>
             <p className="text-sm sm:text-base md:text-lg lg:text-xl text-white max-w-xl md:max-w-2xl mx-auto px-4" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.8), 0 0 16px rgba(0,0,0,0.6)' }}>
-              BoxBoxd lets you log, rate and review every F1 race. Keep a diary and connect with fellow fans. 🏎️
+              BoxBoxd lets you log, rate and review every F1 race.<br />
+              Keep a diary and connect with fellow fans. 🏎️
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 md:gap-6 pt-6 md:pt-10">
               <Button size="lg" className="gap-2 w-full sm:w-auto md:h-14 md:px-8 md:text-lg" onClick={() => navigate('/diary')}>
@@ -139,6 +160,8 @@ const Index = () => {
                 {currentRaces.map((race) => {
                   console.log('Rendering race card:', race.meeting_name, race);
                   const posterUrl = getPosterUrl(race.circuit_short_name || race.circuit_key);
+                  const winnerKey = `${race.year}-${race.round}`;
+                  const winner = winners[winnerKey];
                   return (
                     <RaceCard
                       key={race.meeting_key}
@@ -149,6 +172,7 @@ const Index = () => {
                       date={race.date_start}
                       country={race.country_code}
                       posterUrl={posterUrl || undefined}
+                      winner={winner}
                     />
                   );
                 })}
@@ -157,32 +181,6 @@ const Index = () => {
           ) : (
             <div className="text-center py-12 text-muted-foreground">No races available</div>
           )}
-        </section>
-
-        <section className="space-y-4 sm:space-y-6 md:space-y-8">
-          <div>
-            <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold">Activity</h2>
-            <p className="text-sm sm:text-base md:text-lg text-muted-foreground mt-1">See what the community is watching</p>
-          </div>
-
-          <Tabs defaultValue={auth.currentUser ? "following" : "global"}>
-            {auth.currentUser && (
-              <TabsList>
-                <TabsTrigger value="following">Following</TabsTrigger>
-                <TabsTrigger value="global">Global</TabsTrigger>
-              </TabsList>
-            )}
-
-            {auth.currentUser && (
-              <TabsContent value="following">
-                <ActivityFeed feedType="following" limit={20} />
-              </TabsContent>
-            )}
-
-            <TabsContent value="global">
-              <ActivityFeed feedType="global" limit={20} />
-            </TabsContent>
-          </Tabs>
         </section>
 
         <section className="space-y-4 sm:space-y-6 md:space-y-8">

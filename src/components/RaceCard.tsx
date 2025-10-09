@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Star, Eye, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { getCountryFlag } from "@/services/f1Api";
+import { getCountryFlag, getRaceWinner } from "@/services/f1Api";
 import { Button } from "@/components/ui/button";
 import { addToWatchlist, removeFromWatchlist, getUserWatchlist } from "@/services/watchlist";
 import { useToast } from "@/hooks/use-toast";
@@ -21,6 +21,7 @@ interface RaceCardProps {
   id?: string;
   country?: string;
   showWatchlistButton?: boolean;
+  winner?: string;
 }
 
 export const RaceCard = ({
@@ -35,15 +36,37 @@ export const RaceCard = ({
   id,
   country,
   showWatchlistButton = true,
+  winner,
 }: RaceCardProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isInWatchlist, setIsInWatchlist] = useState(false);
   const [watchlistId, setWatchlistId] = useState<string | null>(null);
+  const [fetchedWinner, setFetchedWinner] = useState<string | null>(null);
 
   useEffect(() => {
     checkWatchlistStatus();
   }, [season, gpName]);
+
+  useEffect(() => {
+    // Fetch winner if not provided and race is in the past
+    const fetchWinner = async () => {
+      if (!winner && season && round && date) {
+        const raceDate = new Date(date);
+        if (raceDate < new Date()) {
+          try {
+            const raceWinner = await getRaceWinner(season, round);
+            if (raceWinner) {
+              setFetchedWinner(raceWinner);
+            }
+          } catch (error) {
+            console.error('[RaceCard] Error fetching winner:', error);
+          }
+        }
+      }
+    };
+    fetchWinner();
+  }, [season, round, date, winner]);
 
   const checkWatchlistStatus = async () => {
     const user = auth.currentUser;
@@ -124,6 +147,7 @@ export const RaceCard = ({
   };
 
   const flagUrl = country ? getCountryFlag(country) : null;
+  const displayWinner = winner || fetchedWinner;
 
   return (
     <Card
@@ -155,15 +179,21 @@ export const RaceCard = ({
             <div className="text-center space-y-1">
               <div className="text-base sm:text-xl md:text-2xl font-bold">{season}</div>
               <div className="text-[10px] sm:text-xs font-medium line-clamp-2 px-1">{gpName}</div>
+              {displayWinner && (
+                <div className="text-[10px] sm:text-xs font-semibold text-racing-red line-clamp-1 px-1 flex items-center justify-center gap-1">
+                  <span>🏆</span>
+                  <span>{displayWinner}</span>
+                </div>
+              )}
             </div>
           </div>
         )}
-        
+
         {/* Rating overlay */}
         {rating && (
           <div className="absolute bottom-1 left-1 sm:bottom-2 sm:left-2 bg-black/80 backdrop-blur-sm px-1.5 py-0.5 sm:px-2 sm:py-1 rounded flex items-center gap-0.5 sm:gap-1">
             <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-racing-red text-racing-red" />
-            <span className="text-[10px] sm:text-xs font-semibold">{rating.toFixed(1)}</span>
+            <span className="text-[10px] sm:text-xs font-semibold text-white">{rating.toFixed(1)}</span>
           </div>
         )}
 
