@@ -105,46 +105,62 @@ export const getFollowingActivity = async (limitCount: number = 50) => {
     return [];
   }
 
-  const q = query(
-    activitiesCollection,
-    where('userId', 'in', followingIds.slice(0, 10)),
-    orderBy('createdAt', 'desc'),
-    limit(limitCount)
-  );
-  const snapshot = await getDocs(q);
+  // Firestore 'in' queries are limited to 10 items, so we need to batch queries
+  const batchSize = 10;
+  const batches: Activity[][] = [];
 
-  // Fetch user profiles for activities missing userAvatar
-  const activities = await Promise.all(
-    snapshot.docs.map(async (docSnapshot) => {
-      const data = docSnapshot.data();
-      let userAvatar = data.userAvatar || '';
-      let username = data.username || 'User';
+  for (let i = 0; i < followingIds.length; i += batchSize) {
+    const batch = followingIds.slice(i, i + batchSize);
 
-      // If userAvatar is missing or empty, fetch from users collection
-      if (!userAvatar && data.userId) {
-        try {
-          const userDoc = await getDoc(doc(db, 'users', data.userId));
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
-            userAvatar = userData.photoURL || '';
-            username = userData.name || username;
+    const q = query(
+      activitiesCollection,
+      where('userId', 'in', batch),
+      orderBy('createdAt', 'desc'),
+      limit(limitCount)
+    );
+
+    const snapshot = await getDocs(q);
+
+    // Fetch user profiles for activities missing userAvatar
+    const activities = await Promise.all(
+      snapshot.docs.map(async (docSnapshot) => {
+        const data = docSnapshot.data();
+        let userAvatar = data.userAvatar || '';
+        let username = data.username || 'User';
+
+        // If userAvatar is missing or empty, fetch from users collection
+        if (!userAvatar && data.userId) {
+          try {
+            const userDoc = await getDoc(doc(db, 'users', data.userId));
+            if (userDoc.exists()) {
+              const userData = userDoc.data();
+              userAvatar = userData.photoURL || '';
+              username = userData.name || username;
+            }
+          } catch (error) {
+            console.error('Error fetching user profile for activity:', error);
           }
-        } catch (error) {
-          console.error('Error fetching user profile for activity:', error);
         }
-      }
 
-      return {
-        id: docSnapshot.id,
-        ...data,
-        username,
-        userAvatar,
-        createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt)
-      } as Activity;
-    })
-  );
+        return {
+          id: docSnapshot.id,
+          ...data,
+          username,
+          userAvatar,
+          createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt)
+        } as Activity;
+      })
+    );
 
-  return activities;
+    batches.push(activities);
+  }
+
+  // Combine all batches and sort by createdAt
+  const allActivities = batches.flat();
+  allActivities.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+  // Return only the requested limit
+  return allActivities.slice(0, limitCount);
 };
 
 export const getGlobalActivity = async (limitCount: number = 50) => {

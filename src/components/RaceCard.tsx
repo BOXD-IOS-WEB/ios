@@ -139,22 +139,22 @@ export const RaceCard = ({
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center p-2 sm:p-4 space-y-2 sm:space-y-4">
+          <div className="w-full h-full flex flex-col items-center justify-center p-2 sm:p-4 space-y-2 sm:space-y-3">
             {flagUrl && (
-              <div className="w-12 h-12 sm:w-20 sm:h-20 rounded-full overflow-hidden border-2 sm:border-4 border-white/20 shadow-lg">
+              <div className="w-10 h-10 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full overflow-hidden border-2 sm:border-3 border-white/20 shadow-lg flex items-center justify-center">
                 <img
                   src={flagUrl}
                   alt={country || circuit}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover scale-110"
                   onError={(e) => {
                     (e.target as HTMLImageElement).style.display = 'none';
                   }}
                 />
               </div>
             )}
-            <div className="text-center">
-              <div className="text-lg sm:text-2xl font-bold">{season}</div>
-              <div className="text-[10px] sm:text-xs mt-0.5 sm:mt-1 font-medium line-clamp-2 px-1">{gpName}</div>
+            <div className="text-center space-y-1">
+              <div className="text-base sm:text-xl md:text-2xl font-bold">{season}</div>
+              <div className="text-[10px] sm:text-xs font-medium line-clamp-2 px-1">{gpName}</div>
             </div>
           </div>
         )}
