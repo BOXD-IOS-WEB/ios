@@ -83,39 +83,56 @@ const Index = () => {
   }, [tagFilter]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#0a0a0a] racing-grid">
       <Header />
-      
+
       <main className="container px-4 sm:px-6 md:px-8 py-6 sm:py-8 md:py-10 space-y-8 sm:space-y-12 md:space-y-16">
         {/* Hero Section */}
-        <section className="relative text-center space-y-4 md:space-y-6 py-12 sm:py-16 md:py-20 lg:py-28 px-4 sm:px-6 md:px-8 rounded-xl md:rounded-3xl overflow-hidden">
+        <section className="relative text-center space-y-6 py-16 sm:py-20 md:py-24 px-4 sm:px-6 md:px-8 rounded-2xl overflow-hidden border-2 border-red-900/50">
           {/* Background Image */}
           <div
             className="absolute inset-0 z-0"
             style={{
-              backgroundImage: 'url(/ferrari-f1.jpg)',
+              backgroundImage: `url(${import.meta.env.BASE_URL}ferrari-f1.jpg)`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
-              opacity: 0.35,
-              filter: 'grayscale(0%)'
+              opacity: 0.55,
+              filter: 'grayscale(0%) brightness(1.0)'
             }}
           />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/40 to-black/70 z-0" />
+
+          {/* Racing stripes */}
+          <div className="absolute left-0 top-0 w-1 h-full bg-racing-red z-0" />
+          <div className="absolute right-0 top-0 w-1 h-full bg-racing-red z-0" />
 
           {/* Content */}
           <div className="relative z-10">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-4 md:mb-8 leading-tight">
-              <span className="hidden sm:inline">Track every <span className="text-racing-red">race</span> you watch.</span>
-              <span className="sm:hidden">Track every <span className="text-racing-red">race.</span></span>
+            <div className="inline-block px-6 py-2 bg-black/60 backdrop-blur-sm border-2 border-racing-red rounded-full mb-6">
+              <span className="text-racing-red font-black text-xs tracking-widest drop-shadow-[0_0_8px_rgba(220,38,38,0.8)]">RACE CONTROL</span>
+            </div>
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-black mb-6 leading-tight tracking-tighter text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
+              <span className="hidden sm:inline">TRACK EVERY <span className="text-racing-red drop-shadow-[0_0_12px_rgba(220,38,38,0.8)]">RACE</span></span>
+              <span className="sm:hidden">TRACK <span className="text-racing-red drop-shadow-[0_0_12px_rgba(220,38,38,0.8)]">RACES</span></span>
             </h1>
-            <p className="text-sm sm:text-base md:text-lg lg:text-xl text-white max-w-xl md:max-w-2xl mx-auto px-4" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.8), 0 0 16px rgba(0,0,0,0.6)' }}>
-              BoxBoxd lets you log, rate and review every F1 race.<br />
-              Keep a diary and connect with fellow fans. 🏎️
+            <p className="text-base sm:text-lg text-white max-w-2xl mx-auto px-4 font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
+              Your personal <span className="text-racing-red drop-shadow-[0_0_8px_rgba(220,38,38,0.8)]">F1 TELEMETRY</span>.
+              Log races, track stats, dominate leaderboards. 🏎️
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 md:gap-6 pt-6 md:pt-10">
-              <Button size="lg" className="gap-2 w-full sm:w-auto md:h-14 md:px-8 md:text-lg" onClick={() => navigate('/diary')}>
-                Get Racing <ArrowRight className="w-4 h-4 md:w-5 md:h-5" />
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8">
+              <Button
+                size="lg"
+                className="gap-2 w-full sm:w-auto bg-racing-red hover:bg-red-600 shadow-xl shadow-red-500/50 border-2 border-red-400 font-black uppercase tracking-wider"
+                onClick={() => navigate('/diary')}
+              >
+                Lights Out <ArrowRight className="w-4 h-4" />
               </Button>
-              <Button size="lg" variant="outline" className="w-full sm:w-auto md:h-14 md:px-8 md:text-lg" onClick={() => navigate('/explore')}>
+              <Button
+                size="lg"
+                variant="outline"
+                className="w-full sm:w-auto border-2 border-racing-red bg-black/60 text-white hover:bg-racing-red/20 font-bold uppercase drop-shadow-[0_2px_4px_rgba(0,0,0,1)]"
+                onClick={() => navigate('/explore')}
+              >
                 Pit Stop
               </Button>
             </div>
@@ -132,7 +149,7 @@ const Index = () => {
               variant="ghost"
               size="sm"
               className="ml-auto h-8 gap-1.5"
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/home')}
             >
               <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               <span className="text-xs sm:text-sm">Clear</span>
@@ -140,24 +157,31 @@ const Index = () => {
           </div>
         )}
 
-        <section className="space-y-4 sm:space-y-6 md:space-y-8">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 md:gap-4">
+        <section className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b-2 border-red-900/50">
             <div>
-              <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold">Current Season</h2>
-              <p className="text-sm sm:text-base md:text-lg text-muted-foreground mt-1">2025 F1 Grand Prix Schedule</p>
+              <div className="inline-block px-4 py-1 bg-black/60 backdrop-blur-sm border-2 border-racing-red rounded-full mb-2">
+                <span className="text-racing-red font-black text-xs tracking-widest drop-shadow-[0_0_6px_rgba(220,38,38,0.8)]">CURRENT SEASON</span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">2025 CALENDAR</h2>
+              <p className="text-xs sm:text-sm text-gray-300 mt-1 font-bold uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">F1 Grand Prix Schedule</p>
             </div>
-            <Button variant="ghost" className="gap-2 self-start sm:self-auto md:h-12 md:px-6 md:text-base" onClick={() => navigate('/explore')}>
-              View All <ArrowRight className="w-4 h-4 md:w-5 md:h-5" />
+            <Button
+              variant="outline"
+              className="gap-2 self-start sm:self-auto border-2 border-racing-red bg-black/60 text-white hover:bg-racing-red/20 font-bold uppercase text-xs drop-shadow-[0_2px_4px_rgba(0,0,0,1)]"
+              onClick={() => navigate('/explore')}
+            >
+              View All <ArrowRight className="w-4 h-4 drop-shadow-[0_2px_4px_rgba(0,0,0,1)]" />
             </Button>
           </div>
 
           {error ? (
-            <div className="text-center py-12 text-red-500">Error: {error}</div>
+            <div className="text-center py-12 text-racing-red font-black uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">Error: {error}</div>
           ) : loading ? (
-            <div className="text-center py-12 text-muted-foreground">Loading races...</div>
+            <div className="text-center py-12 text-gray-300 font-black uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">Loading races...</div>
           ) : currentRaces.length > 0 ? (
             <>
-              <p className="text-xs text-muted-foreground mb-2">Showing {currentRaces.length} races</p>
+              <p className="text-xs text-gray-400 mb-2 font-bold uppercase tracking-wider">Showing {currentRaces.length} races</p>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
                 {currentRaces.map((race) => {
                   const posterUrl = getPosterUrl(race.circuit_short_name || race.circuit_key);
@@ -180,22 +204,27 @@ const Index = () => {
               </div>
             </>
           ) : (
-            <div className="text-center py-12 text-muted-foreground">No races available</div>
+            <div className="text-center py-12 text-gray-400 font-black uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">No races available</div>
           )}
         </section>
 
-        <section className="space-y-4 sm:space-y-6 md:space-y-8">
-          <div>
-            <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold">
-              {tagFilter ? `Races tagged with #${tagFilter}` : 'Recently Logged'}
+        <section className="space-y-6">
+          <div className="pb-2 border-b-2 border-red-900/50">
+            <div className="inline-block px-4 py-1 bg-black/60 backdrop-blur-sm border-2 border-racing-red rounded-full mb-2">
+              <span className="text-racing-red font-black text-xs tracking-widest drop-shadow-[0_0_6px_rgba(220,38,38,0.8)]">
+                {tagFilter ? `#${tagFilter.toUpperCase()}` : 'COMMUNITY'}
+              </span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+              {tagFilter ? `TAGGED RACES` : 'RECENTLY LOGGED'}
             </h2>
-            <p className="text-sm sm:text-base md:text-lg text-muted-foreground mt-1">
-              {tagFilter ? `${popularRaces.length} race${popularRaces.length === 1 ? '' : 's'} found` : 'Latest races logged by the community'}
+            <p className="text-xs sm:text-sm text-gray-300 mt-1 font-bold uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+              {tagFilter ? `${popularRaces.length} Race${popularRaces.length === 1 ? '' : 's'} Found` : 'Latest from the Paddock'}
             </p>
           </div>
 
           {loading ? (
-            <div className="text-center py-12 text-muted-foreground">Loading...</div>
+            <div className="text-center py-12 text-gray-300 font-black uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">Loading...</div>
           ) : popularRaces.length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
               {popularRaces.map((race) => (
@@ -214,30 +243,30 @@ const Index = () => {
               ))}
             </div>
           ) : (
-            <div className="text-center py-12 text-muted-foreground">
-              <p>No races logged yet</p>
-              <p className="text-sm mt-2">Be the first to log a race!</p>
+            <div className="text-center py-12 text-gray-400">
+              <p className="font-black uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">No races logged yet</p>
+              <p className="text-sm mt-2 font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">Be the first to log a race!</p>
             </div>
           )}
         </section>
 
         {/* Footer */}
-        <footer className="border-t border-border mt-16 pt-8 pb-12">
+        <footer className="border-t-2 border-red-900/50 mt-16 pt-8 pb-12">
           <div className="text-center space-y-4">
             <div className="flex flex-wrap justify-center gap-4 text-sm">
-              <a href="/support" className="text-muted-foreground hover:text-racing-red transition-colors">
+              <a href="/support" className="text-gray-400 hover:text-racing-red transition-colors font-bold uppercase tracking-wider">
                 Support
               </a>
-              <span className="text-muted-foreground">•</span>
-              <a href="/privacy-policy" className="text-muted-foreground hover:text-racing-red transition-colors">
-                Privacy Policy
+              <span className="text-red-900">•</span>
+              <a href="/privacy-policy" className="text-gray-400 hover:text-racing-red transition-colors font-bold uppercase tracking-wider">
+                Privacy
               </a>
-              <span className="text-muted-foreground">•</span>
-              <a href="/terms-of-service" className="text-muted-foreground hover:text-racing-red transition-colors">
-                Terms of Service
+              <span className="text-red-900">•</span>
+              <a href="/terms-of-service" className="text-gray-400 hover:text-racing-red transition-colors font-bold uppercase tracking-wider">
+                Terms
               </a>
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">
               © 2025 BoxBoxd. All rights reserved.
             </p>
           </div>

@@ -137,35 +137,38 @@ const Onboarding = () => {
       }, { merge: true });
 
       toast({ title: 'Welcome to BoxBoxd!' });
-      navigate('/');
+      navigate('/home');
     } catch (error: any) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     }
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#0a0a0a] racing-grid flex items-center justify-center p-4">
       <div className="max-w-4xl w-full space-y-8">
-        <div className="text-center space-y-2">
-          <h1 className="text-4xl font-bold">
-            <span className="text-foreground">BOX</span>
+        <div className="text-center space-y-3">
+          <div className="inline-block px-6 py-2 bg-racing-red/20 border-2 border-racing-red rounded-full mb-2">
+            <span className="text-racing-red font-black text-xs tracking-widest">SETUP</span>
+          </div>
+          <h1 className="text-4xl sm:text-5xl font-black tracking-tighter">
+            <span className="text-white">BOX</span>
             <span className="text-racing-red">BOXD</span>
           </h1>
-          <p className="text-muted-foreground">Let's personalize your experience</p>
+          <p className="text-gray-400 font-bold uppercase tracking-wider">Personalize your racing experience</p>
         </div>
 
         <div className="flex justify-center gap-2 mb-8">
-          <div className={`w-20 h-1 rounded ${step >= 1 ? 'bg-racing-red' : 'bg-muted'}`} />
-          <div className={`w-20 h-1 rounded ${step >= 2 ? 'bg-racing-red' : 'bg-muted'}`} />
-          <div className={`w-20 h-1 rounded ${step >= 3 ? 'bg-racing-red' : 'bg-muted'}`} />
+          <div className={`w-20 h-2 rounded ${step >= 1 ? 'bg-racing-red shadow-lg shadow-red-500/50' : 'bg-gray-800'}`} />
+          <div className={`w-20 h-2 rounded ${step >= 2 ? 'bg-racing-red shadow-lg shadow-red-500/50' : 'bg-gray-800'}`} />
+          <div className={`w-20 h-2 rounded ${step >= 3 ? 'bg-racing-red shadow-lg shadow-red-500/50' : 'bg-gray-800'}`} />
         </div>
 
-        <Card className="p-8">
+        <Card className="p-8 border-2 border-red-900/30 bg-black/40 backdrop-blur">
           {step === 1 && (
             <div className="space-y-6">
               <div className="text-center space-y-2">
-                <h2 className="text-2xl font-bold">Choose Your Favorite Drivers</h2>
-                <p className="text-muted-foreground">Select the drivers you support</p>
+                <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white">FAVORITE DRIVERS</h2>
+                <p className="text-gray-400 font-bold uppercase tracking-wider text-sm">Select the drivers you support</p>
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -173,20 +176,24 @@ const Onboarding = () => {
                   <Button
                     key={driver.id}
                     variant={selectedDrivers.includes(driver.id) ? "default" : "outline"}
-                    className="h-auto py-4 flex flex-col items-start"
+                    className={`h-auto py-4 flex flex-col items-start font-black uppercase tracking-wider text-xs ${
+                      selectedDrivers.includes(driver.id)
+                        ? 'bg-racing-red hover:bg-red-600 border-2 border-red-400 shadow-lg shadow-red-500/30'
+                        : 'border-2 border-red-900/50 text-white hover:bg-white/10'
+                    }`}
                     onClick={() => toggleDriver(driver.id)}
                   >
-                    <span className="font-semibold">{driver.name}</span>
-                    <span className="text-xs text-muted-foreground">{driver.team}</span>
+                    <span className="font-black">{driver.name}</span>
+                    <span className="text-[10px] text-gray-400 normal-case font-bold">{driver.team}</span>
                   </Button>
                 ))}
               </div>
 
               <div className="flex justify-between">
-                <Button variant="ghost" onClick={() => navigate('/login')}>
+                <Button variant="ghost" className="border-2 border-red-900/50 text-white hover:bg-white/10 font-black uppercase tracking-wider" onClick={() => navigate('/login')}>
                   Back
                 </Button>
-                <Button onClick={() => setStep(2)} disabled={selectedDrivers.length === 0}>
+                <Button className="bg-racing-red hover:bg-red-600 border-2 border-red-400 shadow-lg shadow-red-500/30 font-black uppercase tracking-wider" onClick={() => setStep(2)} disabled={selectedDrivers.length === 0}>
                   Next
                 </Button>
               </div>
@@ -196,8 +203,8 @@ const Onboarding = () => {
           {step === 2 && (
             <div className="space-y-6">
               <div className="text-center space-y-2">
-                <h2 className="text-2xl font-bold">Choose Your Favorite Teams</h2>
-                <p className="text-muted-foreground">Which teams do you follow?</p>
+                <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white">FAVORITE TEAMS</h2>
+                <p className="text-gray-400 font-bold uppercase tracking-wider text-sm">Which teams do you follow?</p>
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -205,7 +212,11 @@ const Onboarding = () => {
                   <Button
                     key={team.id}
                     variant={selectedTeams.includes(team.id) ? "default" : "outline"}
-                    className="h-auto py-4"
+                    className={`h-auto py-4 font-black uppercase tracking-wider text-xs ${
+                      selectedTeams.includes(team.id)
+                        ? 'bg-racing-red hover:bg-red-600 border-2 border-red-400 shadow-lg shadow-red-500/30'
+                        : 'border-2 border-red-900/50 text-white hover:bg-white/10'
+                    }`}
                     onClick={() => toggleTeam(team.id)}
                   >
                     {team.name}
@@ -214,10 +225,10 @@ const Onboarding = () => {
               </div>
 
               <div className="flex justify-between">
-                <Button variant="ghost" onClick={() => setStep(1)}>
+                <Button variant="ghost" className="border-2 border-red-900/50 text-white hover:bg-white/10 font-black uppercase tracking-wider" onClick={() => setStep(1)}>
                   Back
                 </Button>
-                <Button onClick={() => setStep(3)} disabled={selectedTeams.length === 0}>
+                <Button className="bg-racing-red hover:bg-red-600 border-2 border-red-400 shadow-lg shadow-red-500/30 font-black uppercase tracking-wider" onClick={() => setStep(3)} disabled={selectedTeams.length === 0}>
                   Next
                 </Button>
               </div>
@@ -227,8 +238,8 @@ const Onboarding = () => {
           {step === 3 && (
             <div className="space-y-6">
               <div className="text-center space-y-2">
-                <h2 className="text-2xl font-bold">Choose Your Favorite Circuits</h2>
-                <p className="text-muted-foreground">Which tracks excite you the most?</p>
+                <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white">FAVORITE CIRCUITS</h2>
+                <p className="text-gray-400 font-bold uppercase tracking-wider text-sm">Which tracks excite you the most?</p>
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -236,7 +247,11 @@ const Onboarding = () => {
                   <Button
                     key={circuit.id}
                     variant={selectedCircuits.includes(circuit.id) ? "default" : "outline"}
-                    className="h-auto py-4 flex items-center gap-2"
+                    className={`h-auto py-4 flex items-center gap-2 font-black uppercase tracking-wider text-xs ${
+                      selectedCircuits.includes(circuit.id)
+                        ? 'bg-racing-red hover:bg-red-600 border-2 border-red-400 shadow-lg shadow-red-500/30'
+                        : 'border-2 border-red-900/50 text-white hover:bg-white/10'
+                    }`}
                     onClick={() => toggleCircuit(circuit.id)}
                   >
                     <img
@@ -250,10 +265,10 @@ const Onboarding = () => {
               </div>
 
               <div className="flex justify-between">
-                <Button variant="ghost" onClick={() => setStep(2)}>
+                <Button variant="ghost" className="border-2 border-red-900/50 text-white hover:bg-white/10 font-black uppercase tracking-wider" onClick={() => setStep(2)}>
                   Back
                 </Button>
-                <Button onClick={handleComplete} disabled={selectedCircuits.length === 0}>
+                <Button className="bg-racing-red hover:bg-red-600 border-2 border-red-400 shadow-lg shadow-red-500/30 font-black uppercase tracking-wider" onClick={handleComplete} disabled={selectedCircuits.length === 0}>
                   Complete Setup
                 </Button>
               </div>
@@ -262,7 +277,7 @@ const Onboarding = () => {
         </Card>
 
         <div className="text-center">
-          <Button variant="link" onClick={() => navigate('/')}>
+          <Button variant="link" className="text-gray-400 hover:text-racing-red font-bold uppercase tracking-wider" onClick={() => navigate('/home')}>
             Skip for now
           </Button>
         </div>

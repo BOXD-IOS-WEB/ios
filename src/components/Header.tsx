@@ -99,11 +99,11 @@ export const Header = () => {
   }, [user]);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 md:h-20 items-center px-4 md:px-6 lg:px-8">
+    <header className="sticky top-0 z-50 w-full border-b-2 border-racing-red/20 bg-black/90 backdrop-blur-xl shadow-lg shadow-red-900/10">
+      <div className="container flex h-16 md:h-18 items-center px-4 md:px-6 lg:px-8">
         <div className="flex items-center gap-4 sm:gap-6 md:gap-8 flex-1">
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-            <SheetTrigger asChild className="md:hidden">
+            <SheetTrigger asChild className="lg:hidden">
               <Button variant="ghost" size="icon">
                 <Menu className="w-5 h-5" />
               </Button>
@@ -111,7 +111,7 @@ export const Header = () => {
             <SheetContent side="left" className="w-64">
               <nav className="flex flex-col gap-4 mt-8">
                 <a
-                  href="/"
+                  href="/home"
                   className="text-lg font-medium hover:text-racing-red transition-colors touch-manipulation py-2"
                   onClick={() => setMobileMenuOpen(false)}
                   onTouchEnd={() => setMobileMenuOpen(false)}
@@ -162,39 +162,45 @@ export const Header = () => {
             </SheetContent>
           </Sheet>
 
-          <a href="/" className="flex items-center gap-2">
-            <div className="text-xl sm:text-2xl md:text-3xl font-bold">
-              <span className="text-foreground">BOX</span>
+          <a href="/home" className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-racing-red rounded flex items-center justify-center">
+              <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <line x1="4" y1="22" x2="4" y2="15" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <div className="text-xl sm:text-2xl font-black tracking-tighter">
+              <span className="text-white">BOX</span>
               <span className="text-racing-red">BOXD</span>
             </div>
           </a>
 
-          <nav className="hidden md:flex items-center gap-6 lg:gap-10 text-sm md:text-base font-medium ml-4 md:ml-8">
-            <a href="/" className="text-foreground hover:text-racing-red transition-colors">
+          <nav className="hidden lg:flex items-center gap-6 xl:gap-8 text-xs font-black uppercase tracking-wider ml-4 lg:ml-6">
+            <a href="/home" className="text-white hover:text-racing-red transition-colors">
               Home
             </a>
-            <a href="/explore" className="text-muted-foreground hover:text-foreground transition-colors">
+            <a href="/explore" className="text-gray-400 hover:text-racing-red transition-colors">
               Explore
             </a>
-            <a href="/lists" className="text-muted-foreground hover:text-foreground transition-colors">
+            <a href="/lists" className="text-gray-400 hover:text-racing-red transition-colors">
               Activity
             </a>
-            <a href="/diary" className="text-muted-foreground hover:text-foreground transition-colors">
+            <a href="/diary" className="text-gray-400 hover:text-racing-red transition-colors">
               Diary
             </a>
-            <a href="/watchlist" className="text-muted-foreground hover:text-foreground transition-colors">
+            <a href="/watchlist" className="text-gray-400 hover:text-racing-red transition-colors">
               Watchlist
             </a>
           </nav>
         </div>
 
         <div className="flex items-center gap-3 md:gap-4 flex-shrink-0">
-          <form onSubmit={handleSearch} className="relative hidden md:block">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
+          <form onSubmit={handleSearch} className="relative hidden lg:block">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 lg:w-5 lg:h-5 text-muted-foreground" />
             <Input
               type="search"
               placeholder="Search races, users..."
-              className="pl-9 md:pl-11 w-48 lg:w-64 xl:w-80 bg-muted/50 md:h-11"
+              className="pl-9 lg:pl-11 w-48 xl:w-64 bg-muted/50 lg:h-11"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -203,7 +209,7 @@ export const Header = () => {
           <Button
             size="icon"
             variant="ghost"
-            className="md:hidden"
+            className="lg:hidden"
             onClick={() => navigate('/search')}
           >
             <Search className="w-5 h-5" />
@@ -211,7 +217,7 @@ export const Header = () => {
 
           <LogRaceDialog
             trigger={
-              <Button size="sm" className="gap-2 bg-primary hover:bg-primary/90 md:h-11 md:px-6 md:text-base">
+              <Button size="sm" className="gap-2 bg-racing-red hover:bg-red-600 shadow-lg shadow-red-500/30 border-2 border-red-400 font-black uppercase tracking-wider md:h-11 md:px-6">
                 <Plus className="w-4 h-4 md:w-5 md:h-5" />
                 <span className="hidden sm:inline">Log</span>
               </Button>
@@ -221,9 +227,9 @@ export const Header = () => {
           <DropdownMenu open={notificationsOpen} onOpenChange={setNotificationsOpen}>
             <DropdownMenuTrigger asChild>
               <Button size="icon" variant="ghost" className="relative md:w-11 md:h-11">
-                <Bell className="w-5 h-5 md:w-6 md:h-6" />
+                <Bell className="w-5 h-5 md:w-6 md:h-6 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,1)]" />
                 {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-racing-red text-white text-xs rounded-full flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-racing-red text-white text-xs rounded-full flex items-center justify-center font-black shadow-lg shadow-red-500/50">
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}
@@ -284,64 +290,48 @@ export const Header = () => {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <DropdownMenu>
+          <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
-              <Button size="icon" variant="ghost" className="relative rounded-full md:w-11 md:h-11 touch-manipulation">
+              <Button
+                size="icon"
+                variant="ghost"
+                className="relative rounded-full md:w-11 md:h-11 touch-manipulation cursor-pointer"
+                style={{ WebkitTapHighlightColor: 'transparent' }}
+              >
                 {userPhotoURL ? (
                   <img
                     src={userPhotoURL}
                     alt="Profile"
-                    className="w-8 h-8 md:w-10 md:h-10 rounded-full object-cover"
+                    className="w-8 h-8 md:w-10 md:h-10 rounded-full object-cover pointer-events-none"
                   />
                 ) : (
-                  <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-racing-red/20 flex items-center justify-center text-racing-red font-bold md:text-lg">
+                  <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-racing-red/20 flex items-center justify-center text-racing-red font-bold md:text-lg pointer-events-none">
                     {(user?.displayName || user?.email?.split('@')[0] || 'U').charAt(0).toUpperCase()}
                   </div>
                 )}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="touch-manipulation">
+            <DropdownMenuContent align="end" className="touch-manipulation min-w-[200px]" sideOffset={5}>
               <DropdownMenuItem
-                onClick={(e) => {
-                  e.preventDefault();
-                  navigate('/profile');
-                }}
-                onTouchEnd={(e) => {
-                  e.preventDefault();
-                  navigate('/profile');
-                }}
-                className="cursor-pointer"
+                onClick={() => navigate('/profile')}
+                className="cursor-pointer py-3 px-4 text-base"
               >
-                <User className="w-4 h-4 mr-2" />
+                <User className="w-5 h-5 mr-3" />
                 Profile
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={(e) => {
-                  e.preventDefault();
-                  navigate('/settings');
-                }}
-                onTouchEnd={(e) => {
-                  e.preventDefault();
-                  navigate('/settings');
-                }}
-                className="cursor-pointer"
+                onClick={() => navigate('/settings')}
+                className="cursor-pointer py-3 px-4 text-base"
               >
-                <Settings className="w-4 h-4 mr-2" />
+                <Settings className="w-5 h-5 mr-3" />
                 Settings
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleSignOut();
-                }}
-                onTouchEnd={(e) => {
-                  e.preventDefault();
-                  handleSignOut();
-                }}
-                className="cursor-pointer"
+                onClick={handleSignOut}
+                className="cursor-pointer py-3 px-4 text-base"
               >
-                <LogOut className="w-4 h-4 mr-2" />
+                <LogOut className="w-5 h-5 mr-3" />
                 Sign Out
               </DropdownMenuItem>
             </DropdownMenuContent>

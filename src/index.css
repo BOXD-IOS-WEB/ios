@@ -48,24 +48,24 @@ All colors MUST be HSL.
   }
 
   .dark {
-    /* F1 Letterboxd - Dark theme (primary) */
-    --background: 220 13% 9%; /* Deep carbon */
+    /* F1 Racing - Ultra Dark theme */
+    --background: 0 0% 4%; /* Pure black racing background */
     --foreground: 0 0% 98%;
 
-    --card: 220 13% 12%; /* Carbon fiber */
+    --card: 0 0% 8%; /* Deep black cards */
     --card-foreground: 0 0% 98%;
 
-    --popover: 220 13% 10%;
+    --popover: 0 0% 8%;
     --popover-foreground: 0 0% 98%;
 
     --primary: 0 72% 51%; /* Racing red */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 13% 15%; /* Lighter carbon */
+    --secondary: 0 0% 15%; /* Dark secondary */
     --secondary-foreground: 0 0% 98%;
 
-    --muted: 220 13% 18%;
-    --muted-foreground: 0 0% 65%;
+    --muted: 0 0% 18%;
+    --muted-foreground: 0 0% 75%; /* Lighter for better contrast */
 
     --accent: 0 72% 51%; /* Racing red accent */
     --accent-foreground: 0 0% 100%;
@@ -73,8 +73,8 @@ All colors MUST be HSL.
     --destructive: 0 62.8% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 13% 20%;
-    --input: 220 13% 18%;
+    --border: 0 72% 15%; /* Red-tinted borders */
+    --input: 0 0% 15%;
     --ring: 0 72% 51%;
 
     /* F1 specific tokens */
@@ -100,18 +100,31 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
+  html {
+    @apply dark;
+    /* Prevent double-tap zoom on iOS */
+    touch-action: manipulation;
+    /* Prevent horizontal overflow */
+    overflow-x: hidden;
+  }
+
   body {
     @apply bg-background text-foreground;
     font-feature-settings: 'liga' 1, 'calt' 1;
     /* Better touch handling on iOS/iPad */
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
+    /* Prevent horizontal overflow on all pages */
+    overflow-x: hidden;
+    max-width: 100vw;
+    /* Better base font size for desktop */
+    font-size: 14px;
   }
 
-  html {
-    @apply dark;
-    /* Prevent double-tap zoom on iOS */
-    touch-action: manipulation;
+  @media (min-width: 768px) {
+    body {
+      font-size: 15px;
+    }
   }
 
   /* Better button/interactive element touch handling */
@@ -125,16 +138,62 @@ All colors MUST be HSL.
   .text-racing-red {
     color: hsl(var(--racing-red));
   }
-  
+
   .bg-racing-red {
     background-color: hsl(var(--racing-red));
   }
-  
+
   .text-gold {
     color: hsl(var(--gold-accent));
   }
-  
+
   .bg-carbon {
     background-color: hsl(var(--carbon-light));
   }
+
+  /* Racing grid background */
+  .racing-grid {
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 49px, rgba(220, 38, 38, 0.03) 49px, rgba(220, 38, 38, 0.03) 50px),
+      repeating-linear-gradient(90deg, transparent, transparent 49px, rgba(220, 38, 38, 0.03) 49px, rgba(220, 38, 38, 0.03) 50px);
+  }
+
+  /* Racing stripes */
+  .racing-stripe-left {
+    position: relative;
+  }
+  .racing-stripe-left::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(180deg, hsl(var(--racing-red)) 0%, transparent 100%);
+  }
+
+  .racing-stripe-right {
+    position: relative;
+  }
+  .racing-stripe-right::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(180deg, hsl(var(--racing-red)) 0%, transparent 100%);
+  }
+}
+
+/* Racing animations */
+@keyframes speed-line {
+  0%, 100% { transform: translateX(-100%); opacity: 0; }
+  50% { opacity: 1; }
+  100% { transform: translateX(100%); opacity: 0; }
+}
+
+@keyframes pulse-red {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }

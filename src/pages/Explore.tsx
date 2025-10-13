@@ -99,34 +99,37 @@ const Explore = () => {
   }, [selectedSeason]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#0a0a0a] racing-grid">
       <Header />
-      
+
       <main className="container px-4 sm:px-6 py-6 sm:py-8">
-        <div className="mb-6 sm:mb-8">
-          <h1 className="text-3xl sm:text-4xl font-bold mb-2">Explore</h1>
-          <p className="text-muted-foreground">
-            Discover trending races, top reviews, and popular lists from the community
+        <div className="mb-6 sm:mb-8 pb-4 border-b-2 border-red-900/30">
+          <div className="inline-block px-4 py-1 bg-racing-red/20 border border-racing-red rounded-full mb-2">
+            <span className="text-racing-red font-black text-xs tracking-widest">TRACK BROWSER</span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">EXPLORE RACES</h1>
+          <p className="text-xs sm:text-sm text-gray-400 mt-1 font-bold uppercase tracking-wider">
+            Browse seasons · Trending · Reviews · Lists
           </p>
         </div>
 
         <Tabs defaultValue="seasons" className="space-y-6">
           <div className="w-full overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-            <TabsList className="w-full sm:w-auto inline-flex min-w-max">
-              <TabsTrigger value="seasons" className="gap-1 sm:gap-2 text-[11px] sm:text-sm whitespace-nowrap px-2 sm:px-3">
+            <TabsList className="w-full sm:w-auto inline-flex min-w-max border-2 border-red-900/30 bg-black/50">
+              <TabsTrigger value="seasons" className="gap-1 sm:gap-2 text-[10px] sm:text-xs whitespace-nowrap px-2 sm:px-3 font-black uppercase tracking-wider data-[state=active]:bg-racing-red data-[state=active]:text-white">
                 <History className="w-3 h-3 sm:w-4 sm:h-4" />
                 <span className="hidden xs:inline">Browse </span>Seasons
               </TabsTrigger>
-              <TabsTrigger value="trending" className="gap-1 sm:gap-2 text-[11px] sm:text-sm whitespace-nowrap px-2 sm:px-3">
+              <TabsTrigger value="trending" className="gap-1 sm:gap-2 text-[10px] sm:text-xs whitespace-nowrap px-2 sm:px-3 font-black uppercase tracking-wider data-[state=active]:bg-racing-red data-[state=active]:text-white">
                 <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" />
                 <span className="hidden xs:inline">Trending</span>
                 <span className="xs:hidden">Trend</span>
               </TabsTrigger>
-              <TabsTrigger value="reviews" className="gap-1 sm:gap-2 text-[11px] sm:text-sm whitespace-nowrap px-2 sm:px-3">
+              <TabsTrigger value="reviews" className="gap-1 sm:gap-2 text-[10px] sm:text-xs whitespace-nowrap px-2 sm:px-3 font-black uppercase tracking-wider data-[state=active]:bg-racing-red data-[state=active]:text-white">
                 <Star className="w-3 h-3 sm:w-4 sm:h-4" />
                 Reviews
               </TabsTrigger>
-              <TabsTrigger value="lists" className="gap-1 sm:gap-2 text-[11px] sm:text-sm whitespace-nowrap px-2 sm:px-3">
+              <TabsTrigger value="lists" className="gap-1 sm:gap-2 text-[10px] sm:text-xs whitespace-nowrap px-2 sm:px-3 font-black uppercase tracking-wider data-[state=active]:bg-racing-red data-[state=active]:text-white">
                 <List className="w-3 h-3 sm:w-4 sm:h-4" />
                 Lists
               </TabsTrigger>
@@ -135,8 +138,11 @@ const Explore = () => {
 
           <TabsContent value="seasons" className="space-y-6">
             <div>
-              <h2 className="text-2xl font-bold mb-4">Browse by Season</h2>
-              <p className="text-muted-foreground mb-6">Explore races from previous F1 seasons</p>
+              <div className="inline-block px-4 py-1 bg-racing-red/20 border border-racing-red rounded-full mb-2">
+                <span className="text-racing-red font-black text-xs tracking-widest">SEASON ARCHIVE</span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white mb-2">BROWSE BY SEASON</h2>
+              <p className="text-xs sm:text-sm text-gray-400 font-bold uppercase tracking-wider mb-6">Select a season to view all races</p>
 
               <div className="flex flex-wrap gap-2 mb-6">
                 {[2025, 2024, 2023, 2022, 2021, 2020].map((year) => (
@@ -144,7 +150,11 @@ const Explore = () => {
                     key={year}
                     variant={selectedSeason === year ? "default" : "outline"}
                     onClick={() => setSelectedSeason(year)}
-                    className="min-w-[4rem]"
+                    className={`min-w-[4rem] font-black uppercase tracking-wider ${
+                      selectedSeason === year
+                        ? 'bg-racing-red hover:bg-red-600 border-2 border-red-400 shadow-lg shadow-red-500/30'
+                        : 'border-2 border-racing-red bg-black/60 text-white hover:bg-racing-red/20 drop-shadow-[0_2px_4px_rgba(0,0,0,1)]'
+                    }`}
                   >
                     {year}
                   </Button>
@@ -152,7 +162,7 @@ const Explore = () => {
               </div>
 
               {seasonLoading ? (
-                <div className="text-center py-12 text-muted-foreground">Loading {selectedSeason} season...</div>
+                <div className="text-center py-12 text-gray-200 font-bold uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">Loading {selectedSeason} season...</div>
               ) : seasonRaces.length === 0 ? (
                 <EmptyState
                   icon={History}
@@ -161,7 +171,7 @@ const Explore = () => {
                 />
               ) : (
                 <>
-                  <p className="text-xs text-muted-foreground mb-2">Showing {seasonRaces.length} races for {selectedSeason}</p>
+                  <p className="text-xs text-gray-200 font-bold uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,1)] mb-2">Showing {seasonRaces.length} races for {selectedSeason}</p>
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
                     {seasonRaces.map((race) => (
                         <RaceCard
@@ -182,10 +192,13 @@ const Explore = () => {
 
           <TabsContent value="trending" className="space-y-6">
             <div>
-              <h2 className="text-2xl font-bold mb-4">Trending Races</h2>
-              <p className="text-muted-foreground mb-6">Most logged races recently</p>
+              <div className="inline-block px-4 py-1 bg-racing-red/20 border border-racing-red rounded-full mb-2">
+                <span className="text-racing-red font-black text-xs tracking-widest">HOT LAPS</span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white mb-2">TRENDING RACES</h2>
+              <p className="text-xs sm:text-sm text-gray-400 font-bold uppercase tracking-wider mb-6">Most logged races in the paddock</p>
               {loading ? (
-                <div className="text-center py-12 text-muted-foreground">Loading...</div>
+                <div className="text-center py-12 text-gray-200 font-bold uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">Loading...</div>
               ) : trendingRaces.length === 0 ? (
                 <EmptyState
                   icon={TrendingUp}
@@ -215,11 +228,14 @@ const Explore = () => {
 
           <TabsContent value="reviews" className="space-y-4">
             <div>
-              <h2 className="text-2xl font-bold mb-4">Top Reviews</h2>
-              <p className="text-muted-foreground mb-6">Most liked reviews recently</p>
+              <div className="inline-block px-4 py-1 bg-racing-red/20 border border-racing-red rounded-full mb-2">
+                <span className="text-racing-red font-black text-xs tracking-widest">RACE ANALYSIS</span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white mb-2">TOP REVIEWS</h2>
+              <p className="text-xs sm:text-sm text-gray-400 font-bold uppercase tracking-wider mb-6">Most liked race reviews</p>
 
               {loading ? (
-                <div className="text-center py-12 text-muted-foreground">Loading...</div>
+                <div className="text-center py-12 text-gray-200 font-bold uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">Loading...</div>
               ) : topReviews.length === 0 ? (
                 <EmptyState
                   icon={Star}
@@ -230,11 +246,11 @@ const Explore = () => {
                 topReviews.map((review) => (
                   <Card
                     key={review.id}
-                    className="p-6 space-y-4 hover:ring-2 hover:ring-primary transition-all cursor-pointer"
+                    className="p-6 space-y-4 hover:ring-2 hover:ring-racing-red border-2 border-red-900/40 bg-black/90 backdrop-blur transition-all cursor-pointer"
                     onClick={() => window.location.href = `/race/${review.id}`}
                   >
                     <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center font-bold overflow-hidden">
+                      <div className="w-12 h-12 rounded-full bg-black/80 border-2 border-racing-red/40 flex items-center justify-center font-bold overflow-hidden shadow-lg">
                         {review.userAvatar ? (
                           <img
                             src={review.userAvatar}
@@ -242,23 +258,23 @@ const Explore = () => {
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <span>{review.username?.[0]?.toUpperCase() || 'U'}</span>
+                          <span className="text-white font-black drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">{review.username?.[0]?.toUpperCase() || 'U'}</span>
                         )}
                       </div>
                       <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="font-semibold">{review.username}</span>
-                          <span className="text-muted-foreground">reviewed</span>
-                          <span className="font-semibold">{review.raceName} {review.raceYear}</span>
+                        <div className="flex items-center gap-2 mb-2 flex-wrap">
+                          <span className="font-black text-white uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">{review.username}</span>
+                          <span className="text-gray-200 font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">reviewed</span>
+                          <span className="font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">{review.raceName} {review.raceYear}</span>
                           <div className="flex items-center gap-1 ml-auto">
                             <Star className="w-4 h-4 fill-racing-red text-racing-red" />
-                            <span className="text-sm font-semibold">{review.rating}</span>
+                            <span className="text-sm font-black text-racing-red drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">{review.rating}</span>
                           </div>
                         </div>
-                        <p className="text-sm text-muted-foreground mb-3">
+                        <p className="text-sm text-gray-200 font-medium mb-3 drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
                           {review.review.substring(0, 200)}...
                         </p>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-4 text-sm text-gray-300 font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
                           <span>❤️ {review.likesCount || 0} likes</span>
                         </div>
                       </div>
@@ -271,11 +287,14 @@ const Explore = () => {
 
           <TabsContent value="lists" className="space-y-4">
             <div>
-              <h2 className="text-2xl font-bold mb-4">Popular Lists</h2>
-              <p className="text-muted-foreground mb-6">Most liked lists this month</p>
+              <div className="inline-block px-4 py-1 bg-racing-red/20 border border-racing-red rounded-full mb-2">
+                <span className="text-racing-red font-black text-xs tracking-widest">COLLECTIONS</span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white mb-2">POPULAR LISTS</h2>
+              <p className="text-xs sm:text-sm text-gray-400 font-bold uppercase tracking-wider mb-6">Top rated race collections</p>
 
               {loading ? (
-                <div className="text-center py-12 text-muted-foreground">Loading...</div>
+                <div className="text-center py-12 text-gray-200 font-bold uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">Loading...</div>
               ) : popularLists.length === 0 ? (
                 <EmptyState
                   icon={List}
@@ -285,19 +304,19 @@ const Explore = () => {
               ) : (
                 <div className="grid md:grid-cols-2 gap-4">
                   {popularLists.map((list) => (
-                    <Card key={list.id} className="p-6 space-y-4 hover:ring-2 hover:ring-primary transition-all cursor-pointer">
+                    <Card key={list.id} className="p-6 space-y-4 hover:ring-2 hover:ring-racing-red border-2 border-red-900/40 bg-black/90 backdrop-blur transition-all cursor-pointer">
                       <div className="flex items-start gap-3">
-                        <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                          <List className="w-6 h-6 text-primary" />
+                        <div className="w-12 h-12 bg-racing-red/20 rounded-lg flex items-center justify-center border-2 border-racing-red/40 shadow-lg shadow-red-500/30">
+                          <List className="w-6 h-6 text-racing-red drop-shadow-[0_0_6px_rgba(220,38,38,0.8)]" />
                         </div>
                         <div className="flex-1">
-                          <h3 className="font-semibold text-lg mb-1">{list.title}</h3>
-                          <p className="text-sm text-muted-foreground">
+                          <h3 className="font-black text-white text-lg mb-1 uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">{list.title}</h3>
+                          <p className="text-sm text-gray-200 font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
                             by {list.username}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-4 text-sm text-gray-300 font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
                         <span>{list.races?.length || 0} races</span>
                         <span>❤️ {list.likesCount || 0} likes</span>
                       </div>

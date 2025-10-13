@@ -336,7 +336,7 @@ export const LogRaceDialog = ({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-background via-background to-racing-red/5">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-background via-background to-racing-red/5 w-[95vw] sm:w-full">
         <DialogHeader className="border-b border-border/50 pb-4">
           <DialogTitle className="text-2xl font-bold flex items-center gap-2">
             <div className="w-1 h-8 bg-racing-red rounded-full" />

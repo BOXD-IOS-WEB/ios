@@ -5,35 +5,21 @@ import { auth } from "@/lib/firebase";
 
 const Lists = () => {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#0a0a0a] racing-grid">
       <Header />
 
       <main className="container px-4 sm:px-6 md:px-8 py-6 sm:py-8 md:py-10">
-        <div className="mb-6 sm:mb-8">
-          <h1 className="text-3xl sm:text-4xl font-bold mb-2">Activity</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">
+        <div className="mb-6 sm:mb-8 pb-4 border-b-2 border-red-900/50">
+          <div className="inline-block px-4 py-1 bg-black/60 backdrop-blur-sm border-2 border-racing-red rounded-full mb-2">
+            <span className="text-racing-red font-black text-xs tracking-widest drop-shadow-[0_0_6px_rgba(220,38,38,0.8)]">GLOBAL FEED</span>
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">COMMUNITY ACTIVITY</h1>
+          <p className="text-sm sm:text-base text-gray-300 mt-1 font-bold uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
             See what the F1 community is watching
           </p>
         </div>
 
-        <Tabs defaultValue={auth.currentUser ? "following" : "global"}>
-          {auth.currentUser && (
-            <TabsList>
-              <TabsTrigger value="following">Following</TabsTrigger>
-              <TabsTrigger value="global">Global</TabsTrigger>
-            </TabsList>
-          )}
-
-          {auth.currentUser && (
-            <TabsContent value="following">
-              <ActivityFeed feedType="following" limit={50} />
-            </TabsContent>
-          )}
-
-          <TabsContent value="global">
-            <ActivityFeed feedType="global" limit={50} />
-          </TabsContent>
-        </Tabs>
+        <ActivityFeed feedType="global" limit={50} />
       </main>
     </div>
   );

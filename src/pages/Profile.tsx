@@ -176,18 +176,18 @@ const Profile = () => {
   }, [userId]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#0a0a0a] racing-grid">
       <Header />
-      
+
       <main className="container px-4 sm:px-6 py-6 sm:py-8">
         {/* Profile Header */}
         <div className="space-y-6 mb-6 sm:mb-8">
           {/* Profile Info */}
           <div className="px-0 sm:px-6">
-            <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-lg p-4 sm:p-6">
+            <div className="bg-black/90 backdrop-blur-sm border-2 border-red-900/40 rounded-lg p-4 sm:p-6">
             {/* Avatar */}
             <div className="flex items-end justify-between mb-4">
-              <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full border-4 border-card overflow-hidden bg-muted flex items-center justify-center shadow-lg">
+              <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full border-4 border-racing-red/40 overflow-hidden bg-black/80 flex items-center justify-center shadow-xl shadow-red-500/30">
                 {profile?.photoURL ? (
                   <img
                     src={profile.photoURL}
@@ -195,7 +195,7 @@ const Profile = () => {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="text-4xl sm:text-5xl font-bold">
+                  <div className="text-3xl sm:text-4xl font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
                     {(profile?.name || profile?.email?.split('@')[0] || 'U').charAt(0).toUpperCase()}
                   </div>
                 )}
@@ -209,6 +209,7 @@ const Profile = () => {
                     onClick={handleFollowToggle}
                     disabled={followLoading}
                     variant={followingUser ? "outline" : "default"}
+                    className={followingUser ? "border-2 border-racing-red bg-black/60 text-white hover:bg-racing-red/20 font-black uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,1)]" : "bg-racing-red hover:bg-red-600 border-2 border-red-400 shadow-lg shadow-red-500/30 font-black uppercase tracking-wider"}
                   >
                     {followingUser ? 'Unfollow' : 'Follow'}
                   </Button>
@@ -218,15 +219,15 @@ const Profile = () => {
 
             {/* Name and Bio */}
             <div className="mb-6">
-              <h1 className="text-2xl sm:text-3xl font-bold mb-1">
+              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white mb-1">
                 {profile?.name || 'Loading...'}
               </h1>
-              <p className="text-sm sm:text-base text-muted-foreground">
+              <p className="text-sm sm:text-base text-gray-200 font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
                 @{profile?.email?.split('@')[0] || 'user'}
               </p>
 
               {profile?.description && (
-                <p className="mt-3 text-sm sm:text-base">
+                <p className="mt-3 text-sm sm:text-base text-gray-200 drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
                   {profile.description}
                 </p>
               )}
@@ -235,23 +236,23 @@ const Profile = () => {
             {/* Stats */}
             <div className="flex flex-wrap gap-4 sm:gap-6 text-sm mb-6">
               <div>
-                <span className="font-bold">{stats.racesWatched}</span>{' '}
-                <span className="text-muted-foreground">Races</span>
+                <span className="font-black text-racing-red drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">{stats.racesWatched}</span>{' '}
+                <span className="text-gray-200 font-bold uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">Races</span>
               </div>
               <div>
-                <span className="font-bold">{stats.followers}</span>{' '}
-                <span className="text-muted-foreground">Followers</span>
+                <span className="font-black text-racing-red drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">{stats.followers}</span>{' '}
+                <span className="text-gray-200 font-bold uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">Followers</span>
               </div>
               <div>
-                <span className="font-bold">{stats.following}</span>{' '}
-                <span className="text-muted-foreground">Following</span>
+                <span className="font-black text-racing-red drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">{stats.following}</span>{' '}
+                <span className="text-gray-200 font-bold uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">Following</span>
               </div>
             </div>
 
             {/* Time Spent Watching */}
-            <div className="mb-6 py-3 px-4 bg-gradient-to-r from-racing-red/5 via-racing-red/10 to-racing-red/5 rounded-lg border border-racing-red/20">
+            <div className="mb-6 py-3 px-4 bg-gradient-to-r from-racing-red/10 via-racing-red/15 to-racing-red/10 rounded-lg border-2 border-racing-red/40">
               <div className="flex items-center gap-1.5 flex-wrap text-sm sm:text-base">
-                <span className="text-foreground/80">{currentUser?.uid === (userId || currentUser?.uid) ? "You've" : `${profile?.name || 'They'} has`} spent</span>
+                <span className="text-gray-100 font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">{currentUser?.uid === (userId || currentUser?.uid) ? "You've" : `${profile?.name || 'They'} has`} spent</span>
                 {(() => {
                   const totalHours = stats.hoursSpent;
                   const months = Math.floor(totalHours / (24 * 30));
@@ -263,19 +264,19 @@ const Profile = () => {
                     <>
                       {months > 0 && (
                         <>
-                          <span className="font-bold text-racing-red">{months}</span>
-                          <span className="text-foreground/70">{months === 1 ? 'month' : 'months'}</span>
+                          <span className="font-black text-racing-red drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">{months}</span>
+                          <span className="text-gray-200 font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">{months === 1 ? 'month' : 'months'}</span>
                         </>
                       )}
                       {days > 0 && (
                         <>
-                          <span className="font-bold text-racing-red">{days}</span>
-                          <span className="text-foreground/70">{days === 1 ? 'day' : 'days'}</span>
+                          <span className="font-black text-racing-red drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">{days}</span>
+                          <span className="text-gray-200 font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">{days === 1 ? 'day' : 'days'}</span>
                         </>
                       )}
-                      <span className="font-bold text-racing-red">{hours}</span>
-                      <span className="text-foreground/70">{hours === 1 ? 'hour' : 'hours'}</span>
-                      <span className="text-foreground/80">watching GPs 🏎️</span>
+                      <span className="font-black text-racing-red drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">{hours}</span>
+                      <span className="text-gray-200 font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">{hours === 1 ? 'hour' : 'hours'}</span>
+                      <span className="text-gray-100 font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">watching GPs 🏎️</span>
                     </>
                   );
                 })()}
@@ -284,28 +285,28 @@ const Profile = () => {
 
             {/* Favourites */}
             {(statsDoc?.exists() && (statsDoc.data()?.favoriteDriver || statsDoc.data()?.favoriteCircuit || statsDoc.data()?.favoriteTeam)) && (
-              <Card className="p-4 sm:p-5 mb-6">
-                <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 flex items-center gap-2">
-                  <Heart className="w-4 h-4 sm:w-5 sm:h-5 text-racing-red fill-racing-red" />
-                  About {currentUser?.uid === (userId || currentUser?.uid) ? 'you' : profile?.name || 'them'}
+              <Card className="p-4 sm:p-5 mb-6 border-2 border-red-900/40 bg-black/90 backdrop-blur-sm">
+                <h3 className="text-base sm:text-lg font-black tracking-tight text-white mb-3 sm:mb-4 flex items-center gap-2 drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
+                  <Heart className="w-4 h-4 sm:w-5 sm:h-5 text-racing-red fill-racing-red drop-shadow-[0_0_4px_rgba(220,38,38,0.8)]" />
+                  FAVORITES
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
                   {statsDoc.data()?.favoriteDriver && (
-                    <div className="p-2.5 sm:p-3 rounded-lg bg-muted/50 border border-border">
-                      <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">Favorite Driver</p>
-                      <p className="font-semibold text-xs sm:text-sm">{statsDoc.data().favoriteDriver}</p>
+                    <div className="p-2.5 sm:p-3 rounded-lg bg-racing-red/15 border border-racing-red/40">
+                      <p className="text-[10px] sm:text-xs text-gray-200 mb-0.5 sm:mb-1 font-bold uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">Driver</p>
+                      <p className="font-black text-xs sm:text-sm text-white drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">{statsDoc.data().favoriteDriver}</p>
                     </div>
                   )}
                   {statsDoc.data()?.favoriteCircuit && (
-                    <div className="p-2.5 sm:p-3 rounded-lg bg-muted/50 border border-border">
-                      <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">Favorite Circuit</p>
-                      <p className="font-semibold text-xs sm:text-sm">{statsDoc.data().favoriteCircuit}</p>
+                    <div className="p-2.5 sm:p-3 rounded-lg bg-racing-red/15 border border-racing-red/40">
+                      <p className="text-[10px] sm:text-xs text-gray-200 mb-0.5 sm:mb-1 font-bold uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">Circuit</p>
+                      <p className="font-black text-xs sm:text-sm text-white drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">{statsDoc.data().favoriteCircuit}</p>
                     </div>
                   )}
                   {statsDoc.data()?.favoriteTeam && (
-                    <div className="p-2.5 sm:p-3 rounded-lg bg-muted/50 border border-border">
-                      <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5 sm:mb-1">Favorite Team</p>
-                      <p className="font-semibold text-xs sm:text-sm">{statsDoc.data().favoriteTeam}</p>
+                    <div className="p-2.5 sm:p-3 rounded-lg bg-racing-red/15 border border-racing-red/40">
+                      <p className="text-[10px] sm:text-xs text-gray-200 mb-0.5 sm:mb-1 font-bold uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">Team</p>
+                      <p className="font-black text-xs sm:text-sm text-white drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">{statsDoc.data().favoriteTeam}</p>
                     </div>
                   )}
                 </div>
@@ -318,32 +319,32 @@ const Profile = () => {
         {/* Tabs */}
         <Tabs defaultValue="logs" className="space-y-6">
           <div className="w-full overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-            <TabsList className="w-full sm:w-auto inline-flex justify-start min-w-max">
-              <TabsTrigger value="logs" className="gap-1 sm:gap-2 text-[11px] sm:text-sm px-2 sm:px-3">
+            <TabsList className="w-full sm:w-auto inline-flex justify-start min-w-max border-2 border-red-900/30 bg-black/50">
+              <TabsTrigger value="logs" className="gap-1 sm:gap-2 text-[10px] sm:text-xs px-2 sm:px-3 font-black uppercase tracking-wider data-[state=active]:bg-racing-red data-[state=active]:text-white">
                 <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
                 Logs
               </TabsTrigger>
-              <TabsTrigger value="reviews" className="gap-1 sm:gap-2 text-[11px] sm:text-sm px-2 sm:px-3">
+              <TabsTrigger value="reviews" className="gap-1 sm:gap-2 text-[10px] sm:text-xs px-2 sm:px-3 font-black uppercase tracking-wider data-[state=active]:bg-racing-red data-[state=active]:text-white">
                 <Star className="w-3 h-3 sm:w-4 sm:h-4" />
                 Reviews
               </TabsTrigger>
-              <TabsTrigger value="lists" className="gap-1 sm:gap-2 text-[11px] sm:text-sm px-2 sm:px-3">
+              <TabsTrigger value="lists" className="gap-1 sm:gap-2 text-[10px] sm:text-xs px-2 sm:px-3 font-black uppercase tracking-wider data-[state=active]:bg-racing-red data-[state=active]:text-white">
                 <List className="w-3 h-3 sm:w-4 sm:h-4" />
                 Lists
               </TabsTrigger>
-              <TabsTrigger value="watchlist" className="gap-1 sm:gap-2 text-[11px] sm:text-sm px-2 sm:px-3">
+              <TabsTrigger value="watchlist" className="gap-1 sm:gap-2 text-[10px] sm:text-xs px-2 sm:px-3 font-black uppercase tracking-wider data-[state=active]:bg-racing-red data-[state=active]:text-white">
                 <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
                 Watch
               </TabsTrigger>
-              <TabsTrigger value="likes" className="gap-1 sm:gap-2 text-[11px] sm:text-sm px-2 sm:px-3">
+              <TabsTrigger value="likes" className="gap-1 sm:gap-2 text-[10px] sm:text-xs px-2 sm:px-3 font-black uppercase tracking-wider data-[state=active]:bg-racing-red data-[state=active]:text-white">
                 <Heart className="w-3 h-3 sm:w-4 sm:h-4" />
                 Likes
               </TabsTrigger>
-              <TabsTrigger value="followers" className="gap-1 sm:gap-2 text-[11px] sm:text-sm px-2 sm:px-3">
+              <TabsTrigger value="followers" className="gap-1 sm:gap-2 text-[10px] sm:text-xs px-2 sm:px-3 font-black uppercase tracking-wider data-[state=active]:bg-racing-red data-[state=active]:text-white">
                 <Users className="w-3 h-3 sm:w-4 sm:h-4" />
                 Fans
               </TabsTrigger>
-              <TabsTrigger value="following" className="gap-1 sm:gap-2 text-[11px] sm:text-sm px-2 sm:px-3">
+              <TabsTrigger value="following" className="gap-1 sm:gap-2 text-[10px] sm:text-xs px-2 sm:px-3 font-black uppercase tracking-wider data-[state=active]:bg-racing-red data-[state=active]:text-white">
                 <Users className="w-3 h-3 sm:w-4 sm:h-4" />
                 Follow
               </TabsTrigger>
@@ -352,7 +353,7 @@ const Profile = () => {
 
           <TabsContent value="logs" className="space-y-4">
             {loading ? (
-              <div className="text-center py-12 text-muted-foreground">Loading...</div>
+              <div className="text-center py-12 text-gray-200 font-bold uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">Loading...</div>
             ) : logs.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
                 {logs.map((race, idx) => (
@@ -370,7 +371,7 @@ const Profile = () => {
 
           <TabsContent value="reviews" className="space-y-4">
             {loading ? (
-              <div className="text-center py-12 text-muted-foreground">Loading...</div>
+              <div className="text-center py-12 text-gray-200 font-bold uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">Loading...</div>
             ) : logs.filter(log => logs.find(l => l.id === log.id && l.rating > 0)).length > 0 ? (
               logs
                 .filter(log => {
@@ -378,7 +379,7 @@ const Profile = () => {
                   return fullLog && fullLog.rating > 0;
                 })
                 .map((race) => (
-                  <Card key={race.id} className="p-6">
+                  <Card key={race.id} className="p-6 border-2 border-red-900/30 bg-black/40 backdrop-blur hover:ring-2 hover:ring-racing-red transition-all">
                     <div className="flex items-start gap-4">
                       <div className="w-12 h-12 rounded-full overflow-hidden bg-muted flex items-center justify-center">
                         {profile?.photoURL ? (
@@ -424,13 +425,13 @@ const Profile = () => {
 
           <TabsContent value="lists">
             {loading ? (
-              <div className="text-center py-12 text-muted-foreground">Loading...</div>
+              <div className="text-center py-12 text-gray-200 font-bold uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">Loading...</div>
             ) : lists.length > 0 ? (
               <div className="grid md:grid-cols-2 gap-4">
                 {lists.map((list) => (
                   <Card
                     key={list.id}
-                    className="p-6 hover:ring-2 hover:ring-racing-red transition-all cursor-pointer"
+                    className="p-6 hover:ring-2 hover:ring-racing-red border-2 border-red-900/30 bg-black/40 backdrop-blur transition-all cursor-pointer"
                     onClick={() => navigate(`/list/${list.id}`)}
                   >
                     <div className="flex items-start gap-3 mb-3">
@@ -463,7 +464,7 @@ const Profile = () => {
 
           <TabsContent value="watchlist">
             {loading ? (
-              <div className="text-center py-12 text-muted-foreground">Loading...</div>
+              <div className="text-center py-12 text-gray-200 font-bold uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">Loading...</div>
             ) : watchlist.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
                 {watchlist.map((item, idx) => (
@@ -489,7 +490,7 @@ const Profile = () => {
 
           <TabsContent value="likes">
             {loading ? (
-              <div className="text-center py-12 text-muted-foreground">Loading...</div>
+              <div className="text-center py-12 text-gray-200 font-bold uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">Loading...</div>
             ) : likes.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
                 {likes.map((log) => (
@@ -518,11 +519,11 @@ const Profile = () => {
 
           <TabsContent value="followers">
             {loading ? (
-              <div className="text-center py-12 text-muted-foreground">Loading...</div>
+              <div className="text-center py-12 text-gray-200 font-bold uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">Loading...</div>
             ) : followers.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {followers.map((follower) => (
-                  <Card key={follower.id} className="p-4">
+                  <Card key={follower.id} className="p-4 border-2 border-red-900/30 bg-black/40 backdrop-blur">
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center overflow-hidden">
                         {follower.photoURL ? (
@@ -541,7 +542,7 @@ const Profile = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="w-full mt-3"
+                      className="w-full mt-3 border-2 border-racing-red bg-black/60 text-white hover:bg-racing-red/20 font-black uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,1)]"
                       onClick={() => navigate(`/user/${follower.id}`)}
                     >
                       View Profile
@@ -560,11 +561,11 @@ const Profile = () => {
 
           <TabsContent value="following">
             {loading ? (
-              <div className="text-center py-12 text-muted-foreground">Loading...</div>
+              <div className="text-center py-12 text-gray-200 font-bold uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">Loading...</div>
             ) : following.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {following.map((followedUser) => (
-                  <Card key={followedUser.id} className="p-4">
+                  <Card key={followedUser.id} className="p-4 border-2 border-red-900/30 bg-black/40 backdrop-blur">
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center overflow-hidden">
                         {followedUser.photoURL ? (
@@ -583,7 +584,7 @@ const Profile = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      className="w-full mt-3"
+                      className="w-full mt-3 border-2 border-racing-red bg-black/60 text-white hover:bg-racing-red/20 font-black uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,1)]"
                       onClick={() => navigate(`/user/${followedUser.id}`)}
                     >
                       View Profile

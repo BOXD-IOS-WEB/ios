@@ -157,10 +157,10 @@ const RaceCardComponent = ({
         e.preventDefault();
         handleClick();
       }}
-      className="group relative overflow-hidden bg-card hover:ring-2 hover:ring-primary transition-all duration-200 cursor-pointer touch-manipulation"
+      className="group relative overflow-hidden bg-black/90 border-2 border-red-900/40 hover:border-racing-red hover:ring-2 hover:ring-racing-red hover:shadow-xl hover:shadow-red-500/30 transition-all duration-200 cursor-pointer touch-manipulation backdrop-blur-sm"
     >
       {/* Poster */}
-      <div className="aspect-square sm:aspect-[2/3] relative overflow-hidden bg-gradient-to-br from-racing-red/20 to-background">
+      <div className="aspect-square sm:aspect-[2/3] relative overflow-hidden bg-gradient-to-br from-racing-red/30 to-black/90">
         {posterUrl ? (
           <img
             src={posterUrl}
@@ -168,9 +168,9 @@ const RaceCardComponent = ({
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center p-2 sm:p-4 space-y-2 sm:space-y-3">
+          <div className="w-full h-full flex flex-col items-center justify-center p-2 sm:p-4 space-y-2 sm:space-y-3 bg-gradient-to-b from-transparent via-black/30 to-black/70">
             {flagUrl && (
-              <div className="w-16 h-10 sm:w-20 sm:h-12 md:w-24 md:h-16 rounded overflow-hidden border-2 border-white/20 shadow-lg flex items-center justify-center">
+              <div className="w-16 h-10 sm:w-20 sm:h-12 md:w-24 md:h-16 rounded overflow-hidden border-2 border-racing-red/40 shadow-xl shadow-black/50 flex items-center justify-center">
                 <img
                   src={flagUrl}
                   alt={country || circuit}
@@ -182,12 +182,12 @@ const RaceCardComponent = ({
               </div>
             )}
             <div className="text-center space-y-1">
-              <div className="text-base sm:text-xl md:text-2xl font-bold">{season}</div>
-              <div className="text-[10px] sm:text-xs font-medium line-clamp-2 px-1">{gpName}</div>
+              <div className="text-base sm:text-xl md:text-2xl font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">{season}</div>
+              <div className="text-[10px] sm:text-xs font-black line-clamp-2 px-1 text-white uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">{gpName}</div>
               {displayWinner && (
-                <div className="text-[10px] sm:text-xs font-semibold text-racing-red line-clamp-1 px-1 flex items-center justify-center gap-1">
+                <div className="text-[10px] sm:text-xs font-black text-racing-red line-clamp-1 px-1 flex items-center justify-center gap-1 drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
                   <span>🏆</span>
-                  <span>{displayWinner}</span>
+                  <span className="uppercase tracking-wider">{displayWinner}</span>
                 </div>
               )}
             </div>
@@ -196,15 +196,15 @@ const RaceCardComponent = ({
 
         {/* Rating overlay */}
         {rating && (
-          <div className="absolute bottom-1 left-1 sm:bottom-2 sm:left-2 bg-black/80 backdrop-blur-sm px-1.5 py-0.5 sm:px-2 sm:py-1 rounded flex items-center gap-0.5 sm:gap-1">
-            <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-racing-red text-racing-red" />
-            <span className="text-[10px] sm:text-xs font-semibold text-white">{rating.toFixed(1)}</span>
+          <div className="absolute bottom-1 left-1 sm:bottom-2 sm:left-2 bg-black/90 backdrop-blur-sm px-1.5 py-0.5 sm:px-2 sm:py-1 rounded border border-racing-red/50 flex items-center gap-0.5 sm:gap-1">
+            <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-racing-red text-racing-red drop-shadow-[0_0_4px_rgba(220,38,38,0.8)]" />
+            <span className="text-[10px] sm:text-xs font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">{rating.toFixed(1)}</span>
           </div>
         )}
 
         {/* Watched indicator */}
         {watched && (
-          <div className="absolute top-1 right-1 sm:top-2 sm:right-2 bg-primary/90 backdrop-blur-sm px-1.5 py-0.5 sm:px-2 sm:py-1 rounded text-[10px] sm:text-xs font-medium">
+          <div className="absolute top-1 right-1 sm:top-2 sm:right-2 bg-racing-red/90 backdrop-blur-sm px-1.5 py-0.5 sm:px-2 sm:py-1 rounded text-[10px] sm:text-xs font-black uppercase tracking-wider border border-red-400">
             Logged
           </div>
         )}
@@ -221,7 +221,7 @@ const RaceCardComponent = ({
                 <Button
                   size="icon"
                   variant="secondary"
-                  className="h-6 w-6 sm:h-8 sm:w-8 bg-black/60 hover:bg-black/80 backdrop-blur-sm touch-manipulation"
+                  className="h-6 w-6 sm:h-8 sm:w-8 bg-black/90 hover:bg-racing-red hover:text-white backdrop-blur-sm touch-manipulation border border-red-900/50 text-white"
                   onClick={(e) => e.stopPropagation()}
                   onTouchEnd={(e) => e.stopPropagation()}
                 >
@@ -232,7 +232,7 @@ const RaceCardComponent = ({
             <Button
               size="icon"
               variant="secondary"
-              className="h-6 w-6 sm:h-8 sm:w-8 bg-black/60 hover:bg-black/80 backdrop-blur-sm touch-manipulation"
+              className="h-6 w-6 sm:h-8 sm:w-8 bg-black/90 hover:bg-racing-red hover:text-white backdrop-blur-sm touch-manipulation border border-red-900/50 text-white"
               onClick={handleWatchlistToggle}
               onTouchEnd={handleWatchlistToggle}
             >
@@ -243,10 +243,10 @@ const RaceCardComponent = ({
       </div>
 
       {/* Info */}
-      <div className="p-2 sm:p-3 text-center sm:text-left">
-        <h3 className="font-semibold text-xs sm:text-sm line-clamp-1">{gpName}</h3>
-        <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1">{season} • Round {round}</p>
-        <p className="text-[10px] sm:text-xs text-muted-foreground line-clamp-1">{circuit}</p>
+      <div className="p-2 sm:p-3 text-center sm:text-left bg-gradient-to-b from-black/90 to-black border-t-2 border-red-900/40">
+        <h3 className="font-black text-xs sm:text-sm line-clamp-1 text-white uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">{gpName}</h3>
+        <p className="text-[10px] sm:text-xs text-gray-300 mt-0.5 sm:mt-1 font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">{season} • ROUND {round}</p>
+        <p className="text-[10px] sm:text-xs text-gray-400 line-clamp-1 font-bold uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">{circuit}</p>
       </div>
     </Card>
   );
