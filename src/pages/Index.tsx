@@ -83,24 +83,24 @@ const Index = () => {
   }, [tagFilter]);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] racing-grid">
+    <div className="min-h-screen bg-[#0a0a0a] racing-grid pb-20 lg:pb-0">
       <Header />
 
       <main className="container px-4 sm:px-6 md:px-8 py-6 sm:py-8 md:py-10 space-y-8 sm:space-y-12 md:space-y-16">
         {/* Hero Section */}
-        <section className="relative text-center space-y-6 py-16 sm:py-20 md:py-24 px-4 sm:px-6 md:px-8 rounded-2xl overflow-hidden border-2 border-red-900/50">
+        <section className="relative text-center space-y-4 py-12 sm:py-20 md:py-24 px-3 sm:px-6 md:px-8 rounded-2xl overflow-hidden border-2 border-red-900/50">
           {/* Background Image */}
           <div
             className="absolute inset-0 z-0"
             style={{
               backgroundImage: `url(${import.meta.env.BASE_URL}ferrari-f1.jpg)`,
               backgroundSize: 'cover',
-              backgroundPosition: 'center',
+              backgroundPosition: 'center center',
               opacity: 0.55,
               filter: 'grayscale(0%) brightness(1.0)'
             }}
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/40 to-black/70 z-0" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/80 z-0" />
 
           {/* Racing stripes */}
           <div className="absolute left-0 top-0 w-1 h-full bg-racing-red z-0" />
@@ -108,21 +108,21 @@ const Index = () => {
 
           {/* Content */}
           <div className="relative z-10">
-            <div className="inline-block px-6 py-2 bg-black/60 backdrop-blur-sm border-2 border-racing-red rounded-full mb-6">
-              <span className="text-racing-red font-black text-xs tracking-widest drop-shadow-[0_0_8px_rgba(220,38,38,0.8)]">RACE CONTROL</span>
+            <div className="inline-block px-4 py-1.5 sm:px-6 sm:py-2 bg-black/70 backdrop-blur-sm border-2 border-racing-red rounded-full mb-4 sm:mb-6">
+              <span className="text-racing-red font-black text-[10px] sm:text-xs tracking-widest drop-shadow-[0_0_8px_rgba(220,38,38,0.8)]">RACE CONTROL</span>
             </div>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-black mb-6 leading-tight tracking-tighter text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
-              <span className="hidden sm:inline">TRACK EVERY <span className="text-racing-red drop-shadow-[0_0_12px_rgba(220,38,38,0.8)]">RACE</span></span>
-              <span className="sm:hidden">TRACK <span className="text-racing-red drop-shadow-[0_0_12px_rgba(220,38,38,0.8)]">RACES</span></span>
+            <h1 className="text-3xl sm:text-5xl md:text-6xl font-black mb-3 sm:mb-6 leading-tight tracking-tighter text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
+              <span className="block">TRACK <span className="text-racing-red drop-shadow-[0_0_12px_rgba(220,38,38,0.8)]">EVERY</span></span>
+              <span className="block text-racing-red drop-shadow-[0_0_12px_rgba(220,38,38,0.8)]">RACE</span>
             </h1>
-            <p className="text-base sm:text-lg text-white max-w-2xl mx-auto px-4 font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
-              Your personal <span className="text-racing-red drop-shadow-[0_0_8px_rgba(220,38,38,0.8)]">F1 TELEMETRY</span>.
-              Log races, track stats, dominate leaderboards. 🏎️
+            <p className="text-sm sm:text-base md:text-lg text-white max-w-2xl mx-auto px-2 sm:px-4 font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
+              Your personal <span className="text-racing-red drop-shadow-[0_0_8px_rgba(220,38,38,0.8)]">F1 TELEMETRY</span>
+              <span className="hidden sm:inline">. Log races, track stats, dominate leaderboards.</span> 🏎️
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 pt-6 sm:pt-8 px-4">
               <Button
                 size="lg"
-                className="gap-2 w-full sm:w-auto bg-racing-red hover:bg-red-600 shadow-xl shadow-red-500/50 border-2 border-red-400 font-black uppercase tracking-wider"
+                className="gap-2 w-full sm:w-auto bg-racing-red hover:bg-red-600 shadow-xl shadow-red-500/50 border-2 border-red-400 font-black uppercase tracking-wider text-sm sm:text-base"
                 onClick={() => navigate('/diary')}
               >
                 Lights Out <ArrowRight className="w-4 h-4" />
@@ -130,7 +130,7 @@ const Index = () => {
               <Button
                 size="lg"
                 variant="outline"
-                className="w-full sm:w-auto border-2 border-racing-red bg-black/60 text-white hover:bg-racing-red/20 font-bold uppercase drop-shadow-[0_2px_4px_rgba(0,0,0,1)]"
+                className="w-full sm:w-auto border-2 border-racing-red bg-black/70 text-white hover:bg-racing-red/20 font-bold uppercase drop-shadow-[0_2px_4px_rgba(0,0,0,1)] text-sm sm:text-base"
                 onClick={() => navigate('/explore')}
               >
                 Pit Stop

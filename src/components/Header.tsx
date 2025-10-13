@@ -1,9 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LogRaceDialog } from "@/components/LogRaceDialog";
-import { Search, Plus, User, Bell, LogOut, Settings, Menu, X } from "lucide-react";
+import { Search, Plus, User, Bell, LogOut, Settings, Menu, X, Home, Compass, Activity, Calendar, Eye } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState, useEffect } from "react";
@@ -16,12 +16,14 @@ import { db } from "@/lib/firebase";
 export const Header = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [userPhotoURL, setUserPhotoURL] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [logDialogOpen, setLogDialogOpen] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
@@ -98,76 +100,19 @@ export const Header = () => {
     loadUserPhoto();
   }, [user]);
 
-  return (
-    <header className="sticky top-0 z-50 w-full border-b-2 border-racing-red/20 bg-black/90 backdrop-blur-xl shadow-lg shadow-red-900/10">
-      <div className="container flex h-16 md:h-18 items-center px-4 md:px-6 lg:px-8">
-        <div className="flex items-center gap-4 sm:gap-6 md:gap-8 flex-1">
-          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-            <SheetTrigger asChild className="lg:hidden">
-              <Button variant="ghost" size="icon">
-                <Menu className="w-5 h-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-64">
-              <nav className="flex flex-col gap-4 mt-8">
-                <a
-                  href="/home"
-                  className="text-lg font-medium hover:text-racing-red transition-colors touch-manipulation py-2"
-                  onClick={() => setMobileMenuOpen(false)}
-                  onTouchEnd={() => setMobileMenuOpen(false)}
-                >
-                  Home
-                </a>
-                <a
-                  href="/explore"
-                  className="text-lg font-medium hover:text-racing-red transition-colors touch-manipulation py-2"
-                  onClick={() => setMobileMenuOpen(false)}
-                  onTouchEnd={() => setMobileMenuOpen(false)}
-                >
-                  Explore
-                </a>
-                <a
-                  href="/lists"
-                  className="text-lg font-medium hover:text-racing-red transition-colors touch-manipulation py-2"
-                  onClick={() => setMobileMenuOpen(false)}
-                  onTouchEnd={() => setMobileMenuOpen(false)}
-                >
-                  Activity
-                </a>
-                <a
-                  href="/diary"
-                  className="text-lg font-medium hover:text-racing-red transition-colors touch-manipulation py-2"
-                  onClick={() => setMobileMenuOpen(false)}
-                  onTouchEnd={() => setMobileMenuOpen(false)}
-                >
-                  Diary
-                </a>
-                <a
-                  href="/watchlist"
-                  className="text-lg font-medium hover:text-racing-red transition-colors touch-manipulation py-2"
-                  onClick={() => setMobileMenuOpen(false)}
-                  onTouchEnd={() => setMobileMenuOpen(false)}
-                >
-                  Watchlist
-                </a>
-                <a
-                  href="/profile"
-                  className="text-lg font-medium hover:text-racing-red transition-colors touch-manipulation py-2"
-                  onClick={() => setMobileMenuOpen(false)}
-                  onTouchEnd={() => setMobileMenuOpen(false)}
-                >
-                  Profile
-                </a>
-              </nav>
-            </SheetContent>
-          </Sheet>
+  const isActivePath = (path: string) => location.pathname === path;
 
-          <a href="/home" className="flex items-center">
-            <div className="text-xl sm:text-2xl font-black tracking-tighter">
-              <span className="text-white">BOX</span>
-              <span className="text-racing-red">BOXD</span>
-            </div>
-          </a>
+  return (
+    <>
+      <header className="sticky top-0 z-50 w-full border-b-2 border-racing-red/20 bg-black/90 backdrop-blur-xl shadow-lg shadow-red-900/10">
+        <div className="container flex h-16 md:h-18 items-center px-4 md:px-6 lg:px-8">
+          <div className="flex items-center gap-4 sm:gap-6 md:gap-8 flex-1">
+            <a href="/home" className="flex items-center">
+              <div className="text-xl sm:text-2xl font-black tracking-tighter">
+                <span className="text-white">BOX</span>
+                <span className="text-racing-red">BOXD</span>
+              </div>
+            </a>
 
           <nav className="hidden lg:flex items-center gap-6 xl:gap-8 text-xs font-black uppercase tracking-wider ml-4 lg:ml-6">
             <a href="/home" className="text-white hover:text-racing-red transition-colors">
@@ -211,11 +156,13 @@ export const Header = () => {
 
           <LogRaceDialog
             trigger={
-              <Button size="sm" className="gap-2 bg-racing-red hover:bg-red-600 shadow-lg shadow-red-500/30 border-2 border-red-400 font-black uppercase tracking-wider md:h-11 md:px-6">
+              <Button size="sm" className="gap-2 bg-racing-red hover:bg-red-600 shadow-lg shadow-red-500/30 border-2 border-red-400 font-black uppercase tracking-wider md:h-11 md:px-6 hidden lg:flex">
                 <Plus className="w-4 h-4 md:w-5 md:h-5" />
                 <span className="hidden sm:inline">Log</span>
               </Button>
             }
+            open={logDialogOpen}
+            onOpenChange={setLogDialogOpen}
           />
 
           <DropdownMenu open={notificationsOpen} onOpenChange={setNotificationsOpen}>
@@ -333,5 +280,72 @@ export const Header = () => {
         </div>
       </div>
     </header>
+
+    {/* Mobile Bottom Navigation */}
+    <nav className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-black/95 backdrop-blur-xl border-t-2 border-racing-red/20 shadow-lg shadow-red-900/20">
+      <div className="flex items-center justify-around h-16 px-2">
+        <button
+          onClick={() => navigate('/home')}
+          className={`flex flex-col items-center justify-center flex-1 h-full touch-manipulation transition-colors ${
+            isActivePath('/home') ? 'text-racing-red' : 'text-gray-400'
+          }`}
+        >
+          <Home className={`w-6 h-6 ${isActivePath('/home') ? 'drop-shadow-[0_0_8px_rgba(220,38,38,0.8)]' : ''}`} />
+          <span className="text-xs font-black uppercase tracking-wider mt-1">Home</span>
+        </button>
+
+        <button
+          onClick={() => navigate('/explore')}
+          className={`flex flex-col items-center justify-center flex-1 h-full touch-manipulation transition-colors ${
+            isActivePath('/explore') ? 'text-racing-red' : 'text-gray-400'
+          }`}
+        >
+          <Compass className={`w-6 h-6 ${isActivePath('/explore') ? 'drop-shadow-[0_0_8px_rgba(220,38,38,0.8)]' : ''}`} />
+          <span className="text-xs font-black uppercase tracking-wider mt-1">Explore</span>
+        </button>
+
+        <LogRaceDialog
+          trigger={
+            <button className="flex flex-col items-center justify-center h-full touch-manipulation -mt-6">
+              <div className="bg-racing-red hover:bg-red-600 rounded-full p-4 border-4 border-black shadow-xl shadow-red-500/50">
+                <Plus className="w-7 h-7 text-white" />
+              </div>
+              <span className="text-xs font-black uppercase tracking-wider mt-2 text-racing-red drop-shadow-[0_0_8px_rgba(220,38,38,0.8)]">Log</span>
+            </button>
+          }
+          open={logDialogOpen}
+          onOpenChange={setLogDialogOpen}
+        />
+
+        <button
+          onClick={() => navigate('/lists')}
+          className={`flex flex-col items-center justify-center flex-1 h-full touch-manipulation transition-colors ${
+            isActivePath('/lists') ? 'text-racing-red' : 'text-gray-400'
+          }`}
+        >
+          <Activity className={`w-6 h-6 ${isActivePath('/lists') ? 'drop-shadow-[0_0_8px_rgba(220,38,38,0.8)]' : ''}`} />
+          <span className="text-xs font-black uppercase tracking-wider mt-1">Activity</span>
+        </button>
+
+        <button
+          onClick={() => navigate('/profile')}
+          className={`flex flex-col items-center justify-center flex-1 h-full touch-manipulation transition-colors ${
+            isActivePath('/profile') ? 'text-racing-red' : 'text-gray-400'
+          }`}
+        >
+          {userPhotoURL ? (
+            <img
+              src={userPhotoURL}
+              alt="Profile"
+              className={`w-7 h-7 rounded-full object-cover ${isActivePath('/profile') ? 'ring-2 ring-racing-red' : ''}`}
+            />
+          ) : (
+            <User className={`w-6 h-6 ${isActivePath('/profile') ? 'drop-shadow-[0_0_8px_rgba(220,38,38,0.8)]' : ''}`} />
+          )}
+          <span className="text-xs font-black uppercase tracking-wider mt-1">Profile</span>
+        </button>
+      </div>
+    </nav>
+    </>
   );
 };

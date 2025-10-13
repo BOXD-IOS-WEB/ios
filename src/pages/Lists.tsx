@@ -5,7 +5,7 @@ import { auth } from "@/lib/firebase";
 
 const Lists = () => {
   return (
-    <div className="min-h-screen bg-[#0a0a0a] racing-grid">
+    <div className="min-h-screen bg-[#0a0a0a] racing-grid pb-20 lg:pb-0">
       <Header />
 
       <main className="container px-4 sm:px-6 md:px-8 py-6 sm:py-8 md:py-10">

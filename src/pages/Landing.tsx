@@ -68,9 +68,6 @@ const Landing = () => {
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-red-900/20 bg-black/60 backdrop-blur-xl">
         <div className="container mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-racing-red rounded flex items-center justify-center">
-              <Flag className="w-6 h-6 text-white" />
-            </div>
             <h1 className="text-2xl sm:text-3xl font-black tracking-tighter">
               <span className="text-white">BOX</span>
               <span className="text-racing-red">BOXD</span>

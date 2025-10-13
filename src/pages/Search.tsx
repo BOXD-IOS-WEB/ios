@@ -72,7 +72,7 @@ const Search = () => {
   const listResults = results.filter(r => r.type === 'list');
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-20 lg:pb-0">
       <Header />
 
       <main className="container px-4 sm:px-6 py-6 sm:py-8">
