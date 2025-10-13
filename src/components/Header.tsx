@@ -162,13 +162,7 @@ export const Header = () => {
             </SheetContent>
           </Sheet>
 
-          <a href="/home" className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-racing-red rounded flex items-center justify-center">
-              <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5" xmlns="http://www.w3.org/2000/svg">
-                <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <line x1="4" y1="22" x2="4" y2="15" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </div>
+          <a href="/home" className="flex items-center">
             <div className="text-xl sm:text-2xl font-black tracking-tighter">
               <span className="text-white">BOX</span>
               <span className="text-racing-red">BOXD</span>
