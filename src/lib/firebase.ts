@@ -60,27 +60,32 @@ console.log('[Firebase] Firestore instance:', {
   toJSON: db.toJSON()
 });
 
-// Enable auth persistence with fallback
-// Try IndexedDB first (more reliable), then fall back to localStorage
-const enablePersistence = async () => {
-  try {
-    // Try IndexedDB persistence first (more reliable on iOS/iPadOS)
-    await setPersistence(auth, indexedDBLocalPersistence);
-    console.log('[Firebase Auth] ✅ IndexedDB persistence enabled');
-  } catch (error: any) {
-    console.warn('[Firebase Auth] ⚠️ IndexedDB persistence failed, falling back to localStorage:', error);
-    try {
-      await setPersistence(auth, browserLocalPersistence);
-      console.log('[Firebase Auth] ✅ LocalStorage persistence enabled');
-    } catch (fallbackError) {
-      console.error('[Firebase Auth] ❌ Error setting auth persistence:', fallbackError);
-    }
+// CRITICAL: Set auth persistence SYNCHRONOUSLY before any auth operations
+// Use browserLocalPersistence for Capacitor iOS (IndexedDB doesn't work well)
+try {
+  // Check if we're in Capacitor
+  const isCapacitor = typeof window !== 'undefined' && (window as any).Capacitor;
+  if (isCapacitor) {
+    console.log('[Firebase Auth] Running in Capacitor, using localStorage persistence');
+    // Use localStorage for Capacitor - more reliable than IndexedDB on iOS
+    setPersistence(auth, browserLocalPersistence);
+  } else {
+    console.log('[Firebase Auth] Running in browser, using IndexedDB persistence');
+    setPersistence(auth, indexedDBLocalPersistence);
   }
-};
+  console.log('[Firebase Auth] ✅ Persistence configured');
+} catch (error: any) {
+  console.error('[Firebase Auth] ❌ Error setting persistence:', error);
+  // Try fallback
+  try {
+    setPersistence(auth, browserLocalPersistence);
+    console.log('[Firebase Auth] ✅ Fallback to localStorage successful');
+  } catch (fallbackError) {
+    console.error('[Firebase Auth] ❌ Fallback persistence failed:', fallbackError);
+  }
+}
 
-enablePersistence();
-
-// Debug: Log auth state changes (per article recommendation)
+// Debug: Log auth state changes
 auth.onAuthStateChanged((user) => {
   if (user) {
     console.log('[Firebase Auth] ✅ User signed in:', {

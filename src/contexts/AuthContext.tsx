@@ -26,14 +26,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     console.log('[AuthProvider] Initializing auth listener...');
+    let didFire = false;
 
-    // Safety timeout - if auth doesn't respond in 10 seconds, stop loading
+    // Safety timeout - if auth doesn't respond in 5 seconds, stop loading
     const timeout = setTimeout(() => {
-      console.warn('[AuthProvider] Timeout - auth not responding after 10s, setting loading to false');
-      setLoading(false);
-    }, 10000);
+      if (!didFire) {
+        console.warn('[AuthProvider] Timeout - auth not responding after 5s, setting loading to false');
+        setLoading(false);
+        setUser(null);
+      }
+    }, 5000);
 
     const unsubscribe = onAuthChange((authUser) => {
+      didFire = true;
       clearTimeout(timeout);
       console.log('[AuthProvider] Auth state changed:', authUser ? `User: ${authUser.uid}` : 'No user');
       setUser(authUser);
