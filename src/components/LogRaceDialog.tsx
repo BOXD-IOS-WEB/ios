@@ -336,24 +336,24 @@ export const LogRaceDialog = ({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-background via-background to-racing-red/5 w-[95vw] sm:w-full">
-        <DialogHeader className="border-b border-border/50 pb-4">
-          <DialogTitle className="text-2xl font-bold flex items-center gap-2">
-            <div className="w-1 h-8 bg-racing-red rounded-full" />
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-[#0a0a0a] border-2 border-racing-red/40 w-[95vw] sm:w-full">
+        <DialogHeader className="border-b-2 border-red-900/50 pb-4">
+          <DialogTitle className="text-2xl font-black flex items-center gap-2 uppercase tracking-wider text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+            <div className="w-1 h-8 bg-racing-red rounded-full shadow-[0_0_8px_rgba(220,38,38,0.8)]" />
             {editMode ? 'Edit Race Log' : 'Log a Race'}
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6 py-6">
           {/* Race Info Section */}
-          <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-lg p-6 space-y-4">
-            <h3 className="font-semibold text-sm uppercase tracking-wider text-racing-red flex items-center gap-2">
-              <div className="w-2 h-2 bg-racing-red rounded-full animate-pulse" />
+          <div className="bg-black/90 backdrop-blur-sm border-2 border-red-900/40 rounded-lg p-6 space-y-4">
+            <h3 className="font-black text-sm uppercase tracking-wider text-racing-red flex items-center gap-2 drop-shadow-[0_0_8px_rgba(220,38,38,0.8)]">
+              <div className="w-2 h-2 bg-racing-red rounded-full animate-pulse shadow-[0_0_8px_rgba(220,38,38,0.8)]" />
               Race Information
             </h3>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label className="text-xs font-medium text-muted-foreground">Select Circuit *</Label>
+                <Label className="text-xs font-bold uppercase tracking-wider text-gray-300 drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">Select Circuit *</Label>
                 <Select
                   value={raceLocation}
                   onValueChange={async (value) => {
@@ -387,10 +387,10 @@ export const LogRaceDialog = ({
                     }
                   }}
                 >
-                  <SelectTrigger className="border-border/50 hover:border-racing-red">
+                  <SelectTrigger className="border-2 border-red-900/40 hover:border-racing-red bg-black/60 text-white">
                     <SelectValue placeholder="Choose a circuit..." />
                   </SelectTrigger>
-                  <SelectContent className="max-h-[300px]">
+                  <SelectContent className="max-h-[300px] bg-black/95 border-2 border-red-900/40">
                     {circuits.map((circuit) => (
                       <SelectItem key={circuit.location} value={circuit.location}>
                         <div className="flex flex-col">
@@ -404,17 +404,17 @@ export const LogRaceDialog = ({
               </div>
 
               {raceName && (
-                <div className="bg-muted/50 rounded-md p-3 border border-border/50">
+                <div className="bg-racing-red/10 rounded-md p-3 border-2 border-racing-red/30">
                   <div className="flex items-start gap-2">
                     <div className="text-2xl">🏁</div>
                     <div className="flex-1">
-                      <p className="font-semibold text-sm">{raceName}</p>
-                      <p className="text-xs text-muted-foreground">{raceLocation}</p>
+                      <p className="font-black text-sm text-white uppercase tracking-wider">{raceName}</p>
+                      <p className="text-xs text-gray-300 font-bold">{raceLocation}</p>
                       {loadingWinner && (
-                        <p className="text-xs text-muted-foreground mt-1">Loading winner...</p>
+                        <p className="text-xs text-gray-400 mt-1 font-bold">Loading winner...</p>
                       )}
                       {raceWinner && !loadingWinner && (
-                        <p className="text-xs font-semibold text-racing-red mt-1">🏆 Winner: {raceWinner}</p>
+                        <p className="text-xs font-black text-racing-red mt-1 drop-shadow-[0_0_6px_rgba(220,38,38,0.8)]">🏆 Winner: {raceWinner}</p>
                       )}
                     </div>
                   </div>
@@ -423,15 +423,15 @@ export const LogRaceDialog = ({
             </div>
 
             <div className="space-y-2">
-              <Label className="text-xs font-medium text-muted-foreground">Year *</Label>
+              <Label className="text-xs font-bold uppercase tracking-wider text-gray-300 drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">Year *</Label>
               <Select
                 value={raceYear.toString()}
                 onValueChange={(value) => setRaceYear(parseInt(value))}
               >
-                <SelectTrigger className="border-border/50 hover:border-racing-red max-w-xs">
+                <SelectTrigger className="border-2 border-red-900/40 hover:border-racing-red bg-black/60 text-white max-w-xs">
                   <SelectValue placeholder="Select year..." />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-black/95 border-2 border-red-900/40">
                   {(() => {
                     const currentYear = new Date().getFullYear();
                     const years = Array.from({ length: 10 }, (_, i) => currentYear - i);
@@ -459,29 +459,29 @@ export const LogRaceDialog = ({
           </div>
 
           {/* Viewing Details Section */}
-          <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-lg p-6 space-y-4">
-            <h3 className="font-semibold text-sm uppercase tracking-wider text-racing-red flex items-center gap-2">
-              <div className="w-2 h-2 bg-racing-red rounded-full animate-pulse" />
+          <div className="bg-black/90 backdrop-blur-sm border-2 border-red-900/40 rounded-lg p-6 space-y-4">
+            <h3 className="font-black text-sm uppercase tracking-wider text-racing-red flex items-center gap-2 drop-shadow-[0_0_8px_rgba(220,38,38,0.8)]">
+              <div className="w-2 h-2 bg-racing-red rounded-full animate-pulse shadow-[0_0_8px_rgba(220,38,38,0.8)]" />
               Viewing Details
             </h3>
 
             <div className="grid md:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label className="text-xs font-medium text-muted-foreground">Date Watched *</Label>
+                <Label className="text-xs font-bold uppercase tracking-wider text-gray-300 drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">Date Watched *</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
                       className={cn(
-                        "w-full justify-start text-left font-normal border-border/50 hover:border-racing-red",
-                        !date && "text-muted-foreground"
+                        "w-full justify-start text-left font-normal border-2 border-red-900/40 hover:border-racing-red bg-black/60 text-white",
+                        !date && "text-gray-400"
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {date ? format(date, "PPP") : <span>Pick a date</span>}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
+                  <PopoverContent className="w-auto p-0 bg-black/95 border-2 border-red-900/40" align="start">
                     <Calendar
                       mode="single"
                       selected={date}
@@ -494,12 +494,12 @@ export const LogRaceDialog = ({
               </div>
 
               <div className="space-y-2">
-                <Label className="text-xs font-medium text-muted-foreground">Session</Label>
+                <Label className="text-xs font-bold uppercase tracking-wider text-gray-300 drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">Session</Label>
                 <Select value={sessionType} onValueChange={(v: any) => setSessionType(v)}>
-                  <SelectTrigger className="border-border/50 hover:border-racing-red">
+                  <SelectTrigger className="border-2 border-red-900/40 hover:border-racing-red bg-black/60 text-white">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-black/95 border-2 border-red-900/40">
                     <SelectItem value="race">🏁 Race</SelectItem>
                     <SelectItem value="sprint">⚡ Sprint</SelectItem>
                     <SelectItem value="qualifying">🏎️ Qualifying</SelectItem>
@@ -509,12 +509,12 @@ export const LogRaceDialog = ({
               </div>
 
               <div className="space-y-2">
-                <Label className="text-xs font-medium text-muted-foreground">Watch Mode</Label>
+                <Label className="text-xs font-bold uppercase tracking-wider text-gray-300 drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">Watch Mode</Label>
                 <Select value={watchMode} onValueChange={(v: any) => setWatchMode(v)}>
-                  <SelectTrigger className="border-border/50 hover:border-racing-red">
+                  <SelectTrigger className="border-2 border-red-900/40 hover:border-racing-red bg-black/60 text-white">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-black/95 border-2 border-red-900/40">
                     <SelectItem value="live">🔴 Live</SelectItem>
                     <SelectItem value="replay">▶️ Replay</SelectItem>
                     <SelectItem value="tvBroadcast">📡 TV Broadcast</SelectItem>
@@ -527,18 +527,18 @@ export const LogRaceDialog = ({
           </div>
 
           {/* Rating Section */}
-          <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-lg p-6 space-y-4">
-            <h3 className="font-semibold text-sm uppercase tracking-wider text-racing-red flex items-center gap-2">
-              <div className="w-2 h-2 bg-racing-red rounded-full animate-pulse" />
+          <div className="bg-black/90 backdrop-blur-sm border-2 border-red-900/40 rounded-lg p-6 space-y-4">
+            <h3 className="font-black text-sm uppercase tracking-wider text-racing-red flex items-center gap-2 drop-shadow-[0_0_8px_rgba(220,38,38,0.8)]">
+              <div className="w-2 h-2 bg-racing-red rounded-full animate-pulse shadow-[0_0_8px_rgba(220,38,38,0.8)]" />
               Your Rating
             </h3>
             <StarRating rating={rating} onRatingChange={setRating} />
           </div>
 
           {/* Driver of the Day Section */}
-          <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-lg p-6 space-y-4">
-            <h3 className="font-semibold text-sm uppercase tracking-wider text-racing-red flex items-center gap-2">
-              <div className="w-2 h-2 bg-racing-red rounded-full animate-pulse" />
+          <div className="bg-black/90 backdrop-blur-sm border-2 border-red-900/40 rounded-lg p-6 space-y-4">
+            <h3 className="font-black text-sm uppercase tracking-wider text-racing-red flex items-center gap-2 drop-shadow-[0_0_8px_rgba(220,38,38,0.8)]">
+              <div className="w-2 h-2 bg-racing-red rounded-full animate-pulse shadow-[0_0_8px_rgba(220,38,38,0.8)]" />
               Driver of the Day *
             </h3>
             <Select
@@ -546,10 +546,10 @@ export const LogRaceDialog = ({
               onValueChange={setDriverOfTheDay}
               required
             >
-              <SelectTrigger className="border-border/50 hover:border-racing-red">
+              <SelectTrigger className="border-2 border-red-900/40 hover:border-racing-red bg-black/60 text-white">
                 <SelectValue placeholder="Select a driver..." />
               </SelectTrigger>
-              <SelectContent className="max-h-[300px]">
+              <SelectContent className="max-h-[300px] bg-black/95 border-2 border-red-900/40">
                 {drivers2025.map((driver) => (
                   <SelectItem key={driver.id} value={driver.name}>
                     <div className="flex flex-col">
@@ -560,20 +560,20 @@ export const LogRaceDialog = ({
                 ))}
               </SelectContent>
             </Select>
-            <p className="text-xs text-muted-foreground">Who impressed you most during this race?</p>
+            <p className="text-xs text-gray-400 font-bold">Who impressed you most during this race?</p>
           </div>
 
           {/* Review Section */}
-          <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-lg p-6 space-y-4">
-            <h3 className="font-semibold text-sm uppercase tracking-wider text-racing-red flex items-center gap-2">
-              <div className="w-2 h-2 bg-racing-red rounded-full animate-pulse" />
+          <div className="bg-black/90 backdrop-blur-sm border-2 border-red-900/40 rounded-lg p-6 space-y-4">
+            <h3 className="font-black text-sm uppercase tracking-wider text-racing-red flex items-center gap-2 drop-shadow-[0_0_8px_rgba(220,38,38,0.8)]">
+              <div className="w-2 h-2 bg-racing-red rounded-full animate-pulse shadow-[0_0_8px_rgba(220,38,38,0.8)]" />
               Review (Optional)
             </h3>
             <Textarea
               value={review}
               onChange={(e) => setReview(e.target.value)}
               placeholder="Share your thoughts about this race... What made it memorable?"
-              className="min-h-[120px] border-border/50 focus:border-racing-red resize-none"
+              className="min-h-[120px] border-2 border-red-900/40 focus:border-racing-red bg-black/60 text-white resize-none"
             />
             <div className="flex items-center gap-2 pt-2">
               <Switch
@@ -581,22 +581,22 @@ export const LogRaceDialog = ({
                 onCheckedChange={setSpoiler}
                 id="spoiler"
               />
-              <Label htmlFor="spoiler" className="text-sm font-normal text-muted-foreground cursor-pointer">
+              <Label htmlFor="spoiler" className="text-sm font-bold text-gray-300 cursor-pointer uppercase tracking-wider">
                 ⚠️ Contains spoilers
               </Label>
             </div>
           </div>
 
           {/* Tags & Social Section */}
-          <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-lg p-6 space-y-6">
+          <div className="bg-black/90 backdrop-blur-sm border-2 border-red-900/40 rounded-lg p-6 space-y-6">
             <div className="space-y-4">
-              <h3 className="font-semibold text-sm uppercase tracking-wider text-racing-red flex items-center gap-2">
-                <div className="w-2 h-2 bg-racing-red rounded-full animate-pulse" />
+              <h3 className="font-black text-sm uppercase tracking-wider text-racing-red flex items-center gap-2 drop-shadow-[0_0_8px_rgba(220,38,38,0.8)]">
+                <div className="w-2 h-2 bg-racing-red rounded-full animate-pulse shadow-[0_0_8px_rgba(220,38,38,0.8)]" />
                 Tags
               </h3>
               <div className="flex flex-wrap gap-2 mb-2">
                 {tags.map(tag => (
-                  <Badge key={tag} variant="secondary" className="gap-1 hover:bg-racing-red hover:text-white transition-colors">
+                  <Badge key={tag} variant="secondary" className="gap-1 hover:bg-racing-red hover:text-white hover:border-racing-red transition-colors border-2 bg-black/60 font-bold uppercase">
                     #{tag}
                     <X
                       className="w-3 h-3 cursor-pointer"
@@ -616,24 +616,24 @@ export const LogRaceDialog = ({
                       addTag(tagInput);
                     }
                   }}
-                  className="border-border/50 focus:border-racing-red"
+                  className="border-2 border-red-900/40 focus:border-racing-red bg-black/60 text-white"
                 />
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => addTag(tagInput)}
-                  className="hover:bg-racing-red hover:text-white"
+                  className="border-2 border-racing-red bg-black/60 text-white hover:bg-racing-red/20 font-bold uppercase"
                 >
                   Add
                 </Button>
               </div>
               <div className="flex flex-wrap gap-2">
-                <p className="text-xs text-muted-foreground w-full mb-1">Quick tags:</p>
+                <p className="text-xs text-gray-400 w-full mb-1 font-bold uppercase tracking-wider">Quick tags:</p>
                 {suggestedTags.map(tag => (
                   <Badge
                     key={tag}
                     variant="outline"
-                    className="cursor-pointer hover:bg-racing-red hover:text-white hover:border-racing-red transition-colors"
+                    className="cursor-pointer hover:bg-racing-red hover:text-white hover:border-racing-red transition-colors border-2 border-red-900/40 bg-black/40 font-bold uppercase"
                     onClick={() => addTag(tag)}
                   >
                     #{tag}
@@ -642,17 +642,17 @@ export const LogRaceDialog = ({
               </div>
             </div>
 
-            <div className="border-t border-border/50 pt-6 space-y-4">
+            <div className="border-t-2 border-red-900/50 pt-6 space-y-4">
               <div>
-                <h3 className="font-semibold text-sm uppercase tracking-wider text-racing-red flex items-center gap-2 mb-1">
-                  <div className="w-2 h-2 bg-racing-red rounded-full animate-pulse" />
+                <h3 className="font-black text-sm uppercase tracking-wider text-racing-red flex items-center gap-2 mb-1 drop-shadow-[0_0_8px_rgba(220,38,38,0.8)]">
+                  <div className="w-2 h-2 bg-racing-red rounded-full animate-pulse shadow-[0_0_8px_rgba(220,38,38,0.8)]" />
                   Watched With
                 </h3>
-                <p className="text-xs text-muted-foreground">Tag up to 2 people</p>
+                <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Tag up to 2 people</p>
               </div>
               <div className="flex flex-wrap gap-2 mb-2">
                 {companions.map(companion => (
-                  <Badge key={companion} variant="secondary" className="gap-1 hover:bg-racing-red hover:text-white transition-colors">
+                  <Badge key={companion} variant="secondary" className="gap-1 hover:bg-racing-red hover:text-white hover:border-racing-red transition-colors border-2 bg-black/60 font-bold uppercase">
                     @{companion}
                     <X
                       className="w-3 h-3 cursor-pointer"
@@ -673,14 +673,14 @@ export const LogRaceDialog = ({
                         addCompanion(companionInput);
                       }
                     }}
-                    className="border-border/50 focus:border-racing-red"
+                    className="border-2 border-red-900/40 focus:border-racing-red bg-black/60 text-white"
                   />
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => addCompanion(companionInput)}
                     disabled={!companionInput.trim()}
-                    className="hover:bg-racing-red hover:text-white"
+                    className="border-2 border-racing-red bg-black/60 text-white hover:bg-racing-red/20 font-bold uppercase"
                   >
                     Add
                   </Button>
@@ -690,16 +690,16 @@ export const LogRaceDialog = ({
           </div>
 
           {/* Visibility Section */}
-          <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-lg p-6 space-y-4">
-            <h3 className="font-semibold text-sm uppercase tracking-wider text-racing-red flex items-center gap-2">
-              <div className="w-2 h-2 bg-racing-red rounded-full animate-pulse" />
+          <div className="bg-black/90 backdrop-blur-sm border-2 border-red-900/40 rounded-lg p-6 space-y-4">
+            <h3 className="font-black text-sm uppercase tracking-wider text-racing-red flex items-center gap-2 drop-shadow-[0_0_8px_rgba(220,38,38,0.8)]">
+              <div className="w-2 h-2 bg-racing-red rounded-full animate-pulse shadow-[0_0_8px_rgba(220,38,38,0.8)]" />
               Privacy
             </h3>
             <Select value={visibility} onValueChange={(v: any) => setVisibility(v)}>
-              <SelectTrigger className="border-border/50 hover:border-racing-red">
+              <SelectTrigger className="border-2 border-red-900/40 hover:border-racing-red bg-black/60 text-white">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-black/95 border-2 border-red-900/40">
                 <SelectItem value="public">🌍 Public - Everyone can see</SelectItem>
                 <SelectItem value="friends">👥 Friends Only</SelectItem>
                 <SelectItem value="private">🔒 Private - Only you</SelectItem>
@@ -708,18 +708,18 @@ export const LogRaceDialog = ({
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 pt-4 border-t border-border/50">
+        <div className="flex justify-end gap-3 pt-4 border-t-2 border-red-900/50">
           <Button
             variant="outline"
             onClick={() => setOpen(false)}
-            className="hover:bg-muted"
+            className="border-2 border-red-900/40 bg-black/60 text-white hover:bg-red-900/20 font-bold uppercase tracking-wider"
           >
             Cancel
           </Button>
           <Button
             onClick={handleSubmit}
             disabled={loading}
-            className="bg-racing-red hover:bg-racing-red/90 text-white min-w-[120px]"
+            className="bg-racing-red hover:bg-red-600 text-white min-w-[120px] shadow-lg shadow-red-500/50 border-2 border-red-400 font-black uppercase tracking-wider"
           >
             {loading ? (
               <span className="flex items-center gap-2">
