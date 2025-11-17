@@ -1,20 +1,15 @@
+import { getCurrentUser } from '@/lib/auth-native';
 import {
-  collection,
-  doc,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  getDoc,
-  getDocs,
-  query,
-  where,
-  orderBy,
-  limit,
+  getDocument,
+  setDocument,
+  getDocuments,
+  addDocument,
+  updateDocument,
+  deleteDocument,
   Timestamp,
   increment,
-  setDoc
-} from 'firebase/firestore';
-import { db, auth } from '@/lib/firebase';
+  timestampToDate
+} from '@/lib/firestore-native';
 
 export interface RaceLog {
   id?: string;
@@ -27,14 +22,17 @@ export interface RaceLog {
   round?: number;
   countryCode?: string;
   dateWatched: Date;
-  sessionType: 'race' | 'sprint' | 'qualifying' | 'highlights';
+  sessionType: 'race' | 'sprint' | 'qualifying' | 'sprintQualifying' | 'highlights';
   watchMode: 'live' | 'replay' | 'tvBroadcast' | 'highlights' | 'attendedInPerson';
   rating: number;
   review: string;
   tags: string[];
   companions: string[];
+  driverOfTheDay?: string;
+  raceWinner?: string;
   mediaUrls: string[];
   spoilerWarning: boolean;
+  hasSpoilers?: boolean;
   visibility: 'public' | 'private' | 'friends';
   addToLists?: string[];
   createdAt: Date;
@@ -43,8 +41,6 @@ export interface RaceLog {
   commentsCount: number;
   likedBy: string[];
 }
-
-const raceLogsCollection = collection(db, 'raceLogs');
 
 const updateUserStats = async (userId: string) => {
   // Get all user's race logs
@@ -56,16 +52,15 @@ const updateUserStats = async (userId: string) => {
   const totalHoursWatched = calculateTotalHoursWatched(userLogs);
 
   // Update userStats document
-  const userStatsRef = doc(db, 'userStats', userId);
-  await setDoc(userStatsRef, {
+  await setDocument(`userStats/${userId}`, {
     racesWatched,
     reviewsCount,
     totalHoursWatched
-  }, { merge: true });
+  }, true);
 };
 
 export const createRaceLog = async (raceLog: Omit<RaceLog, 'id' | 'createdAt' | 'updatedAt' | 'likesCount' | 'commentsCount' | 'likedBy'>) => {
-  const user = auth.currentUser;
+  const user = await getCurrentUser();
   if (!user) throw new Error('User not authenticated');
 
   try {
@@ -82,9 +77,8 @@ export const createRaceLog = async (raceLog: Omit<RaceLog, 'id' | 'createdAt' | 
     let username = raceLog.username || user.displayName || user.email?.split('@')[0] || 'User';
 
     try {
-      const userDoc = await getDoc(doc(db, 'users', user.uid));
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
+      const userData = await getDocument(`users/${user.uid}`);
+      if (userData) {
         userAvatar = userData.photoURL || user.photoURL || '';
         username = userData.name || username;
       }
@@ -110,13 +104,13 @@ export const createRaceLog = async (raceLog: Omit<RaceLog, 'id' | 'createdAt' | 
       likedBy: []
     };
 
-    const docRef = await addDoc(raceLogsCollection, newLog);
-    console.log('[createRaceLog] Successfully created race log with ID:', docRef.id);
+    const docId = await addDocument('raceLogs', newLog);
+    console.log('[createRaceLog] Successfully created race log with ID:', docId);
 
     // Update user stats
     await updateUserStats(user.uid);
 
-    return docRef.id;
+    return docId;
   } catch (error) {
     console.error('[createRaceLog] Error creating race log:', error);
     console.error('UserId:', user.uid, 'Race:', raceLog.raceName);
@@ -126,21 +120,17 @@ export const createRaceLog = async (raceLog: Omit<RaceLog, 'id' | 'createdAt' | 
 
 export const getUserRaceLogs = async (userId: string) => {
   try {
-    const q = query(
-      raceLogsCollection,
-      where('userId', '==', userId),
-      orderBy('createdAt', 'desc')
-    );
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => {
-      const data = doc.data();
+    const docs = await getDocuments('raceLogs', {
+      where: [{ field: 'userId', operator: '==', value: userId }],
+      orderBy: { field: 'createdAt', direction: 'desc' }
+    });
+    return docs.map(doc => {
       // Convert Firestore Timestamps to Date objects
       return {
-        id: doc.id,
-        ...data,
-        dateWatched: data.dateWatched?.toDate ? data.dateWatched.toDate() : new Date(data.dateWatched),
-        createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt),
-        updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : new Date(data.updatedAt),
+        ...doc,
+        dateWatched: timestampToDate(doc.dateWatched),
+        createdAt: timestampToDate(doc.createdAt),
+        updatedAt: timestampToDate(doc.updatedAt),
       } as RaceLog;
     });
   } catch (error) {
@@ -152,43 +142,44 @@ export const getUserRaceLogs = async (userId: string) => {
 
 export const getPublicRaceLogs = async (limitCount: number = 20) => {
   try {
-    const q = query(
-      raceLogsCollection,
-      where('visibility', '==', 'public'),
-      orderBy('createdAt', 'desc'),
-      limit(limitCount)
-    );
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => {
-      const data = doc.data();
+    console.log('[getPublicRaceLogs] Fetching public race logs, limit:', limitCount);
+    console.log('[getPublicRaceLogs] Fetching from Firestore...');
+
+    const docs = await getDocuments('raceLogs', {
+      where: [{ field: 'visibility', operator: '==', value: 'public' }],
+      orderBy: { field: 'createdAt', direction: 'desc' },
+      limit: limitCount
+    });
+    console.log('[getPublicRaceLogs] Fetched', docs.length, 'documents');
+    const logs = docs.map(doc => {
       // Convert Firestore Timestamps to Date objects
       return {
-        id: doc.id,
-        ...data,
-        dateWatched: data.dateWatched?.toDate ? data.dateWatched.toDate() : new Date(data.dateWatched),
-        createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt),
-        updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : new Date(data.updatedAt),
+        ...doc,
+        dateWatched: timestampToDate(doc.dateWatched),
+        createdAt: timestampToDate(doc.createdAt),
+        updatedAt: timestampToDate(doc.updatedAt),
       } as RaceLog;
     });
+    console.log('[getPublicRaceLogs] Returning', logs.length, 'race logs');
+    return logs;
   } catch (error) {
-    console.error('Error fetching public race logs:', error);
+    console.error('[getPublicRaceLogs] Error fetching public race logs:', error);
+    console.error('[getPublicRaceLogs] Error details:', error instanceof Error ? error.message : 'Unknown error');
     throw new Error('Failed to fetch public race logs: ' + (error instanceof Error ? error.message : 'Unknown error'));
   }
 };
 
 export const getRaceLogById = async (logId: string) => {
   try {
-    const docRef = doc(db, 'raceLogs', logId);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      const data = docSnap.data();
+    const data = await getDocument(`raceLogs/${logId}`);
+    if (data) {
       // Convert Firestore Timestamps to Date objects
       return {
-        id: docSnap.id,
+        id: logId,
         ...data,
-        dateWatched: data.dateWatched?.toDate ? data.dateWatched.toDate() : new Date(data.dateWatched),
-        createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt),
-        updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : new Date(data.updatedAt),
+        dateWatched: timestampToDate(data.dateWatched),
+        createdAt: timestampToDate(data.createdAt),
+        updatedAt: timestampToDate(data.updatedAt),
       } as RaceLog;
     }
     return null;
@@ -200,12 +191,11 @@ export const getRaceLogById = async (logId: string) => {
 };
 
 export const updateRaceLog = async (logId: string, updates: Partial<RaceLog>) => {
-  const user = auth.currentUser;
+  const user = await getCurrentUser();
   if (!user) throw new Error('User not authenticated');
 
   try {
     console.log('[updateRaceLog] Updating log:', logId, 'Updates:', updates);
-    const docRef = doc(db, 'raceLogs', logId);
 
     // Convert Date objects to Timestamps for Firestore
     const updatesToSave: any = { ...updates };
@@ -215,7 +205,7 @@ export const updateRaceLog = async (logId: string, updates: Partial<RaceLog>) =>
         : updates.dateWatched;
     }
 
-    await updateDoc(docRef, {
+    await updateDocument(`raceLogs/${logId}`, {
       ...updatesToSave,
       updatedAt: Timestamp.now()
     });
@@ -231,13 +221,12 @@ export const updateRaceLog = async (logId: string, updates: Partial<RaceLog>) =>
 };
 
 export const deleteRaceLog = async (logId: string) => {
-  const user = auth.currentUser;
+  const user = await getCurrentUser();
   if (!user) throw new Error('User not authenticated');
 
   try {
     console.log('[deleteRaceLog] Deleting log:', logId, 'UserId:', user.uid);
-    const docRef = doc(db, 'raceLogs', logId);
-    await deleteDoc(docRef);
+    await deleteDocument(`raceLogs/${logId}`);
 
     console.log('[deleteRaceLog] Successfully deleted race log');
     // Update user stats
@@ -251,22 +240,20 @@ export const deleteRaceLog = async (logId: string) => {
 
 export const getRaceLogsByYear = async (year: number) => {
   try {
-    const q = query(
-      raceLogsCollection,
-      where('raceYear', '==', year),
-      where('visibility', '==', 'public'),
-      orderBy('createdAt', 'desc')
-    );
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => {
-      const data = doc.data();
+    const docs = await getDocuments('raceLogs', {
+      where: [
+        { field: 'raceYear', operator: '==', value: year },
+        { field: 'visibility', operator: '==', value: 'public' }
+      ],
+      orderBy: { field: 'createdAt', direction: 'desc' }
+    });
+    return docs.map(doc => {
       // Convert Firestore Timestamps to Date objects
       return {
-        id: doc.id,
-        ...data,
-        dateWatched: data.dateWatched?.toDate ? data.dateWatched.toDate() : new Date(data.dateWatched),
-        createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt),
-        updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : new Date(data.updatedAt),
+        ...doc,
+        dateWatched: timestampToDate(doc.dateWatched),
+        createdAt: timestampToDate(doc.createdAt),
+        updatedAt: timestampToDate(doc.updatedAt),
       } as RaceLog;
     });
   } catch (error) {
@@ -278,22 +265,20 @@ export const getRaceLogsByYear = async (year: number) => {
 
 export const getRaceLogsByTag = async (tag: string) => {
   try {
-    const q = query(
-      raceLogsCollection,
-      where('tags', 'array-contains', tag),
-      where('visibility', '==', 'public'),
-      orderBy('createdAt', 'desc')
-    );
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => {
-      const data = doc.data();
+    const docs = await getDocuments('raceLogs', {
+      where: [
+        { field: 'tags', operator: 'array-contains', value: tag },
+        { field: 'visibility', operator: '==', value: 'public' }
+      ],
+      orderBy: { field: 'createdAt', direction: 'desc' }
+    });
+    return docs.map(doc => {
       // Convert Firestore Timestamps to Date objects
       return {
-        id: doc.id,
-        ...data,
-        dateWatched: data.dateWatched?.toDate ? data.dateWatched.toDate() : new Date(data.dateWatched),
-        createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt),
-        updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : new Date(data.updatedAt),
+        ...doc,
+        dateWatched: timestampToDate(doc.dateWatched),
+        createdAt: timestampToDate(doc.createdAt),
+        updatedAt: timestampToDate(doc.updatedAt),
       } as RaceLog;
     });
   } catch (error) {
@@ -325,6 +310,6 @@ export const calculateTotalHoursWatched = (logs: RaceLog[]): number => {
 };
 
 export const getUserProfile = async (userId: string) => {
-  const userDoc = await getDoc(doc(db, 'users', userId));
-  return userDoc.exists() ? { id: userDoc.id, ...userDoc.data() } : null;
+  const data = await getDocument(`users/${userId}`);
+  return data ? { id: userId, ...data } : null;
 };

@@ -1,17 +1,13 @@
+import { getCurrentUser } from '@/lib/auth-native';
 import {
-  collection,
-  doc,
-  addDoc,
-  deleteDoc,
-  getDocs,
-  getDoc,
-  query,
-  where,
+  getDocument,
+  getDocuments,
+  addDocument,
+  updateDocument,
+  deleteDocument,
   Timestamp,
-  updateDoc,
   increment
-} from 'firebase/firestore';
-import { db, auth } from '@/lib/firebase';
+} from '@/lib/firestore-native';
 import { createActivity } from './activity';
 import { createNotification } from './notifications';
 
@@ -22,56 +18,74 @@ export interface Like {
   createdAt: Date;
 }
 
-const likesCollection = collection(db, 'likes');
-
 export const toggleLike = async (raceLogId: string) => {
-  const user = auth.currentUser;
+  const user = await getCurrentUser();
   if (!user) throw new Error('User not authenticated');
 
-  const q = query(
-    likesCollection,
-    where('userId', '==', user.uid),
-    where('raceLogId', '==', raceLogId)
-  );
+  console.log('[toggleLike] Toggling like for raceLogId:', raceLogId, 'userId:', user.uid);
 
-  const snapshot = await getDocs(q);
-  const raceLogRef = doc(db, 'raceLogs', raceLogId);
+  const existingLikes = await getDocuments('likes', {
+    where: [
+      { field: 'userId', operator: '==', value: user.uid },
+      { field: 'raceLogId', operator: '==', value: raceLogId }
+    ]
+  });
 
-  if (snapshot.empty) {
+  if (existingLikes.length === 0) {
+    // Add like
+    console.log('[toggleLike] Adding like');
     const newLike = {
       userId: user.uid,
       raceLogId,
       createdAt: Timestamp.now()
     };
-    await addDoc(likesCollection, newLike);
+    await addDocument('likes', newLike);
 
-    const raceLogDoc = await getDoc(raceLogRef);
-    if (raceLogDoc.exists()) {
-      const likedBy = raceLogDoc.data().likedBy || [];
-      await updateDoc(raceLogRef, {
-        likedBy: [...likedBy, user.uid],
-        likesCount: increment(1)
-      });
+    const raceLogData = await getDocument(`raceLogs/${raceLogId}`);
+    if (raceLogData) {
+      const likedBy = raceLogData.likedBy || [];
 
-      try {
-        await createActivity({
-          type: 'like',
-          targetId: raceLogId,
-          targetType: 'raceLog',
+      // Only update if not already liked (prevent duplicates)
+      if (!likedBy.includes(user.uid)) {
+        await updateDocument(`raceLogs/${raceLogId}`, {
+          likedBy: [...likedBy, user.uid],
+          likesCount: increment(1)
         });
-      } catch (error) {
-        console.error('Failed to create activity:', error);
       }
 
-      // Create notification for the race log owner
+      // Check if activity already exists for this user+raceLog combo
+      const existingActivities = await getDocuments('activities', {
+        where: [
+          { field: 'userId', operator: '==', value: user.uid },
+          { field: 'targetId', operator: '==', value: raceLogId },
+          { field: 'type', operator: '==', value: 'like' }
+        ]
+      });
+
+      // Only create activity if it doesn't exist
+      if (existingActivities.length === 0) {
+        try {
+          console.log('[toggleLike] Creating like activity');
+          await createActivity({
+            type: 'like',
+            targetId: raceLogId,
+            targetType: 'raceLog',
+          });
+        } catch (error) {
+          console.error('[toggleLike] Failed to create activity:', error);
+        }
+      } else {
+        console.log('[toggleLike] Activity already exists, skipping creation');
+      }
+
+      // Create notification for the race log owner (only if not self-like)
       try {
-        const raceLogOwnerId = raceLogDoc.data().userId;
+        const raceLogOwnerId = raceLogData.userId;
         if (raceLogOwnerId && raceLogOwnerId !== user.uid) {
-          const likerDoc = await getDoc(doc(db, 'users', user.uid));
-          const likerData = likerDoc.exists() ? likerDoc.data() : {};
-          const likerName = likerData.name || user.displayName || user.email?.split('@')[0] || 'Someone';
-          const likerPhoto = likerData.photoURL || user.photoURL;
-          const raceName = raceLogDoc.data().raceName || 'your race log';
+          const likerData = await getDocument(`users/${user.uid}`);
+          const likerName = likerData?.name || user.displayName || user.email?.split('@')[0] || 'Someone';
+          const likerPhoto = likerData?.photoURL || user.photoURL;
+          const raceName = raceLogData.raceName || 'your race log';
 
           await createNotification({
             userId: raceLogOwnerId,
@@ -91,16 +105,39 @@ export const toggleLike = async (raceLogId: string) => {
 
     return true;
   } else {
-    const likeDoc = snapshot.docs[0];
-    await deleteDoc(doc(db, 'likes', likeDoc.id));
+    // Remove like
+    console.log('[toggleLike] Removing like');
+    const likeDoc = existingLikes[0];
+    await deleteDocument(`likes/${likeDoc.id}`);
 
-    const raceLogDoc = await getDoc(raceLogRef);
-    if (raceLogDoc.exists()) {
-      const likedBy = raceLogDoc.data().likedBy || [];
-      await updateDoc(raceLogRef, {
+    const raceLogData = await getDocument(`raceLogs/${raceLogId}`);
+    if (raceLogData) {
+      const likedBy = raceLogData.likedBy || [];
+      await updateDocument(`raceLogs/${raceLogId}`, {
         likedBy: likedBy.filter((id: string) => id !== user.uid),
         likesCount: increment(-1)
       });
+    }
+
+    // Delete the like activity when unliking
+    try {
+      console.log('[toggleLike] Deleting like activity');
+      const activities = await getDocuments('activities', {
+        where: [
+          { field: 'userId', operator: '==', value: user.uid },
+          { field: 'targetId', operator: '==', value: raceLogId },
+          { field: 'type', operator: '==', value: 'like' }
+        ]
+      });
+
+      for (const activity of activities) {
+        if (activity.id) {
+          await deleteDocument(`activities/${activity.id}`);
+          console.log('[toggleLike] Deleted activity:', activity.id);
+        }
+      }
+    } catch (error) {
+      console.error('[toggleLike] Failed to delete activity:', error);
     }
 
     return false;
@@ -108,17 +145,18 @@ export const toggleLike = async (raceLogId: string) => {
 };
 
 export const getRaceLogLikes = async (raceLogId: string) => {
-  const q = query(likesCollection, where('raceLogId', '==', raceLogId));
-  const snapshot = await getDocs(q);
-  return snapshot.size;
+  const likes = await getDocuments('likes', {
+    where: [{ field: 'raceLogId', operator: '==', value: raceLogId }]
+  });
+  return likes.length;
 };
 
 export const hasUserLiked = async (raceLogId: string, userId: string) => {
-  const q = query(
-    likesCollection,
-    where('userId', '==', userId),
-    where('raceLogId', '==', raceLogId)
-  );
-  const snapshot = await getDocs(q);
-  return !snapshot.empty;
+  const likes = await getDocuments('likes', {
+    where: [
+      { field: 'userId', operator: '==', value: userId },
+      { field: 'raceLogId', operator: '==', value: raceLogId }
+    ]
+  });
+  return likes.length > 0;
 };

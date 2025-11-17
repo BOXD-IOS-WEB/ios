@@ -9,7 +9,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getListById, deleteList } from "@/services/lists";
 import { getRacesBySeason } from "@/services/f1Api";
-import { auth } from "@/lib/firebase";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog,
@@ -27,6 +27,7 @@ const ListDetail = () => {
   const { listId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [list, setList] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -132,11 +133,11 @@ const ListDetail = () => {
     loadList();
   }, [listId]);
 
-  const isOwner = auth.currentUser?.uid === list?.userId;
+  const isOwner = user?.uid === list?.userId;
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-[100vh] min-h-[100dvh] bg-[#0a0a0a] racing-grid pb-[env(safe-area-inset-bottom,4rem)] lg:pb-0">
         <Header />
         <main className="container py-8">
           <div className="text-center py-12 text-muted-foreground">Loading...</div>
@@ -147,7 +148,7 @@ const ListDetail = () => {
 
   if (!list) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-[100vh] min-h-[100dvh] bg-[#0a0a0a] racing-grid pb-[env(safe-area-inset-bottom,4rem)] lg:pb-0">
         <Header />
         <main className="container py-8">
           <div className="text-center py-12 text-muted-foreground">List not found</div>
@@ -157,7 +158,7 @@ const ListDetail = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-[100vh] min-h-[100dvh] bg-[#0a0a0a] racing-grid pb-[env(safe-area-inset-bottom,4rem)] lg:pb-0">
       <Header />
 
       <main className="container py-8">

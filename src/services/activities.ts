@@ -1,13 +1,7 @@
 import {
-  collection,
-  getDocs,
-  query,
-  where,
-  orderBy,
-  limit,
-  Timestamp
-} from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+  getDocuments,
+  timestampToDate
+} from '@/lib/firestore-native';
 
 export interface Activity {
   id?: string;
@@ -24,28 +18,42 @@ export interface Activity {
   commentsCount: number;
 }
 
-const activitiesCollection = collection(db, 'activities');
-
 export const getUserActivities = async (userId: string, limitCount: number = 20) => {
-  const q = query(
-    activitiesCollection,
-    where('userId', '==', userId),
-    orderBy('createdAt', 'desc'),
-    limit(limitCount)
-  );
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Activity));
+  const docs = await getDocuments('activities', {
+    where: [{ field: 'userId', operator: '==', value: userId }],
+    orderBy: { field: 'createdAt', direction: 'desc' },
+    limit: limitCount
+  });
+  return docs.map(doc => ({
+    ...doc,
+    createdAt: timestampToDate(doc.createdAt)
+  })) as Activity[];
 };
 
 export const getFollowingActivities = async (userIds: string[], limitCount: number = 20) => {
   if (userIds.length === 0) return [];
 
-  const q = query(
-    activitiesCollection,
-    where('userId', 'in', userIds.slice(0, 10)),
-    orderBy('createdAt', 'desc'),
-    limit(limitCount)
+  // Take only first 10 users due to Firestore 'in' query limitation
+  const limitedUserIds = userIds.slice(0, 10);
+
+  // Since native plugin might not support 'in' operator, fetch for each user separately
+  const allActivities = await Promise.all(
+    limitedUserIds.map(async (userId) => {
+      const docs = await getDocuments('activities', {
+        where: [{ field: 'userId', operator: '==', value: userId }],
+        orderBy: { field: 'createdAt', direction: 'desc' },
+        limit: 5
+      });
+      return docs.map(doc => ({
+        ...doc,
+        createdAt: timestampToDate(doc.createdAt)
+      })) as Activity[];
+    })
   );
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Activity));
+
+  // Flatten and sort by createdAt
+  const flattened = allActivities.flat();
+  flattened.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+  return flattened.slice(0, limitCount);
 };

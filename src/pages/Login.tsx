@@ -5,9 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { doc, getDoc } from 'firebase/firestore';
-import { db, auth as firebaseAuth } from '@/lib/firebase';
-import { sendPasswordResetEmail } from 'firebase/auth';
+import { getDocument } from '@/lib/firestore-native';
+import { sendPasswordReset } from '@/lib/auth-native';
 import { Flag, ArrowLeft, Mail, Lock, User as UserIcon } from 'lucide-react';
 import {
   Dialog,
@@ -55,13 +54,14 @@ const Login = () => {
         toast({ title: 'Welcome back!' });
 
         console.log('[Login] Fetching user document...');
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        console.log('[Login] User document exists:', userDoc.exists());
-
-        const userData = userDoc.data();
+        const userData = await getDocument(`users/${user.uid}`);
+        console.log('[Login] User document exists:', !!userData);
         console.log('[Login] User data:', userData);
 
-        if (!userDoc.exists() || !userData?.onboardingCompleted) {
+        // Small delay to ensure auth state is fully propagated
+        await new Promise(resolve => setTimeout(resolve, 300));
+
+        if (!userData || !userData.onboardingCompleted) {
           console.log('[Login] Redirecting to onboarding');
           navigate('/onboarding');
         } else {
@@ -93,7 +93,7 @@ const Login = () => {
 
     setResetLoading(true);
     try {
-      await sendPasswordResetEmail(firebaseAuth, resetEmail);
+      await sendPasswordReset(resetEmail);
       toast({
         title: 'Password reset email sent!',
         description: 'Check your inbox for instructions to reset your password.',
@@ -112,7 +112,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white overflow-hidden relative flex items-center justify-center p-4">
+    <div className="min-h-[100vh] min-h-[100dvh] bg-[#0a0a0a] text-white overflow-hidden relative flex items-center justify-center p-[2vh]">
       {/* Animated background grid */}
       <div className="fixed inset-0 z-0">
         {/* Racing grid lines */}
@@ -274,14 +274,14 @@ const Login = () => {
                         type="button"
                         variant="outline"
                         onClick={() => setResetDialogOpen(false)}
-                        className="flex-1 border-2 border-red-900/50 text-white hover:bg-white/10 font-bold uppercase"
+                        className="flex-1 border-2 border-red-900/50 bg-black text-white hover:bg-white/10 font-bold uppercase"
                       >
                         Cancel
                       </Button>
                       <Button
                         type="submit"
                         disabled={resetLoading}
-                        className="flex-1 bg-racing-red hover:bg-red-600 text-white font-black uppercase shadow-lg shadow-red-500/50"
+                        className="flex-1 bg-racing-red hover:bg-red-600 text-white font-black uppercase shadow-lg shadow-red-500/50 border-2 border-red-400"
                       >
                         {resetLoading ? 'Sending...' : 'Send Link'}
                       </Button>

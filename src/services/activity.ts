@@ -1,16 +1,11 @@
+import { getCurrentUser } from '@/lib/auth-native';
 import {
-  collection,
-  addDoc,
-  getDocs,
-  query,
-  where,
-  orderBy,
-  limit,
+  getDocument,
+  getDocuments,
+  addDocument,
   Timestamp,
-  doc,
-  getDoc
-} from 'firebase/firestore';
-import { db, auth } from '@/lib/firebase';
+  timestampToDate
+} from '@/lib/firestore-native';
 import { getFollowing } from './follows';
 
 export interface Activity {
@@ -25,10 +20,8 @@ export interface Activity {
   createdAt: Date;
 }
 
-const activitiesCollection = collection(db, 'activities');
-
 export const createActivity = async (activity: Omit<Activity, 'id' | 'createdAt' | 'userId' | 'username' | 'userAvatar'>) => {
-  const user = auth.currentUser;
+  const user = await getCurrentUser();
   if (!user) throw new Error('User not authenticated');
 
   // Fetch user's profile from Firestore to get the latest photoURL
@@ -36,9 +29,8 @@ export const createActivity = async (activity: Omit<Activity, 'id' | 'createdAt'
   let username = user.displayName || user.email?.split('@')[0] || 'User';
 
   try {
-    const userDoc = await getDoc(doc(db, 'users', user.uid));
-    if (userDoc.exists()) {
-      const userData = userDoc.data();
+    const userData = await getDocument(`users/${user.uid}`);
+    if (userData) {
       userAvatar = userData.photoURL || user.photoURL || '';
       username = userData.name || username;
     }
@@ -54,27 +46,24 @@ export const createActivity = async (activity: Omit<Activity, 'id' | 'createdAt'
     createdAt: Timestamp.now()
   };
 
-  const docRef = await addDoc(activitiesCollection, newActivity);
-  return docRef.id;
+  const docId = await addDocument('activities', newActivity);
+  return docId;
 };
 
 export const getUserActivity = async (userId: string, limitCount: number = 20) => {
-  const q = query(
-    activitiesCollection,
-    where('userId', '==', userId),
-    orderBy('createdAt', 'desc'),
-    limit(limitCount)
-  );
-  const snapshot = await getDocs(q);
+  const docs = await getDocuments('activities', {
+    where: [{ field: 'userId', operator: '==', value: userId }],
+    orderBy: { field: 'createdAt', direction: 'desc' },
+    limit: limitCount
+  });
 
   // Fetch user profile once for this user
   let userAvatar = '';
   let username = 'User';
 
   try {
-    const userDoc = await getDoc(doc(db, 'users', userId));
-    if (userDoc.exists()) {
-      const userData = userDoc.data();
+    const userData = await getDocument(`users/${userId}`);
+    if (userData) {
       userAvatar = userData.photoURL || '';
       username = userData.name || username;
     }
@@ -82,24 +71,20 @@ export const getUserActivity = async (userId: string, limitCount: number = 20) =
     console.error('Error fetching user profile:', error);
   }
 
-  return snapshot.docs.map(docSnapshot => {
-    const data = docSnapshot.data();
-    return {
-      id: docSnapshot.id,
-      ...data,
-      username: data.username || username,
-      userAvatar: data.userAvatar || userAvatar,
-      createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt)
-    } as Activity;
-  });
+  return docs.map(doc => ({
+    ...doc,
+    username: doc.username || username,
+    userAvatar: doc.userAvatar || userAvatar,
+    createdAt: timestampToDate(doc.createdAt)
+  })) as Activity[];
 };
 
 export const getFollowingActivity = async (limitCount: number = 50) => {
-  const user = auth.currentUser;
+  const user = await getCurrentUser();
   if (!user) throw new Error('User not authenticated');
 
   const following = await getFollowing(user.uid);
-  const followingIds = following.map(f => f.followingId).filter(id => id !== undefined && id !== null);
+  const followingIds = following.map((f: any) => f.id).filter(id => id !== undefined && id !== null);
 
   if (followingIds.length === 0) {
     return [];
@@ -115,47 +100,23 @@ export const getFollowingActivity = async (limitCount: number = 50) => {
     // Skip empty batches
     if (batch.length === 0) continue;
 
-    const q = query(
-      activitiesCollection,
-      where('userId', 'in', batch),
-      orderBy('createdAt', 'desc'),
-      limit(100) // Fetch more from each batch to ensure we get recent activities
-    );
-
-    const snapshot = await getDocs(q);
-
-    // Fetch user profiles for activities missing userAvatar
-    const activities = await Promise.all(
-      snapshot.docs.map(async (docSnapshot) => {
-        const data = docSnapshot.data();
-        let userAvatar = data.userAvatar || '';
-        let username = data.username || 'User';
-
-        // If userAvatar is missing or empty, fetch from users collection
-        if (!userAvatar && data.userId) {
-          try {
-            const userDoc = await getDoc(doc(db, 'users', data.userId));
-            if (userDoc.exists()) {
-              const userData = userDoc.data();
-              userAvatar = userData.photoURL || '';
-              username = userData.name || username;
-            }
-          } catch (error) {
-            console.error('Error fetching user profile for activity:', error);
-          }
-        }
-
-        return {
-          id: docSnapshot.id,
-          ...data,
-          username,
-          userAvatar,
-          createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt)
-        } as Activity;
+    // Note: Native plugin doesn't support 'in' operator yet, so we'll fetch for each user
+    // This is less efficient but works for now
+    const batchActivities = await Promise.all(
+      batch.map(async (userId) => {
+        const docs = await getDocuments('activities', {
+          where: [{ field: 'userId', operator: '==', value: userId }],
+          orderBy: { field: 'createdAt', direction: 'desc' },
+          limit: 20
+        });
+        return docs.map(doc => ({
+          ...doc,
+          createdAt: timestampToDate(doc.createdAt)
+        })) as Activity[];
       })
     );
 
-    batches.push(activities);
+    batches.push(batchActivities.flat());
   }
 
   // Combine all batches and sort by createdAt
@@ -167,43 +128,43 @@ export const getFollowingActivity = async (limitCount: number = 50) => {
 };
 
 export const getGlobalActivity = async (limitCount: number = 50) => {
-  const q = query(
-    activitiesCollection,
-    orderBy('createdAt', 'desc'),
-    limit(limitCount)
-  );
-  const snapshot = await getDocs(q);
+  try {
+    const docs = await getDocuments('activities', {
+      orderBy: { field: 'createdAt', direction: 'desc' },
+      limit: limitCount
+    });
 
-  // Fetch user profiles for activities missing userAvatar
-  const activities = await Promise.all(
-    snapshot.docs.map(async (docSnapshot) => {
-      const data = docSnapshot.data();
-      let userAvatar = data.userAvatar || '';
-      let username = data.username || 'User';
+    // Fetch user profiles for activities missing userAvatar
+    const activities = await Promise.all(
+      docs.map(async (doc) => {
+        let userAvatar = doc.userAvatar || '';
+        let username = doc.username || 'User';
 
-      // If userAvatar is missing or empty, fetch from users collection
-      if (!userAvatar && data.userId) {
-        try {
-          const userDoc = await getDoc(doc(db, 'users', data.userId));
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
-            userAvatar = userData.photoURL || '';
-            username = userData.name || username;
+        // If userAvatar is missing or empty, fetch from users collection
+        if (!userAvatar && doc.userId) {
+          try {
+            const userData = await getDocument(`users/${doc.userId}`);
+            if (userData) {
+              userAvatar = userData.photoURL || '';
+              username = userData.name || username;
+            }
+          } catch (error) {
+            console.error('Error fetching user profile for activity:', error);
           }
-        } catch (error) {
-          console.error('Error fetching user profile for activity:', error);
         }
-      }
 
-      return {
-        id: docSnapshot.id,
-        ...data,
-        username,
-        userAvatar,
-        createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt)
-      } as Activity;
-    })
-  );
+        return {
+          ...doc,
+          username,
+          userAvatar,
+          createdAt: timestampToDate(doc.createdAt)
+        } as Activity;
+      })
+    );
 
-  return activities;
+    return activities;
+  } catch (error) {
+    console.error('[getGlobalActivity] Error:', error);
+    return [];
+  }
 };

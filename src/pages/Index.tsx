@@ -24,7 +24,28 @@ const Index = () => {
         const f1Races = await getCurrentSeasonRaces();
 
         if (Array.isArray(f1Races) && f1Races.length > 0) {
-          const racesToShow = f1Races.slice(0, 6);
+          // Sort races by date to show the most recent/upcoming races
+          const sortedRaces = [...f1Races].sort((a, b) => {
+            const dateA = new Date(a.date_start).getTime();
+            const dateB = new Date(b.date_start).getTime();
+            const now = Date.now();
+
+            // Separate past and future races
+            const isPastA = dateA < now;
+            const isPastB = dateB < now;
+
+            // If both are past or both are future, sort by date
+            if (isPastA === isPastB) {
+              // For future races, show earliest first (upcoming)
+              // For past races, show latest first (most recent)
+              return isPastA ? dateB - dateA : dateA - dateB;
+            }
+
+            // Show future races before past races
+            return isPastA ? 1 : -1;
+          });
+
+          const racesToShow = sortedRaces.slice(0, 6);
           setCurrentRaces(racesToShow);
 
           // Fetch winners for past races (races that have already occurred) in parallel
@@ -83,12 +104,12 @@ const Index = () => {
   }, [tagFilter]);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] racing-grid pb-20 lg:pb-0">
+    <div className="min-h-[100vh] min-h-[100dvh] bg-[#0a0a0a] racing-grid pb-[env(safe-area-inset-bottom,4rem)] lg:pb-0">
       <Header />
 
-      <main className="container px-4 sm:px-6 md:px-8 py-6 sm:py-8 md:py-10 space-y-8 sm:space-y-12 md:space-y-16">
+      <main className="container px-[4vw] py-[2vh] sm:py-[3vh] space-y-[3vh] sm:space-y-[4vh] max-w-full">
         {/* Hero Section */}
-        <section className="relative text-center space-y-4 py-12 sm:py-20 md:py-24 px-3 sm:px-6 md:px-8 rounded-2xl overflow-hidden border-2 border-red-900/50">
+        <section className="relative text-center space-y-3 sm:space-y-4 py-8 sm:py-12 md:py-16 px-3 sm:px-6 rounded-2xl overflow-hidden border-2 border-red-900/50">
           {/* Background Image */}
           <div
             className="absolute inset-0 z-0"
@@ -182,7 +203,7 @@ const Index = () => {
           ) : currentRaces.length > 0 ? (
             <>
               <p className="text-xs text-gray-400 mb-2 font-bold uppercase tracking-wider">Showing {currentRaces.length} races</p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+              <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3 md:gap-4">
                 {currentRaces.map((race) => {
                   const posterUrl = getPosterUrl(race.circuit_short_name || race.circuit_key);
                   const winnerKey = `${race.year}-${race.round}`;
@@ -226,7 +247,7 @@ const Index = () => {
           {loading ? (
             <div className="text-center py-12 text-gray-300 font-black uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">Loading...</div>
           ) : popularRaces.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+            <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3 md:gap-4">
               {popularRaces.map((race) => (
                 <RaceCard
                   key={race.id}

@@ -11,9 +11,9 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { addToWatchlist, removeFromWatchlist } from "@/services/watchlist";
 import { toggleLike } from "@/services/likes";
-import { getCountryFlag, getRaceByYearAndRound, getRaceWinner } from "@/services/f1Api";
+import { getCountryFlag, getRaceByYearAndRound, getRaceWinner, getCountryNameFromCode } from "@/services/f1Api";
 import { getRaceLogById, getPublicRaceLogs, deleteRaceLog } from "@/services/raceLogs";
-import { auth } from "@/lib/firebase";
+import { getCurrentUser } from "@/lib/auth-native";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,6 +45,7 @@ const RaceDetail = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [reviewToDelete, setReviewToDelete] = useState<string | null>(null);
   const [editingReview, setEditingReview] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const { toast } = useToast();
 
   const loadRaceData = async () => {
@@ -67,7 +68,7 @@ const RaceDetail = () => {
         console.log('[RaceDetail] Race log by ID:', log);
         setRaceLog(log);
 
-        const user = auth.currentUser;
+        const user = await getCurrentUser();
         if (user && log) {
           setIsLiked(log.likedBy?.includes(user.uid) || false);
         }
@@ -108,14 +109,19 @@ const RaceDetail = () => {
   };
 
   useEffect(() => {
-    loadRaceData();
+    const init = async () => {
+      const user = await getCurrentUser();
+      setCurrentUser(user);
+      await loadRaceData();
+    };
+    init();
   }, [id, year, round]);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] racing-grid">
+      <div className="min-h-[100vh] min-h-[100dvh] bg-[#0a0a0a] racing-grid pb-[env(safe-area-inset-bottom,4rem)] lg:pb-0">
         <Header />
-        <div className="container py-8 text-center text-white font-black uppercase tracking-wider">Loading...</div>
+        <div className="container py-[4vh] text-center text-white font-black uppercase tracking-wider">Loading...</div>
       </div>
     );
   }
@@ -142,7 +148,7 @@ const RaceDetail = () => {
       round: raceLog.round || 1,
       gpName: raceLog.raceName,
       circuit: raceLog.raceLocation,
-      country: raceLog.raceLocation,
+      country: raceLog.countryCode ? getCountryNameFromCode(raceLog.countryCode) : raceLog.raceLocation,
       countryCode: raceLog.countryCode || 'ae',
       date: raceLog.dateWatched?.toDate?.()?.toISOString() || new Date().toISOString(),
       rating: avgRating,
@@ -170,9 +176,9 @@ const RaceDetail = () => {
 
   if (!race) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] racing-grid">
+      <div className="min-h-[100vh] min-h-[100dvh] bg-[#0a0a0a] racing-grid pb-[env(safe-area-inset-bottom,4rem)] lg:pb-0">
         <Header />
-        <div className="container py-8 text-center">
+        <div className="container py-[4vh] text-center">
           <p className="text-gray-400 font-bold uppercase tracking-wider">Race not found. Please try again.</p>
         </div>
       </div>
@@ -306,73 +312,44 @@ const RaceDetail = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] racing-grid pb-20 lg:pb-0">
+    <div className="min-h-[100vh] min-h-[100dvh] bg-[#0a0a0a] racing-grid pb-[env(safe-area-inset-bottom,4rem)] lg:pb-0">
       <Header />
 
-      <main className="container px-4 sm:px-6 py-6 sm:py-8">
-        <div className="grid lg:grid-cols-3 gap-6 sm:gap-8">
+      <main className="container px-[4vw] py-[2vh] sm:py-[3vh] max-w-full">
+        <div className="grid lg:grid-cols-3 gap-[3vh] sm:gap-[4vh]">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Poster & Info */}
-            <div className="flex flex-col md:flex-row gap-4 md:gap-6">
-              <div className="w-full md:w-56 lg:w-64 aspect-[16/9] md:aspect-[2/3] bg-gradient-to-br from-racing-red/30 to-black/90 rounded-lg overflow-hidden relative border-2 border-red-900/40">
-                <div className="w-full h-full flex flex-col items-center justify-center p-4 md:p-6 space-y-3 md:space-y-4 bg-gradient-to-b from-transparent via-black/30 to-black/70">
-                  <div className="w-24 h-16 md:w-32 md:h-20 lg:w-40 lg:h-24 rounded overflow-hidden border-2 border-racing-red/40 shadow-xl shadow-black/50">
+            <div className="flex flex-col md:flex-row gap-6">
+              <div className="w-full md:w-56 lg:w-64 aspect-[16/9] md:aspect-[2/3] bg-gradient-to-br from-racing-red/30 to-black/90 rounded-lg overflow-hidden relative border-2 border-red-900/40 mx-auto md:mx-0">
+                <div className="w-full h-full flex flex-col items-center justify-center p-4 md:p-6 gap-3 md:gap-4 bg-gradient-to-b from-transparent via-black/30 to-black/70">
+                  <div className="w-28 h-[70px] md:w-32 md:h-20 rounded overflow-hidden border-2 border-racing-red/40 shadow-xl shadow-black/50 flex-shrink-0">
                     <img
                       src={flagUrl}
                       alt={race.country}
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  <div className="text-center">
+                  <div className="text-center flex-shrink-0">
                     <div className="text-2xl md:text-3xl font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">{race.season}</div>
-                    <div className="text-sm mt-2 font-black line-clamp-2 uppercase tracking-wider text-white drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">{race.gpName}</div>
+                    <div className="text-xs md:text-sm mt-1 md:mt-2 font-black line-clamp-2 uppercase tracking-wider text-white drop-shadow-[0_2px_4px_rgba(0,0,0,1)] px-2">{race.gpName}</div>
                   </div>
                 </div>
               </div>
 
-              <div className="flex-1 space-y-3 md:space-y-4">
+              <div className="flex-1 space-y-4">
                 {winner && (
-                  <div className="p-3 bg-racing-red/15 border border-racing-red/40 rounded-lg">
-                    <p className="text-xs sm:text-sm text-gray-200 mb-1 font-bold uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">Race Winner</p>
-                    <p className="text-sm sm:text-base font-black text-racing-red flex items-center gap-2 drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
+                  <div className="p-4 bg-racing-red/15 border-2 border-racing-red/40 rounded-lg">
+                    <p className="text-sm text-gray-200 mb-1 font-bold uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,1)] text-center md:text-left">Race Winner</p>
+                    <p className="text-base font-black text-racing-red flex items-center justify-center md:justify-start gap-2 drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
                       <span>🏆</span>
                       <span>{winner}</span>
                     </p>
                   </div>
                 )}
 
-                <div className="grid grid-cols-3 gap-3 md:gap-4 text-center sm:text-left">
-                  <div>
-                    <p className="text-xs sm:text-sm text-gray-200 font-bold uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">Circuit</p>
-                    <p className="text-sm sm:text-base font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">{race.circuit}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs sm:text-sm text-gray-200 font-bold uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">Country</p>
-                    <p className="text-sm sm:text-base font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">{race.country}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs sm:text-sm text-gray-200 font-bold uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">Date</p>
-                    <p className="text-sm sm:text-base font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
-                      <span className="hidden sm:inline">
-                        {new Date(race.date).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric'
-                        })}
-                      </span>
-                      <span className="sm:hidden">
-                        {new Date(race.date).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric'
-                        })}
-                      </span>
-                    </p>
-                  </div>
-                </div>
-
-                <div>
+                {/* MAIN FOCUS: Rating */}
+                <div className="flex justify-center md:justify-start mb-4">
                   <StarRating
                     rating={race.rating}
                     readonly
@@ -381,12 +358,21 @@ const RaceDetail = () => {
                   />
                 </div>
 
-                <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
+                {/* Small info boxes */}
+                <div className="flex gap-2 text-xs text-gray-400 justify-center md:justify-start">
+                  <span>{race.circuit}</span>
+                  <span>•</span>
+                  <span>{race.country}</span>
+                  <span>•</span>
+                  <span>{new Date(race.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                </div>
+
+                {/* ICONS ONLY */}
+                <div className="flex gap-2 justify-center md:justify-start mt-4">
                   <LogRaceDialog
                     trigger={
-                      <Button size="sm" className="gap-2 bg-racing-red hover:bg-red-600 border-2 border-red-400 shadow-lg shadow-red-500/30 font-black uppercase tracking-wider">
-                        <Plus className="w-4 h-4" />
-                        <span className="hidden xs:inline">Log</span>
+                      <Button size="sm" className="bg-racing-red hover:bg-red-600 border-2 border-red-400 shadow-lg shadow-red-500/30 min-h-[44px] min-w-[44px] h-11 w-11 p-0 touch-manipulation">
+                        <Plus className="w-5 h-5" />
                       </Button>
                     }
                     open={logDialogOpen}
@@ -410,38 +396,29 @@ const RaceDetail = () => {
                     raceLocation={race.circuit}
                     countryCode={race.countryCode}
                     trigger={
-                      <Button size="sm" variant="outline" className="gap-2 border-2 border-racing-red bg-black/60 text-white hover:bg-racing-red/20 font-black uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
-                        <List className="w-4 h-4 drop-shadow-[0_2px_4px_rgba(0,0,0,1)]" />
-                        <span className="hidden sm:inline">Add to List</span>
+                      <Button size="sm" variant="outline" className="border-2 border-racing-red bg-black/60 text-white hover:bg-racing-red/20 min-h-[44px] min-w-[44px] h-11 w-11 p-0 touch-manipulation">
+                        <List className="w-5 h-5" />
                       </Button>
                     }
                   />
                   <Button
                     size="sm"
                     variant="outline"
-                    className="gap-2 border-2 border-racing-red bg-black/60 text-white hover:bg-racing-red/20 font-black uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,1)]"
+                    className="border-2 border-racing-red bg-black/60 text-white hover:bg-racing-red/20 min-h-[44px] min-w-[44px] h-11 w-11 p-0 touch-manipulation"
                     onClick={handleWatchlistToggle}
                   >
-                    <Eye className={`w-4 h-4 drop-shadow-[0_2px_4px_rgba(0,0,0,1)] ${isInWatchlist ? 'fill-current' : ''}`} />
-                    <span className="hidden sm:inline">{isInWatchlist ? 'In Watchlist' : 'Watchlist'}</span>
+                    <Eye className={`w-5 h-5 ${isInWatchlist ? 'fill-current' : ''}`} />
                   </Button>
                   {id && (
-                    <Button size="sm" variant="outline" className="gap-2 border-2 border-racing-red bg-black/60 text-white hover:bg-racing-red/20 font-black uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,1)]" onClick={handleLikeRace}>
-                      <Heart className={`w-4 h-4 drop-shadow-[0_2px_4px_rgba(0,0,0,1)] ${isLiked ? 'fill-racing-red text-racing-red' : ''}`} />
-                      <span className="hidden xs:inline">{isLiked ? 'Liked' : 'Like'}</span>
+                    <Button size="sm" variant="outline" className="border-2 border-racing-red bg-black/60 text-white hover:bg-racing-red/20 min-h-[44px] min-w-[44px] h-11 w-11 p-0 touch-manipulation" onClick={handleLikeRace}>
+                      <Heart className={`w-5 h-5 ${isLiked ? 'fill-racing-red text-racing-red' : ''}`} />
                     </Button>
                   )}
-                  <Button variant="outline" size="icon" className="border-2 border-racing-red bg-black/60 text-white hover:bg-racing-red/20 drop-shadow-[0_2px_4px_rgba(0,0,0,1)]" onClick={handleBookmark}>
-                    <Bookmark className={`w-4 h-4 drop-shadow-[0_2px_4px_rgba(0,0,0,1)] ${isBookmarked ? 'fill-current' : ''}`} />
-                  </Button>
-                  <Button variant="outline" size="icon" className="border-2 border-racing-red bg-black/60 text-white hover:bg-racing-red/20 drop-shadow-[0_2px_4px_rgba(0,0,0,1)]" onClick={handleShare}>
-                    <Share2 className="w-4 h-4 drop-shadow-[0_2px_4px_rgba(0,0,0,1)]" />
-                  </Button>
                 </div>
               </div>
             </div>
 
-            {/* Reviews */}
+            {/* Community Thoughts */}
             <div>
               <div className="mb-4 md:mb-6">
                 <div className="inline-block px-4 py-1 bg-black/60 backdrop-blur-sm border-2 border-racing-red rounded-full mb-2">
@@ -460,11 +437,11 @@ const RaceDetail = () => {
                   </div>
                 ) : (
                   reviews.map((review) => (
-                    <Card key={review.id} className="p-0 overflow-hidden border-2 border-red-900/40 bg-black/90 backdrop-blur-sm shadow-sm hover:shadow-lg hover:ring-2 hover:ring-racing-red transition-all">
-                      <div className="flex">
-                        {/* Left stripe with rating */}
-                        <div className="w-16 sm:w-20 bg-gradient-to-b from-racing-red/15 to-racing-red/8 flex flex-col items-center justify-start pt-4 sm:pt-6 gap-2">
-                          <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-full bg-black/80 border-2 border-racing-red/40 shadow-lg flex items-center justify-center font-black text-sm sm:text-lg overflow-hidden text-white drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
+                    <Card key={review.id} className="p-0 overflow-hidden border-2 border-red-900/40 bg-black/90 backdrop-blur-sm shadow-sm hover:shadow-lg hover:ring-2 hover:ring-racing-red transition-all mx-auto w-full">
+                      <div className="flex flex-col sm:flex-row">
+                        {/* Top bar with avatar on mobile, left stripe on desktop */}
+                        <div className="sm:w-20 bg-gradient-to-r sm:bg-gradient-to-b from-racing-red/15 to-racing-red/8 flex sm:flex-col items-center justify-start p-3 sm:pt-6 gap-3 sm:gap-0">
+                          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-black/80 border-2 border-racing-red/40 shadow-lg flex items-center justify-center font-black text-base sm:text-lg overflow-hidden text-white drop-shadow-[0_2px_4px_rgba(0,0,0,1)] flex-shrink-0">
                             {review.userAvatar ? (
                               <img
                                 src={review.userAvatar}
@@ -475,26 +452,27 @@ const RaceDetail = () => {
                               <span>{review.username?.[0]?.toUpperCase() || 'U'}</span>
                             )}
                           </div>
-                          <div className="flex flex-col items-center">
-                            {[...Array(5)].map((_, i) => (
-                              <Star
-                                key={i}
-                                className={`w-2.5 h-2.5 sm:w-3 sm:h-3 ${
-                                  i < review.rating
-                                    ? 'fill-racing-red text-racing-red'
-                                    : 'text-muted stroke-muted'
-                                }`}
-                              />
-                            ))}
-                          </div>
+                          {/* Username on mobile in top bar */}
+                          <span className="sm:hidden font-black text-base hover:text-racing-red transition-colors cursor-pointer text-white drop-shadow-[0_2px_4px_rgba(0,0,0,1)] uppercase tracking-wider">
+                            {review.username}
+                          </span>
                         </div>
 
                         {/* Main content */}
                         <div className="flex-1 p-4 sm:p-6">
-                          <div className="flex flex-wrap items-baseline gap-2 mb-3">
-                            <span className="font-black text-base sm:text-lg hover:text-racing-red transition-colors cursor-pointer text-white drop-shadow-[0_2px_4px_rgba(0,0,0,1)] uppercase tracking-wider">
+                          {/* Desktop: show username with session and date */}
+                          <div className="hidden sm:flex flex-wrap items-center gap-2 mb-3">
+                            <span className="font-black text-lg hover:text-racing-red transition-colors cursor-pointer text-white drop-shadow-[0_2px_4px_rgba(0,0,0,1)] uppercase tracking-wider">
                               {review.username}
                             </span>
+                            {review.sessionType && (
+                              <span className="text-xs px-2 py-0.5 rounded bg-racing-red/20 border border-racing-red/40 text-racing-red font-black uppercase tracking-wider whitespace-nowrap">
+                                {review.sessionType === 'race' && '🏁 Race'}
+                                {review.sessionType === 'sprint' && '⚡ Sprint'}
+                                {review.sessionType === 'qualifying' && '🏎️ Qualifying'}
+                                {review.sessionType === 'sprintQualifying' && '🏁 Sprint Quali'}
+                              </span>
+                            )}
                             <span className="text-xs text-gray-300 font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
                               {review.dateWatched instanceof Date
                                 ? review.dateWatched.toLocaleDateString('en-US', {
@@ -512,9 +490,53 @@ const RaceDetail = () => {
                             </span>
                           </div>
 
+                          {/* Mobile: session and date without username */}
+                          <div className="flex sm:hidden flex-wrap items-center gap-2 mb-3">
+                            {review.sessionType && (
+                              <span className="text-xs px-2 py-0.5 rounded bg-racing-red/20 border border-racing-red/40 text-racing-red font-black uppercase tracking-wider whitespace-nowrap">
+                                {review.sessionType === 'race' && '🏁 Race'}
+                                {review.sessionType === 'sprint' && '⚡ Sprint'}
+                                {review.sessionType === 'qualifying' && '🏎️ Qualifying'}
+                                {review.sessionType === 'sprintQualifying' && '🏁 Sprint Quali'}
+                              </span>
+                            )}
+                            <span className="text-xs text-gray-300 font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
+                              {review.dateWatched instanceof Date
+                                ? review.dateWatched.toLocaleDateString('en-US', {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    year: 'numeric'
+                                  })
+                                : review.createdAt instanceof Date
+                                  ? review.createdAt.toLocaleDateString('en-US', {
+                                      month: 'short',
+                                      day: 'numeric',
+                                      year: 'numeric'
+                                    })
+                                  : 'Recently'}
+                            </span>
+                          </div>
+
+                          {/* Rating - Full width on mobile, inline on desktop */}
+                          <div className="flex items-center justify-center sm:justify-start mb-4">
+                            <div className="flex items-center gap-1 px-3 py-2 bg-black/60 rounded-lg border-2 border-yellow-500/40">
+                              {[...Array(5)].map((_, i) => (
+                                <Star
+                                  key={i}
+                                  className={`w-5 h-5 sm:w-5 sm:h-5 ${
+                                    i < review.rating
+                                      ? 'fill-yellow-500 text-yellow-500 drop-shadow-[0_0_6px_rgba(234,179,8,0.8)]'
+                                      : 'text-gray-600 stroke-gray-600'
+                                  }`}
+                                />
+                              ))}
+                              <span className="ml-2 font-black text-yellow-500 text-base drop-shadow-[0_0_6px_rgba(234,179,8,0.8)]">{review.rating}/5</span>
+                            </div>
+                          </div>
+
                           {/* Driver of the Day */}
                           {review.driverOfTheDay && (
-                            <div className="flex items-center gap-2 mb-3 text-sm">
+                            <div className="flex flex-wrap items-center gap-2 mb-3 text-sm justify-center sm:justify-start">
                               <span className="text-gray-200 font-bold uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">Driver of the Day:</span>
                               <span className="font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">🏆 {review.driverOfTheDay}</span>
                             </div>
@@ -522,34 +544,34 @@ const RaceDetail = () => {
 
                           {/* Review with spoiler handling */}
                           {review.spoilerWarning && !revealedSpoilers.has(review.id) ? (
-                            <div className="relative mb-3 sm:mb-4 min-h-[100px]">
-                              <div className="text-sm sm:text-base leading-relaxed blur-sm select-none pointer-events-none">
+                            <div className="relative mb-4 min-h-[100px]">
+                              <div className="text-sm sm:text-base leading-relaxed blur-sm select-none pointer-events-none text-center sm:text-left">
                                 {review.review}
                               </div>
                               <div className="absolute inset-0 flex items-center justify-center">
                                 <button
                                   onClick={() => setRevealedSpoilers(new Set([...revealedSpoilers, review.id]))}
-                                  className="bg-racing-red hover:bg-racing-red/90 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-sm sm:text-base font-medium shadow-lg flex items-center gap-1.5 sm:gap-2"
+                                  className="bg-racing-red hover:bg-racing-red/90 text-white px-4 py-2 rounded-lg text-sm font-black uppercase tracking-wider shadow-lg flex items-center gap-2 border-2 border-red-400 min-h-[44px]"
                                 >
                                   ⚠️ Show Spoilers
                                 </button>
                               </div>
                             </div>
                           ) : (
-                            <div className="text-sm sm:text-base leading-relaxed mb-3 sm:mb-4 text-gray-200 font-medium drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
+                            <div className="text-sm sm:text-base leading-relaxed mb-4 text-gray-200 font-medium drop-shadow-[0_2px_4px_rgba(0,0,0,1)] text-center sm:text-left">
                               {review.review}
                             </div>
                           )}
 
                           {/* Companions */}
                           {review.companions && review.companions.length > 0 && (
-                            <div className="flex flex-wrap items-center gap-1.5 mb-3 text-xs text-gray-300 font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
+                            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-3 text-xs text-gray-300 font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
                               <span>Watched with:</span>
                               {review.companions.map((companion: string) => (
                                 <Badge
                                   key={companion}
                                   variant="outline"
-                                  className="text-[10px] sm:text-xs"
+                                  className="text-xs border-racing-red/40 bg-black/60"
                                 >
                                   @{companion}
                                 </Badge>
@@ -559,14 +581,13 @@ const RaceDetail = () => {
 
                           {/* Tags */}
                           {review.tags && review.tags.length > 0 && (
-                            <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-3 sm:mb-4">
+                            <div className="flex flex-wrap justify-center sm:justify-start gap-2 mb-4">
                               {review.tags.map((tag: string) => (
                                 <Badge
                                   key={tag}
                                   variant="secondary"
-                                  className="text-[10px] sm:text-xs hover:bg-racing-red/10 transition-colors cursor-pointer"
+                                  className="text-xs hover:bg-racing-red/10 transition-colors cursor-pointer border-racing-red/30 bg-black/40"
                                   onClick={() => {
-                                    // Navigate to home with tag filter
                                     navigate(`/?tag=${encodeURIComponent(tag)}`);
                                   }}
                                 >
@@ -577,13 +598,13 @@ const RaceDetail = () => {
                           )}
 
                           {/* Actions */}
-                          <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4 md:gap-6 pt-2.5 sm:pt-3 border-t border-red-900/30">
+                          <div className="flex flex-wrap items-center justify-center sm:justify-between gap-4 pt-3 border-t border-red-900/30 min-h-[44px]">
                             <button
-                              className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-gray-200 hover:text-racing-red transition-colors group font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,1)]"
+                              className="flex items-center gap-2 text-sm text-gray-200 hover:text-racing-red transition-colors group font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,1)] min-h-[44px] px-3"
                               onClick={() => review.id && handleLikeReview(review.id)}
                             >
-                              <Heart className={`w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover:scale-110 transition-transform ${
-                                review.likedBy?.includes(auth.currentUser?.uid || '')
+                              <Heart className={`w-4 h-4 group-hover:scale-110 transition-transform ${
+                                review.likedBy?.includes(currentUser?.uid || '')
                                   ? 'fill-racing-red text-racing-red'
                                   : ''
                               }`} />
@@ -593,21 +614,21 @@ const RaceDetail = () => {
                             </button>
 
                             {/* Edit & Delete buttons - only show for own reviews */}
-                            {auth.currentUser?.uid === review.userId && (
-                              <div className="flex items-center gap-2">
+                            {currentUser?.uid === review.userId && (
+                              <div className="flex items-center gap-3">
                                 <button
-                                  className="flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm text-gray-200 hover:text-white transition-colors font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,1)]"
+                                  className="flex items-center gap-1.5 text-sm text-gray-200 hover:text-white transition-colors font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,1)] min-h-[44px] px-3"
                                   onClick={() => handleEditReview(review)}
                                 >
-                                  <Edit className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                                  <span className="hidden sm:inline">Edit</span>
+                                  <Edit className="w-4 h-4" />
+                                  <span>Edit</span>
                                 </button>
                                 <button
-                                  className="flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm text-gray-200 hover:text-racing-red transition-colors font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,1)]"
+                                  className="flex items-center gap-1.5 text-sm text-gray-200 hover:text-racing-red transition-colors font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,1)] min-h-[44px] px-3"
                                   onClick={() => review.id && handleDeleteReview(review.id)}
                                 >
-                                  <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                                  <span className="hidden sm:inline">Delete</span>
+                                  <Trash2 className="w-4 h-4" />
+                                  <span>Delete</span>
                                 </button>
                               </div>
                             )}
@@ -622,18 +643,18 @@ const RaceDetail = () => {
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-4 sm:space-y-6">
-            <Card className="p-4 sm:p-5 md:p-6 border-2 border-red-900/40 bg-black/90 backdrop-blur-sm shadow-sm">
-              <div className="inline-block px-3 py-1 bg-black/60 backdrop-blur-sm border-2 border-racing-red rounded-full mb-3">
-                <span className="text-racing-red font-black text-xs tracking-widest drop-shadow-[0_0_6px_rgba(220,38,38,0.8)]">POPULAR</span>
+          <div className="space-y-3 sm:space-y-4">
+            <Card className="p-3 sm:p-4 border-2 border-red-900/40 bg-black/90 backdrop-blur-sm shadow-sm">
+              <div className="inline-block px-2 py-0.5 bg-black/60 backdrop-blur-sm border border-racing-red rounded-full mb-2">
+                <span className="text-racing-red font-black text-[10px] tracking-widest drop-shadow-[0_0_6px_rgba(220,38,38,0.8)]">POPULAR</span>
               </div>
-              <h3 className="font-black text-base sm:text-lg mb-3 sm:mb-4 text-white tracking-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">TRENDING TAGS</h3>
-              <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                {['overtake', 'late-drama', 'season-finale', 'sunset', 'rain', 'safety-car'].map((tag) => (
+              <h3 className="font-black text-sm mb-2 text-white tracking-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">TRENDING TAGS</h3>
+              <div className="flex flex-wrap gap-1">
+                {['overtake', 'late-drama', 'sunset', 'rain', 'safety-car'].map((tag) => (
                   <Badge
                     key={tag}
                     variant="secondary"
-                    className="text-xs hover:bg-racing-red/10 transition-colors cursor-pointer"
+                    className="text-[10px] px-2 py-0.5 hover:bg-racing-red/10 transition-colors cursor-pointer"
                     onClick={() => navigate(`/?tag=${encodeURIComponent(tag)}`)}
                   >
                     #{tag}

@@ -1,18 +1,15 @@
+import { getCurrentUser } from '@/lib/auth-native';
 import {
-  collection,
-  doc,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  getDoc,
-  getDocs,
-  query,
-  where,
-  orderBy,
+  getDocument,
+  setDocument,
+  getDocuments,
+  addDocument,
+  updateDocument,
+  deleteDocument,
   Timestamp,
-  increment
-} from 'firebase/firestore';
-import { db, auth } from '@/lib/firebase';
+  increment,
+  timestampToDate
+} from '@/lib/firestore-native';
 
 export interface RaceListItem {
   raceYear: number;
@@ -39,10 +36,8 @@ export interface RaceList {
   commentsCount: number;
 }
 
-const listsCollection = collection(db, 'lists');
-
 export const createList = async (list: Omit<RaceList, 'id' | 'createdAt' | 'updatedAt' | 'likesCount' | 'commentsCount'>) => {
-  const user = auth.currentUser;
+  const user = await getCurrentUser();
   if (!user) {
     console.error('[createList] User not authenticated');
     throw new Error('User not authenticated');
@@ -63,15 +58,15 @@ export const createList = async (list: Omit<RaceList, 'id' | 'createdAt' | 'upda
   console.log('[createList] newList with timestamps:', newList);
 
   try {
-    const docRef = await addDoc(listsCollection, newList);
-    console.log('[createList] List created successfully with ID:', docRef.id);
+    const docId = await addDocument('lists', newList);
+    console.log('[createList] List created successfully with ID:', docId);
 
-    await updateDoc(doc(db, 'userStats', user.uid), {
+    await updateDocument(`userStats/${user.uid}`, {
       listsCount: increment(1)
     });
     console.log('[createList] User stats updated');
 
-    return docRef.id;
+    return docId;
   } catch (error) {
     console.error('[createList] Error creating list:', error);
     throw error;
@@ -82,21 +77,17 @@ export const getUserLists = async (userId: string) => {
   console.log('[getUserLists] Fetching lists for user:', userId);
 
   try {
-    const q = query(
-      listsCollection,
-      where('userId', '==', userId),
-      orderBy('updatedAt', 'desc')
-    );
-    const snapshot = await getDocs(q);
-    console.log('[getUserLists] Found', snapshot.docs.length, 'lists');
-
-    const lists = snapshot.docs.map(doc => {
-      const data = doc.data();
-      console.log('[getUserLists] List data:', { id: doc.id, ...data });
-      return { id: doc.id, ...data } as RaceList;
+    const docs = await getDocuments('lists', {
+      where: [{ field: 'userId', operator: '==', value: userId }],
+      orderBy: { field: 'updatedAt', direction: 'desc' }
     });
+    console.log('[getUserLists] Found', docs.length, 'lists');
 
-    return lists;
+    return docs.map(doc => ({
+      ...doc,
+      createdAt: timestampToDate(doc.createdAt),
+      updatedAt: timestampToDate(doc.updatedAt)
+    })) as RaceList[];
   } catch (error) {
     console.error('[getUserLists] Error fetching lists:', error);
     throw error;
@@ -104,40 +95,44 @@ export const getUserLists = async (userId: string) => {
 };
 
 export const getPublicLists = async () => {
-  const q = query(
-    listsCollection,
-    where('isPublic', '==', true),
-    orderBy('updatedAt', 'desc')
-  );
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as RaceList));
+  const docs = await getDocuments('lists', {
+    where: [{ field: 'isPublic', operator: '==', value: true }],
+    orderBy: { field: 'updatedAt', direction: 'desc' }
+  });
+  return docs.map(doc => ({
+    ...doc,
+    createdAt: timestampToDate(doc.createdAt),
+    updatedAt: timestampToDate(doc.updatedAt)
+  })) as RaceList[];
 };
 
 export const getListById = async (listId: string) => {
-  const docRef = doc(db, 'lists', listId);
-  const docSnap = await getDoc(docRef);
-  if (docSnap.exists()) {
-    return { id: docSnap.id, ...docSnap.data() } as RaceList;
+  const data = await getDocument(`lists/${listId}`);
+  if (data) {
+    return {
+      id: listId,
+      ...data,
+      createdAt: timestampToDate(data.createdAt),
+      updatedAt: timestampToDate(data.updatedAt)
+    } as RaceList;
   }
   return null;
 };
 
 export const updateList = async (listId: string, updates: Partial<RaceList>) => {
-  const docRef = doc(db, 'lists', listId);
-  await updateDoc(docRef, {
+  await updateDocument(`lists/${listId}`, {
     ...updates,
     updatedAt: Timestamp.now()
   });
 };
 
 export const deleteList = async (listId: string) => {
-  const user = auth.currentUser;
+  const user = await getCurrentUser();
   if (!user) throw new Error('User not authenticated');
 
-  const docRef = doc(db, 'lists', listId);
-  await deleteDoc(docRef);
+  await deleteDocument(`lists/${listId}`);
 
-  await updateDoc(doc(db, 'userStats', user.uid), {
+  await updateDocument(`userStats/${user.uid}`, {
     listsCount: increment(-1)
   });
 };

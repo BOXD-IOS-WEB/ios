@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Calendar, List, Plus, Trash2, Edit, Star, Grid3x3 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { auth } from "@/lib/firebase";
 import { getUserRaceLogs, calculateTotalHoursWatched, deleteRaceLog, RaceLog } from "@/services/raceLogs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -82,8 +81,10 @@ const Diary = () => {
   };
 
   useEffect(() => {
-    loadLogs();
-  }, []);
+    if (user) {
+      loadLogs();
+    }
+  }, [user?.uid]);
 
   const handleDeleteClick = (logId: string) => {
     setLogToDelete(logId);
@@ -108,10 +109,10 @@ const Diary = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] racing-grid pb-20 lg:pb-0">
+    <div className="min-h-[100vh] min-h-[100dvh] bg-[#0a0a0a] racing-grid pb-[env(safe-area-inset-bottom,4rem)] lg:pb-0">
       <Header />
 
-      <main className="container px-4 sm:px-6 py-6 sm:py-8">
+      <main className="container px-[4vw] py-[2vh] sm:py-[3vh] max-w-full">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8 pb-6 border-b-2 border-red-900/50">
           <div>
             <div className="flex items-center gap-3 mb-2">
@@ -337,8 +338,8 @@ const Diary = () => {
 
                         {/* Rating */}
                         {log.rating && (
-                          <div className="flex items-center gap-1 bg-black/90 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full border border-racing-red/50 flex-shrink-0">
-                            <Star className="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-racing-red text-racing-red drop-shadow-[0_0_4px_rgba(220,38,38,0.8)]" />
+                          <div className="flex items-center gap-1 bg-black/90 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full border border-yellow-500/50 flex-shrink-0">
+                            <Star className="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-yellow-500 text-yellow-500 drop-shadow-[0_0_4px_rgba(234,179,8,0.8)]" />
                             <span className="font-black text-xs sm:text-sm text-white drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">{log.rating.toFixed(1)}</span>
                           </div>
                         )}
@@ -369,7 +370,7 @@ const Diary = () => {
                           <Button
                             size="icon"
                             variant="ghost"
-                            className="h-6 w-6 sm:h-7 sm:w-7 opacity-0 group-hover:opacity-100 text-racing-red hover:text-red-600 hover:bg-red-900/20"
+                            className="min-h-[44px] min-w-[44px] h-11 w-11 opacity-0 group-hover:opacity-100 text-racing-red hover:text-red-600 hover:bg-red-900/20 touch-manipulation"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleDeleteClick(log.id!);
@@ -399,7 +400,7 @@ const Diary = () => {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-[2vw] sm:gap-[1.5vw]">
             {logs.map((race) => (
               <div key={race.id} className="relative group">
                 <RaceCard {...race} />
@@ -407,13 +408,13 @@ const Diary = () => {
                   <Button
                     size="icon"
                     variant="destructive"
-                    className="h-8 w-8"
+                    className="min-h-[44px] min-w-[44px] h-11 w-11 touch-manipulation"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleDeleteClick(race.id);
                     }}
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
                   </Button>
                 </div>
               </div>

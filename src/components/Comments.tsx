@@ -4,7 +4,7 @@ import { Textarea } from './ui/textarea';
 import { Card } from './ui/card';
 import { Heart, Trash2 } from 'lucide-react';
 import { addComment, getComments, deleteComment, toggleCommentLike, Comment } from '@/services/comments';
-import { auth } from '@/lib/firebase';
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 
 interface CommentsProps {
@@ -12,6 +12,7 @@ interface CommentsProps {
 }
 
 export const Comments = ({ raceLogId }: CommentsProps) => {
+  const { user } = useAuth();
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(true);
@@ -67,8 +68,6 @@ export const Comments = ({ raceLogId }: CommentsProps) => {
     }
   };
 
-  const currentUser = auth.currentUser;
-
   if (loading) {
     return <div className="text-center py-4 text-muted-foreground">Loading comments...</div>;
   }
@@ -77,7 +76,7 @@ export const Comments = ({ raceLogId }: CommentsProps) => {
     <div className="space-y-4">
       <h3 className="text-xl font-semibold">Comments</h3>
 
-      {currentUser && (
+      {user && (
         <div className="space-y-2">
           <Textarea
             placeholder="Add a comment..."
@@ -128,7 +127,7 @@ export const Comments = ({ raceLogId }: CommentsProps) => {
                     >
                       <Heart
                         className={`w-4 h-4 ${
-                          comment.likedBy?.includes(currentUser?.uid || '')
+                          comment.likedBy?.includes(user?.uid || '')
                             ? 'fill-racing-red text-racing-red'
                             : ''
                         }`}
@@ -136,7 +135,7 @@ export const Comments = ({ raceLogId }: CommentsProps) => {
                       <span className="text-xs">{comment.likesCount || 0}</span>
                     </Button>
 
-                    {currentUser?.uid === comment.userId && (
+                    {user?.uid === comment.userId && (
                       <Button
                         variant="ghost"
                         size="sm"

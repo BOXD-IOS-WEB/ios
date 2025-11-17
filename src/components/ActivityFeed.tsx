@@ -68,7 +68,7 @@ export const ActivityFeed = ({ feedType, limit = 50, initialShow = 10 }: Activit
       case 'raceLog':
         return `/race/${activity.targetId}`;
       case 'list':
-        return `/lists/${activity.targetId}`;
+        return `/list/${activity.targetId}`;
       case 'user':
         return `/user/${activity.targetId}`;
       default:
@@ -133,7 +133,7 @@ export const ActivityFeed = ({ feedType, limit = 50, initialShow = 10 }: Activit
                   <Link to={`/user/${activity.userId}`} className="font-black text-sm sm:text-base text-white hover:text-racing-red transition-colors uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
                     {activity.username}
                   </Link>
-                  <span className="text-xs sm:text-sm text-gray-200 font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">{getActivityText(activity)}</span>
+                  <span className="text-xs sm:text-sm text-gray-100 font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">{getActivityText(activity)}</span>
                   {activity.targetType === 'raceLog' && (
                     <Link to={getActivityLink(activity)} className="text-xs sm:text-sm font-semibold text-racing-red hover:underline">
                       a race
@@ -154,12 +154,12 @@ export const ActivityFeed = ({ feedType, limit = 50, initialShow = 10 }: Activit
                 {/* Content */}
                 {activity.content && (
                   <div className="mb-2 sm:mb-3 p-2 sm:p-3 bg-black/60 rounded-lg border border-red-900/30">
-                    <p className="text-xs sm:text-sm leading-relaxed line-clamp-3 italic text-gray-200 font-medium drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">"{activity.content}"</p>
+                    <p className="text-xs sm:text-sm leading-relaxed line-clamp-3 italic text-white font-medium drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">"{activity.content}"</p>
                   </div>
                 )}
 
                 {/* Footer */}
-                <div className="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs text-gray-300 font-bold">
+                <div className="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs text-gray-100 font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
                   <span className="flex items-center gap-0.5 sm:gap-1">
                     <span>📅</span>
                     {new Date(activity.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}

@@ -7,24 +7,23 @@ import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/EmptyState";
 import { UserPlus, UserMinus, Settings, Heart, List, Calendar, Star, Users, Eye } from "lucide-react";
 import { useEffect, useState } from "react";
-import { auth } from "@/lib/firebase";
 import { getUserProfile, getUserRaceLogs, calculateTotalHoursWatched } from "@/services/raceLogs";
 import { followUser, unfollowUser, isFollowing, getFollowers, getFollowing } from "@/services/follows";
 import { getUserLists } from "@/services/lists";
 import { getUserWatchlist } from "@/services/watchlist";
-import { collection, query, where, getDocs } from "firebase/firestore";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { getDocument, getDocuments } from "@/lib/firestore-native";
 import { useToast } from "@/hooks/use-toast";
 import { useParams, useNavigate } from "react-router-dom";
 import { EditProfileDialog } from "@/components/EditProfileDialog";
 import { useAuth } from "@/contexts/AuthContext";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const Profile = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, loading: authLoading } = useAuth();
   const [logs, setLogs] = useState<any[]>([]);
   const [stats, setStats] = useState({
     racesWatched: 0,
@@ -45,34 +44,60 @@ const Profile = () => {
   const [lists, setLists] = useState<any[]>([]);
   const [watchlist, setWatchlist] = useState<any[]>([]);
   const [likes, setLikes] = useState<any[]>([]);
+  const [visibleLogsCount, setVisibleLogsCount] = useState(6);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [followersDialogOpen, setFollowersDialogOpen] = useState(false);
+  const [followingDialogOpen, setFollowingDialogOpen] = useState(false);
 
-  const loadProfile = async () => {
+  const loadProfile = async (forceRefresh = false) => {
     const targetUserId = userId || currentUser?.uid;
 
+    console.log('[Profile] Loading profile for userId:', targetUserId, 'forceRefresh:', forceRefresh);
+    console.log('[Profile] URL param userId:', userId);
+    console.log('[Profile] Current user UID:', currentUser?.uid);
+
     if (!targetUserId) {
+      console.warn('[Profile] No target user ID available');
       setLoading(false);
       return;
     }
 
     try {
-      const profileDoc = await getDoc(doc(db, 'users', targetUserId));
-      if (profileDoc.exists()) {
-        setProfile({ id: profileDoc.id, ...profileDoc.data() });
+      console.log('[Profile] Fetching user document...');
+
+      // If force refresh, add a small delay to ensure Firestore has the latest data
+      if (forceRefresh) {
+        console.log('[Profile] Force refresh - waiting for data propagation...');
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+
+      const profileData = await getDocument(`users/${targetUserId}`);
+      if (profileData) {
+        console.log('[Profile] ✅ Profile data loaded for:', targetUserId, 'photoURL:', profileData.photoURL);
+        // Add timestamp to force image reload
+        const photoURL = profileData.photoURL ? `${profileData.photoURL}?t=${Date.now()}` : null;
+        setProfile({ id: targetUserId, ...profileData, photoURL });
       } else {
+        console.log('[Profile] ⚠️ No profile data found, using defaults');
         setProfile({
+          id: targetUserId,
           name: currentUser?.displayName || currentUser?.email?.split('@')[0] || 'User',
           email: currentUser?.email,
           description: 'F1 fan',
         });
       }
 
+      console.log('[Profile] Fetching user race logs...');
       const userLogs = await getUserRaceLogs(targetUserId);
+      console.log('[Profile] Found', userLogs.length, 'race logs');
+
       const hoursWatched = calculateTotalHoursWatched(userLogs);
       const reviewsCount = userLogs.filter(log => log.review && log.review.length > 0).length;
 
-      const userStatsDoc = await getDoc(doc(db, 'userStats', targetUserId));
-      setStatsDoc(userStatsDoc);
-      const statsData = userStatsDoc.exists() ? userStatsDoc.data() : {};
+      console.log('[Profile] Fetching user stats...');
+      const userStatsData = await getDocument(`userStats/${targetUserId}`);
+      setStatsDoc(userStatsData ? { exists: () => true, data: () => userStatsData } : { exists: () => false, data: () => ({}) });
+      const statsData = userStatsData || {};
 
       setStats({
         racesWatched: userLogs.length,
@@ -83,13 +108,19 @@ const Profile = () => {
         following: statsData.followingCount || 0,
       });
 
+      console.log('[Profile] Stats loaded:', {
+        racesWatched: userLogs.length,
+        followers: statsData.followersCount || 0,
+        following: statsData.followingCount || 0,
+      });
+
       setLogs(userLogs.map(log => ({
         id: log.id,
         season: log.raceYear,
         round: log.round || 1,
         gpName: log.raceName,
         circuit: log.raceLocation,
-        date: log.dateWatched.toString(),
+        date: log.dateWatched ? (typeof log.dateWatched.toDate === 'function' ? log.dateWatched.toDate().toISOString() : log.dateWatched.toString()) : new Date().toISOString(),
         rating: log.rating,
         watched: true,
         country: log.countryCode,
@@ -115,34 +146,60 @@ const Profile = () => {
 
       // Load likes (race logs that user has liked)
       try {
-        const likesQuery = query(
-          collection(db, 'likes'),
-          where('userId', '==', targetUserId)
-        );
-        const likesSnapshot = await getDocs(likesQuery);
-        const likedRaceLogIds = likesSnapshot.docs.map(doc => doc.data().raceLogId);
+        const likesDocs = await getDocuments('likes', {
+          where: [{ field: 'userId', operator: '==', value: targetUserId }]
+        });
+        const likedRaceLogIds = likesDocs.map(doc => doc.raceLogId);
 
         // Fetch the actual race logs
         if (likedRaceLogIds.length > 0) {
-          const raceLogsQuery = query(
-            collection(db, 'raceLogs'),
-            where('__name__', 'in', likedRaceLogIds.slice(0, 10)) // Firestore limit
+          // Fetch each race log individually since native plugin may not support 'in' operator
+          const likedLogs = await Promise.all(
+            likedRaceLogIds.slice(0, 10).map(async (logId) => {
+              const logData = await getDocument(`raceLogs/${logId}`);
+              return logData ? { id: logId, ...logData } : null;
+            })
           );
-          const raceLogsSnapshot = await getDocs(raceLogsQuery);
-          const likedLogs = raceLogsSnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          }));
-          setLikes(likedLogs);
+          setLikes(likedLogs.filter(log => log !== null));
         }
       } catch (error) {
         console.error('Error loading likes:', error);
         setLikes([]);
       }
     } catch (error) {
-      console.error('Error loading profile:', error);
+      console.error('[Profile] ❌ Error loading profile:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadFollowers = async () => {
+    const targetUserId = userId || currentUser?.uid;
+    if (!targetUserId) return;
+
+    setFollowersLoading(true);
+    try {
+      const followersList = await getFollowers(targetUserId);
+      setFollowers(followersList);
+    } catch (error) {
+      console.error('Error loading followers:', error);
+    } finally {
+      setFollowersLoading(false);
+    }
+  };
+
+  const loadFollowing = async () => {
+    const targetUserId = userId || currentUser?.uid;
+    if (!targetUserId) return;
+
+    setFollowersLoading(true);
+    try {
+      const followingList = await getFollowing(targetUserId);
+      setFollowing(followingList);
+    } catch (error) {
+      console.error('Error loading following:', error);
+    } finally {
+      setFollowersLoading(false);
     }
   };
 
@@ -156,30 +213,57 @@ const Profile = () => {
       if (followingUser) {
         await unfollowUser(targetUserId);
         setFollowingUser(false);
-        setStats(prev => ({ ...prev, followers: prev.followers - 1 }));
+        setStats(prev => ({ ...prev, followers: Math.max(0, prev.followers - 1) }));
         toast({ title: 'Unfollowed user' });
+        // Reload the lists if dialogs are open
+        if (followersDialogOpen) {
+          await loadFollowers();
+        }
+        if (followingDialogOpen) {
+          await loadFollowing();
+        }
       } else {
         await followUser(targetUserId);
         setFollowingUser(true);
         setStats(prev => ({ ...prev, followers: prev.followers + 1 }));
         toast({ title: 'Following user' });
+        // Reload the lists if dialogs are open
+        if (followersDialogOpen) {
+          await loadFollowers();
+        }
+        if (followingDialogOpen) {
+          await loadFollowing();
+        }
       }
     } catch (error: any) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+      console.error('Error toggling follow:', error);
+      toast({ title: 'Error', description: error.message || 'Failed to update follow status', variant: 'destructive' });
     } finally {
       setFollowLoading(false);
     }
   };
 
   useEffect(() => {
-    loadProfile();
-  }, [userId]);
+    // Wait for auth to finish loading before attempting to load profile
+    if (authLoading) {
+      console.log('[Profile] Waiting for auth to load...');
+      return;
+    }
+
+    // Only load profile if we have a user (currentUser for own profile, userId for other profiles)
+    if (currentUser || userId) {
+      loadProfile();
+    } else {
+      console.log('[Profile] No user available after auth loaded');
+      setLoading(false);
+    }
+  }, [userId, currentUser?.uid, authLoading]);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] racing-grid pb-20 lg:pb-0">
+    <div className="min-h-[100vh] min-h-[100dvh] bg-[#0a0a0a] racing-grid pb-[env(safe-area-inset-bottom,4rem)] lg:pb-0">
       <Header />
 
-      <main className="container px-4 sm:px-6 py-6 sm:py-8">
+      <main className="container px-[4vw] py-[2vh] sm:py-[3vh] max-w-full">
         {/* Profile Header */}
         <div className="space-y-6 mb-6 sm:mb-8">
           {/* Profile Info */}
@@ -203,7 +287,7 @@ const Profile = () => {
 
               <div className="mb-2">
                 {currentUser?.uid === (userId || currentUser?.uid) ? (
-                  <EditProfileDialog profile={profile} onSuccess={loadProfile} />
+                  <EditProfileDialog profile={profile} onSuccess={() => loadProfile(true)} />
                 ) : (
                   <Button
                     onClick={handleFollowToggle}
@@ -239,14 +323,30 @@ const Profile = () => {
                 <span className="font-black text-racing-red drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">{stats.racesWatched}</span>{' '}
                 <span className="text-gray-200 font-bold uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">Races</span>
               </div>
-              <div>
+              <button
+                onClick={async () => {
+                  setFollowersDialogOpen(true);
+                  if (followers.length === 0) {
+                    await loadFollowers();
+                  }
+                }}
+                className="hover:opacity-70 transition-opacity cursor-pointer touch-manipulation"
+              >
                 <span className="font-black text-racing-red drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">{stats.followers}</span>{' '}
                 <span className="text-gray-200 font-bold uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">Followers</span>
-              </div>
-              <div>
+              </button>
+              <button
+                onClick={async () => {
+                  setFollowingDialogOpen(true);
+                  if (following.length === 0) {
+                    await loadFollowing();
+                  }
+                }}
+                className="hover:opacity-70 transition-opacity cursor-pointer touch-manipulation"
+              >
                 <span className="font-black text-racing-red drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">{stats.following}</span>{' '}
                 <span className="text-gray-200 font-bold uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">Following</span>
-              </div>
+              </button>
             </div>
 
             {/* Time Spent Watching */}
@@ -340,14 +440,6 @@ const Profile = () => {
                 <Heart className="w-3 h-3 sm:w-4 sm:h-4" />
                 Likes
               </TabsTrigger>
-              <TabsTrigger value="followers" className="gap-1 sm:gap-2 text-[10px] sm:text-xs px-2 sm:px-3 font-black uppercase tracking-wider data-[state=active]:bg-racing-red data-[state=active]:text-white">
-                <Users className="w-3 h-3 sm:w-4 sm:h-4" />
-                Fans
-              </TabsTrigger>
-              <TabsTrigger value="following" className="gap-1 sm:gap-2 text-[10px] sm:text-xs px-2 sm:px-3 font-black uppercase tracking-wider data-[state=active]:bg-racing-red data-[state=active]:text-white">
-                <Users className="w-3 h-3 sm:w-4 sm:h-4" />
-                Follow
-              </TabsTrigger>
             </TabsList>
           </div>
 
@@ -355,11 +447,23 @@ const Profile = () => {
             {loading ? (
               <div className="text-center py-12 text-gray-200 font-bold uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">Loading...</div>
             ) : logs.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
-                {logs.map((race, idx) => (
-                  <RaceCard key={idx} {...race} />
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-[2vw] sm:gap-[1.5vw]">
+                  {logs.slice(0, visibleLogsCount).map((race, idx) => (
+                    <RaceCard key={idx} {...race} />
+                  ))}
+                </div>
+                {logs.length > visibleLogsCount && (
+                  <div className="flex justify-center pt-6">
+                    <Button
+                      onClick={() => setVisibleLogsCount(prev => prev + 12)}
+                      className="bg-racing-red hover:bg-red-600 border-2 border-red-400 shadow-lg shadow-red-500/30 font-black uppercase tracking-wider"
+                    >
+                      View More ({logs.length - visibleLogsCount} remaining)
+                    </Button>
+                  </div>
+                )}
+              </>
             ) : (
               <EmptyState
                 icon={Calendar}
@@ -381,33 +485,33 @@ const Profile = () => {
                 .map((race) => (
                   <Card key={race.id} className="p-6 border-2 border-red-900/30 bg-black/40 backdrop-blur hover:ring-2 hover:ring-racing-red transition-all">
                     <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 rounded-full overflow-hidden bg-muted flex items-center justify-center">
+                      <div className="w-12 h-12 rounded-full overflow-hidden bg-black/60 border-2 border-racing-red/40 flex items-center justify-center">
                         {profile?.photoURL ? (
                           <img src={profile.photoURL} alt={profile.name} className="w-full h-full object-cover" />
                         ) : (
-                          <div className="text-lg font-bold">
+                          <div className="text-lg font-bold text-white">
                             {(profile?.name || profile?.email?.split('@')[0] || 'U').charAt(0).toUpperCase()}
                           </div>
                         )}
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2 flex-wrap">
-                          <span className="font-semibold">{profile?.name || profile?.email?.split('@')[0]}</span>
-                          <span className="text-muted-foreground text-sm">reviewed</span>
+                          <span className="font-semibold text-white">{profile?.name || profile?.email?.split('@')[0]}</span>
+                          <span className="text-gray-200 text-sm font-bold">reviewed</span>
                           <span
-                            className="font-semibold hover:text-racing-red cursor-pointer"
+                            className="font-semibold text-white hover:text-racing-red cursor-pointer"
                             onClick={() => navigate(`/race/${race.season}/${race.round}`)}
                           >
                             {race.season} {race.gpName}
                           </span>
                           {race.rating && (
                             <div className="flex items-center gap-1 ml-auto">
-                              <Star className="w-4 h-4 fill-racing-red text-racing-red" />
+                              <Star className="w-4 h-4 fill-yellow-500 text-yellow-500" />
                               <span className="text-sm font-semibold">{race.rating.toFixed(1)}</span>
                             </div>
                           )}
                         </div>
-                        <p className="text-sm text-muted-foreground mb-2">
+                        <p className="text-sm text-gray-200 mb-2 font-bold">
                           Watched at {race.circuit} on {new Date(race.date).toLocaleDateString()}
                         </p>
                       </div>
@@ -439,11 +543,11 @@ const Profile = () => {
                         <List className="w-6 h-6 text-racing-red" />
                       </div>
                       <div className="flex-1">
-                        <h3 className="font-bold text-lg">{list.title}</h3>
-                        <p className="text-sm text-muted-foreground line-clamp-2">{list.description}</p>
+                        <h3 className="font-bold text-lg text-white">{list.title}</h3>
+                        <p className="text-sm text-gray-200 line-clamp-2">{list.description}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground pt-3 border-t">
+                    <div className="flex items-center gap-4 text-sm text-gray-200 font-bold pt-3 border-t border-red-900/30">
                       <span>{list.races?.length || 0} races</span>
                       <div className="flex items-center gap-1">
                         <Heart className="w-4 h-4" />
@@ -466,7 +570,7 @@ const Profile = () => {
             {loading ? (
               <div className="text-center py-12 text-gray-200 font-bold uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">Loading...</div>
             ) : watchlist.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+              <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-[2vw] sm:gap-[1.5vw]">
                 {watchlist.map((item, idx) => (
                   <RaceCard
                     key={idx}
@@ -492,7 +596,7 @@ const Profile = () => {
             {loading ? (
               <div className="text-center py-12 text-gray-200 font-bold uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">Loading...</div>
             ) : likes.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+              <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-[2vw] sm:gap-[1.5vw]">
                 {likes.map((log) => (
                   <RaceCard
                     key={log.id}
@@ -525,25 +629,28 @@ const Profile = () => {
                 {followers.map((follower) => (
                   <Card key={follower.id} className="p-4 border-2 border-red-900/30 bg-black/40 backdrop-blur">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center overflow-hidden">
+                      <div className="w-12 h-12 rounded-full bg-black/60 border-2 border-racing-red/40 flex items-center justify-center overflow-hidden">
                         {follower.photoURL ? (
                           <img src={follower.photoURL} alt={follower.name} className="w-full h-full object-cover" />
                         ) : (
-                          <div className="text-lg font-bold">
+                          <div className="text-lg font-bold text-white">
                             {(follower.name || follower.email?.split('@')[0] || 'U').charAt(0).toUpperCase()}
                           </div>
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold truncate">{follower.name || follower.email?.split('@')[0]}</p>
-                        <p className="text-sm text-muted-foreground truncate">@{follower.email?.split('@')[0]}</p>
+                        <p className="font-semibold truncate text-white">{follower.name || follower.email?.split('@')[0]}</p>
+                        <p className="text-sm text-gray-300 font-bold truncate">@{follower.email?.split('@')[0]}</p>
                       </div>
                     </div>
                     <Button
                       variant="outline"
                       size="sm"
-                      className="w-full mt-3 border-2 border-racing-red bg-black/60 text-white hover:bg-racing-red/20 font-black uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,1)]"
-                      onClick={() => navigate(`/user/${follower.id}`)}
+                      className="w-full mt-3 border-2 border-racing-red bg-black/60 text-white hover:bg-racing-red/20 font-black uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,1)] touch-manipulation cursor-pointer min-h-[44px]"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/user/${follower.id}`);
+                      }}
                     >
                       View Profile
                     </Button>
@@ -567,25 +674,28 @@ const Profile = () => {
                 {following.map((followedUser) => (
                   <Card key={followedUser.id} className="p-4 border-2 border-red-900/30 bg-black/40 backdrop-blur">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center overflow-hidden">
+                      <div className="w-12 h-12 rounded-full bg-black/60 border-2 border-racing-red/40 flex items-center justify-center overflow-hidden">
                         {followedUser.photoURL ? (
                           <img src={followedUser.photoURL} alt={followedUser.name} className="w-full h-full object-cover" />
                         ) : (
-                          <div className="text-lg font-bold">
+                          <div className="text-lg font-bold text-white">
                             {(followedUser.name || followedUser.email?.split('@')[0] || 'U').charAt(0).toUpperCase()}
                           </div>
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold truncate">{followedUser.name || followedUser.email?.split('@')[0]}</p>
-                        <p className="text-sm text-muted-foreground truncate">@{followedUser.email?.split('@')[0]}</p>
+                        <p className="font-semibold truncate text-white">{followedUser.name || followedUser.email?.split('@')[0]}</p>
+                        <p className="text-sm text-gray-300 font-bold truncate">@{followedUser.email?.split('@')[0]}</p>
                       </div>
                     </div>
                     <Button
                       variant="outline"
                       size="sm"
-                      className="w-full mt-3 border-2 border-racing-red bg-black/60 text-white hover:bg-racing-red/20 font-black uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,1)]"
-                      onClick={() => navigate(`/user/${followedUser.id}`)}
+                      className="w-full mt-3 border-2 border-racing-red bg-black/60 text-white hover:bg-racing-red/20 font-black uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,1)] touch-manipulation cursor-pointer min-h-[44px]"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/user/${followedUser.id}`);
+                      }}
                     >
                       View Profile
                     </Button>
@@ -602,6 +712,112 @@ const Profile = () => {
           </TabsContent>
         </Tabs>
       </main>
+
+      {/* Followers Dialog */}
+      <Dialog open={followersDialogOpen} onOpenChange={setFollowersDialogOpen}>
+        <DialogContent className="max-w-md w-[95vw] sm:w-full max-h-[80vh] bg-black/95 border-2 border-racing-red/40">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-black text-white uppercase tracking-wider">
+              Followers ({stats.followers})
+            </DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="max-h-[60vh] pr-4">
+            {followersLoading ? (
+              <div className="text-center py-12 text-gray-400">Loading...</div>
+            ) : followers.length > 0 ? (
+              <div className="space-y-3">
+                {followers.map((follower) => (
+                  <Card key={follower.id} className="p-3 border-2 border-red-900/30 bg-black/40 backdrop-blur">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-black/60 border-2 border-racing-red/40 flex items-center justify-center overflow-hidden flex-shrink-0">
+                        {follower.photoURL ? (
+                          <img src={follower.photoURL} alt={follower.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="text-sm font-bold text-white">
+                            {(follower.name || follower.email?.split('@')[0] || 'U').charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold truncate text-white text-sm">{follower.name || follower.email?.split('@')[0]}</p>
+                        <p className="text-xs text-gray-300 font-bold truncate">@{follower.email?.split('@')[0]}</p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-2 border-racing-red bg-black/60 text-white hover:bg-racing-red/20 font-black uppercase tracking-wider text-xs"
+                        onClick={() => {
+                          navigate(`/user/${follower.id}`);
+                          setFollowersDialogOpen(false);
+                        }}
+                      >
+                        View
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 text-gray-400">
+                <p className="font-bold">No followers yet</p>
+              </div>
+            )}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
+
+      {/* Following Dialog */}
+      <Dialog open={followingDialogOpen} onOpenChange={setFollowingDialogOpen}>
+        <DialogContent className="max-w-md w-[95vw] sm:w-full max-h-[80vh] bg-black/95 border-2 border-racing-red/40">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-black text-white uppercase tracking-wider">
+              Following ({stats.following})
+            </DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="max-h-[60vh] pr-4">
+            {followersLoading ? (
+              <div className="text-center py-12 text-gray-400">Loading...</div>
+            ) : following.length > 0 ? (
+              <div className="space-y-3">
+                {following.map((followedUser) => (
+                  <Card key={followedUser.id} className="p-3 border-2 border-red-900/30 bg-black/40 backdrop-blur">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-black/60 border-2 border-racing-red/40 flex items-center justify-center overflow-hidden flex-shrink-0">
+                        {followedUser.photoURL ? (
+                          <img src={followedUser.photoURL} alt={followedUser.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="text-sm font-bold text-white">
+                            {(followedUser.name || followedUser.email?.split('@')[0] || 'U').charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold truncate text-white text-sm">{followedUser.name || followedUser.email?.split('@')[0]}</p>
+                        <p className="text-xs text-gray-300 font-bold truncate">@{followedUser.email?.split('@')[0]}</p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-2 border-racing-red bg-black/60 text-white hover:bg-racing-red/20 font-black uppercase tracking-wider text-xs"
+                        onClick={() => {
+                          navigate(`/user/${followedUser.id}`);
+                          setFollowingDialogOpen(false);
+                        }}
+                      >
+                        View
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 text-gray-400">
+                <p className="font-bold">Not following anyone yet</p>
+              </div>
+            )}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

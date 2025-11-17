@@ -10,8 +10,7 @@ import { useState, useEffect } from "react";
 import { getUserNotifications, markNotificationAsRead, markAllNotificationsAsRead, getUnreadNotificationsCount } from "@/services/notifications";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { getDocument } from "@/lib/firestore-native";
 
 export const Header = () => {
   const { user, signOut } = useAuth();
@@ -85,51 +84,53 @@ export const Header = () => {
     const loadUserPhoto = async () => {
       if (!user) return;
       try {
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
-          setUserPhotoURL(userData.photoURL || user.photoURL || null);
+        const userData = await getDocument(`users/${user.uid}`);
+        if (userData && userData.photoURL) {
+          // Add timestamp to prevent browser caching
+          setUserPhotoURL(`${userData.photoURL}?t=${Date.now()}`);
+        } else if (user.photoURL) {
+          setUserPhotoURL(`${user.photoURL}?t=${Date.now()}`);
         } else {
-          setUserPhotoURL(user.photoURL || null);
+          setUserPhotoURL(null);
         }
       } catch (error) {
         console.error('Error loading user photo:', error);
-        setUserPhotoURL(user.photoURL || null);
+        setUserPhotoURL(user.photoURL ? `${user.photoURL}?t=${Date.now()}` : null);
       }
     };
     loadUserPhoto();
-  }, [user]);
+  }, [user, location.pathname]);
 
   const isActivePath = (path: string) => location.pathname === path;
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full border-b-2 border-racing-red/20 bg-black/90 backdrop-blur-xl shadow-lg shadow-red-900/10">
+      <header className="sticky top-0 z-[99999] w-full border-b-2 border-racing-red/20 bg-black/90 backdrop-blur-xl shadow-lg shadow-red-900/10 pointer-events-auto" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
         <div className="container flex h-16 md:h-18 items-center px-4 md:px-6 lg:px-8">
           <div className="flex items-center gap-4 sm:gap-6 md:gap-8 flex-1">
-            <a href="/home" className="flex items-center">
+            <button onClick={() => navigate('/home')} className="flex items-center cursor-pointer">
               <div className="text-xl sm:text-2xl font-black tracking-tighter">
                 <span className="text-white">BOX</span>
                 <span className="text-racing-red">BOXD</span>
               </div>
-            </a>
+            </button>
 
           <nav className="hidden lg:flex items-center gap-6 xl:gap-8 text-xs font-black uppercase tracking-wider ml-4 lg:ml-6">
-            <a href="/home" className="text-white hover:text-racing-red transition-colors">
+            <button onClick={() => navigate('/home')} className={`${isActivePath('/home') ? 'text-racing-red' : 'text-white'} hover:text-racing-red transition-colors cursor-pointer`}>
               Home
-            </a>
-            <a href="/explore" className="text-gray-400 hover:text-racing-red transition-colors">
+            </button>
+            <button onClick={() => navigate('/explore')} className={`${isActivePath('/explore') ? 'text-racing-red' : 'text-gray-400'} hover:text-racing-red transition-colors cursor-pointer`}>
               Explore
-            </a>
-            <a href="/lists" className="text-gray-400 hover:text-racing-red transition-colors">
+            </button>
+            <button onClick={() => navigate('/lists')} className={`${isActivePath('/lists') ? 'text-racing-red' : 'text-gray-400'} hover:text-racing-red transition-colors cursor-pointer`}>
               Activity
-            </a>
-            <a href="/diary" className="text-gray-400 hover:text-racing-red transition-colors">
+            </button>
+            <button onClick={() => navigate('/diary')} className={`${isActivePath('/diary') ? 'text-racing-red' : 'text-gray-400'} hover:text-racing-red transition-colors cursor-pointer`}>
               Diary
-            </a>
-            <a href="/watchlist" className="text-gray-400 hover:text-racing-red transition-colors">
+            </button>
+            <button onClick={() => navigate('/watchlist')} className={`${isActivePath('/watchlist') ? 'text-racing-red' : 'text-gray-400'} hover:text-racing-red transition-colors cursor-pointer`}>
               Watchlist
-            </a>
+            </button>
           </nav>
         </div>
 
@@ -151,7 +152,7 @@ export const Header = () => {
             className="lg:hidden"
             onClick={() => navigate('/search')}
           >
-            <Search className="w-5 h-5" />
+            <Search className="w-5 h-5 text-white" />
           </Button>
 
           <LogRaceDialog
@@ -167,16 +168,16 @@ export const Header = () => {
 
           <DropdownMenu open={notificationsOpen} onOpenChange={setNotificationsOpen}>
             <DropdownMenuTrigger asChild>
-              <Button size="icon" variant="ghost" className="relative md:w-11 md:h-11">
+              <Button size="icon" variant="ghost" className="relative md:w-11 md:h-11 z-[100000] pointer-events-auto touch-manipulation cursor-pointer">
                 <Bell className="w-5 h-5 md:w-6 md:h-6 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,1)]" />
                 {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-racing-red text-white text-xs rounded-full flex items-center justify-center font-black shadow-lg shadow-red-500/50">
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-racing-red text-white text-xs rounded-full flex items-center justify-center font-black shadow-lg shadow-red-500/50 pointer-events-none">
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80">
+            <DropdownMenuContent align="end" className="w-80 z-[100001] pointer-events-auto bg-black/95 border-2 border-red-900/40">
               <div className="flex items-center justify-between px-2 py-2 border-b">
                 <span className="font-semibold">Notifications</span>
                 {unreadCount > 0 && (
@@ -231,13 +232,12 @@ export const Header = () => {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <DropdownMenu modal={false}>
+          <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 size="icon"
                 variant="ghost"
-                className="relative rounded-full md:w-11 md:h-11 touch-manipulation cursor-pointer"
-                style={{ WebkitTapHighlightColor: 'transparent' }}
+                className="relative rounded-full md:w-11 md:h-11 touch-manipulation cursor-pointer z-[100000] pointer-events-auto"
               >
                 {userPhotoURL ? (
                   <img
@@ -252,7 +252,7 @@ export const Header = () => {
                 )}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="touch-manipulation min-w-[200px]" sideOffset={5}>
+            <DropdownMenuContent align="end" className="touch-manipulation min-w-[200px] z-[100001] pointer-events-auto bg-black/95 border-2 border-red-900/40" sideOffset={5}>
               <DropdownMenuItem
                 onClick={() => navigate('/profile')}
                 className="cursor-pointer py-3 px-4 text-base"
@@ -282,7 +282,7 @@ export const Header = () => {
     </header>
 
     {/* Mobile Bottom Navigation */}
-    <nav className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-black/95 backdrop-blur-xl border-t-2 border-racing-red/20 shadow-lg shadow-red-900/20">
+    <nav className="fixed bottom-0 left-0 right-0 z-[9998] lg:hidden bg-black/95 backdrop-blur-xl border-t-2 border-racing-red/20 shadow-lg shadow-red-900/20" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
       <div className="flex items-center justify-around h-16 px-2">
         <button
           onClick={() => navigate('/home')}

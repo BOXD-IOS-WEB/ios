@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 
 const TermsOfService = () => {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-[100vh] min-h-[100dvh] bg-[#0a0a0a] racing-grid">
       <Header />
 
       <main className="container py-8 max-w-4xl">

@@ -1,15 +1,11 @@
+import { getCurrentUser } from '@/lib/auth-native';
 import {
-  collection,
-  doc,
-  addDoc,
-  deleteDoc,
-  getDocs,
-  query,
-  where,
-  orderBy,
-  Timestamp
-} from 'firebase/firestore';
-import { db, auth } from '@/lib/firebase';
+  addDocument,
+  getDocuments,
+  deleteDocument,
+  Timestamp,
+  timestampToDate
+} from '@/lib/firestore-native';
 
 export interface WatchlistItem {
   id?: string;
@@ -17,24 +13,21 @@ export interface WatchlistItem {
   raceYear: number;
   raceName: string;
   raceLocation: string;
-  raceDate: Date | Timestamp;
+  raceDate: Date;
   countryCode?: string;
   notes: string;
   reminderEnabled: boolean;
-  createdAt: Date | Timestamp;
+  createdAt: Date;
 }
 
-const watchlistCollection = collection(db, 'watchlist');
-
 export const addToWatchlist = async (item: Omit<WatchlistItem, 'id' | 'createdAt'>) => {
-  const user = auth.currentUser;
+  const user = await getCurrentUser();
   if (!user) throw new Error('User not authenticated');
 
   console.log('[Watchlist] Adding item to watchlist:', {
     raceName: item.raceName,
     raceYear: item.raceYear,
     raceDate: item.raceDate,
-    raceDateType: item.raceDate?.constructor?.name
   });
 
   const newItem = {
@@ -44,39 +37,25 @@ export const addToWatchlist = async (item: Omit<WatchlistItem, 'id' | 'createdAt
     createdAt: Timestamp.now()
   };
 
-  console.log('[Watchlist] Converted item for Firestore:', {
-    ...newItem,
-    raceDateType: newItem.raceDate?.constructor?.name
-  });
-
-  const docRef = await addDoc(watchlistCollection, newItem);
-  console.log('[Watchlist] Item added with ID:', docRef.id);
-  return docRef.id;
+  const docId = await addDocument('watchlist', newItem);
+  console.log('[Watchlist] Item added with ID:', docId);
+  return docId;
 };
 
 export const getUserWatchlist = async (userId: string) => {
   try {
     console.log('[Watchlist] Fetching watchlist for userId:', userId);
-    const q = query(
-      watchlistCollection,
-      where('userId', '==', userId),
-      orderBy('raceDate', 'asc')
-    );
-    const snapshot = await getDocs(q);
-    console.log('[Watchlist] Found', snapshot.docs.length, 'items');
-
-    const items = snapshot.docs.map(doc => {
-      const data = doc.data();
-      console.log('[Watchlist] Item:', doc.id, {
-        raceName: data.raceName,
-        raceYear: data.raceYear,
-        raceDate: data.raceDate,
-        raceDateType: data.raceDate?.constructor?.name
-      });
-      return { id: doc.id, ...data } as WatchlistItem;
+    const docs = await getDocuments('watchlist', {
+      where: [{ field: 'userId', operator: '==', value: userId }],
+      orderBy: { field: 'raceDate', direction: 'asc' }
     });
+    console.log('[Watchlist] Found', docs.length, 'items');
 
-    return items;
+    return docs.map(doc => ({
+      ...doc,
+      raceDate: timestampToDate(doc.raceDate),
+      createdAt: timestampToDate(doc.createdAt)
+    })) as WatchlistItem[];
   } catch (error) {
     console.error('[Watchlist] Error fetching watchlist:', error);
     throw error;
@@ -84,6 +63,5 @@ export const getUserWatchlist = async (userId: string) => {
 };
 
 export const removeFromWatchlist = async (itemId: string) => {
-  const docRef = doc(db, 'watchlist', itemId);
-  await deleteDoc(docRef);
+  await deleteDocument(`watchlist/${itemId}`);
 };

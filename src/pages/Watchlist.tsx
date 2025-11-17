@@ -4,10 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Bell, RefreshCw } from "lucide-react";
 import { useState, useEffect } from "react";
-import { auth } from "@/lib/firebase";
 import { getUserWatchlist } from "@/services/watchlist";
 import { getRacesBySeason } from "@/services/f1Api";
-import { onAuthStateChanged } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -19,20 +17,15 @@ const Watchlist = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Wait for auth state to be ready
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        console.log('[Watchlist Page] Auth state changed, user logged in:', user.uid);
-        loadWatchlist();
-      } else {
-        console.log('[Watchlist Page] Auth state changed, no user');
-        setLoading(false);
-        setUpcomingRaces([]);
-      }
-    });
-
-    return () => unsubscribe();
-  }, []);
+    if (user) {
+      console.log('[Watchlist Page] User logged in:', user.uid);
+      loadWatchlist();
+    } else {
+      console.log('[Watchlist Page] No user');
+      setLoading(false);
+      setUpcomingRaces([]);
+    }
+  }, [user]);
 
   const loadWatchlist = async () => {
     if (!user) {
@@ -124,10 +117,10 @@ const Watchlist = () => {
     : upcomingRaces.filter(race => race.season.toString() === filterValue);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] racing-grid pb-20 lg:pb-0">
+    <div className="min-h-[100vh] min-h-[100dvh] bg-[#0a0a0a] racing-grid pb-[env(safe-area-inset-bottom,4rem)] lg:pb-0">
       <Header />
 
-      <main className="container px-4 sm:px-6 py-6 sm:py-8">
+      <main className="container px-[4vw] py-[2vh] sm:py-[3vh] max-w-full">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8 pb-6 border-b-2 border-red-900/50">
           <div>
             <div className="flex items-center gap-3 mb-2">
@@ -176,9 +169,9 @@ const Watchlist = () => {
             <p className="text-sm mt-2 font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">{filterValue === "all" ? "Add races you want to watch!" : "Try selecting a different season"}</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-[2vw] sm:gap-[1.5vw]">
             {filteredRaces.map((race, idx) => (
-              <RaceCard key={idx} {...race} showWatchlistButton={false} />
+              <RaceCard key={idx} {...race} showWatchlistButton={true} onWatchlistChange={loadWatchlist} />
             ))}
           </div>
         )}

@@ -11,18 +11,32 @@ install! 'cocoapods', :disable_input_output_paths => true
 def capacitor_pods
   pod 'Capacitor', :path => '../../node_modules/@capacitor/ios'
   pod 'CapacitorCordova', :path => '../../node_modules/@capacitor/ios'
-
+  pod 'CapacitorFirebaseAuthentication', :path => '../../node_modules/@capacitor-firebase/authentication'
+  pod 'CapacitorFirebaseFirestore', :path => '../../node_modules/@capacitor-firebase/firestore'
+  pod 'CapacitorCamera', :path => '../../node_modules/@capacitor/camera'
 end
 
 target 'App' do
   capacitor_pods
   # Add your Pods here
-  pod 'Firebase/Core'
-  pod 'Firebase/Auth'
-  pod 'Firebase/Firestore'
-  pod 'Firebase/Storage'
 end
 
 post_install do |installer|
   assertDeploymentTarget(installer)
+
+  # Fix bundle identifiers for all pods to use valid characters
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      # Replace invalid characters: + becomes Plus, - becomes hyphen word, etc.
+      sanitized_name = target.name
+        .gsub('++', 'pp')           # C++ becomes Cpp
+        .gsub('+', 'plus')          # Any other + becomes plus
+        .gsub(/[^a-zA-Z0-9-]/, '')  # Remove everything except alphanumerics and hyphens
+        .gsub(/-+$/, '')            # Remove trailing hyphens
+        .gsub(/^-+/, '')            # Remove leading hyphens
+
+      bundle_id = "org.cocoapods.#{sanitized_name}"
+      config.build_settings['PRODUCT_BUNDLE_IDENTIFIER'] = bundle_id
+    end
+  end
 end

@@ -1,5 +1,28 @@
+import { CapacitorHttp } from '@capacitor/core';
+
 const OPENF1_BASE = 'https://api.openf1.org/v1';
 const JOLPICA_BASE = 'https://api.jolpi.ca/ergast/f1';
+
+// Check if running in Capacitor
+const isCapacitor = typeof window !== 'undefined' && (window as any).Capacitor;
+
+// Wrapper for fetch that uses CapacitorHttp on native platforms
+const fetchWrapper = async (url: string): Promise<Response> => {
+  if (isCapacitor) {
+    console.log('[F1 API] Using CapacitorHttp for:', url);
+    const response = await CapacitorHttp.get({ url });
+    // Convert CapacitorHttp response to Response-like object
+    return {
+      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
+      json: async () => response.data,
+      text: async () => JSON.stringify(response.data),
+    } as Response;
+  } else {
+    console.log('[F1 API] Using native fetch for:', url);
+    return fetch(url);
+  }
+};
 
 export interface F1Meeting {
   circuit_key?: number;
@@ -78,7 +101,7 @@ export const getCurrentSeasonRaces = async (): Promise<F1Meeting[]> => {
   try {
     const url = `${OPENF1_BASE}/meetings?year=${year}`;
     console.log(`[F1 API] Trying OpenF1: ${url}`);
-    const response = await fetch(url);
+    const response = await fetchWrapper(url);
 
     if (response.ok) {
       const data = await response.json();
@@ -103,7 +126,7 @@ export const getCurrentSeasonRaces = async (): Promise<F1Meeting[]> => {
   try {
     const url = `${JOLPICA_BASE}/${year}.json`;
     console.log(`[F1 API] Trying Jolpica: ${url}`);
-    const response = await fetch(url);
+    const response = await fetchWrapper(url);
 
     if (response.ok) {
       const data = await response.json();
@@ -133,7 +156,7 @@ export const getRacesBySeason = async (year: number): Promise<F1Meeting[]> => {
   try {
     const url = `${OPENF1_BASE}/meetings?year=${year}`;
     console.log(`[F1 API] Trying OpenF1: ${url}`);
-    const response = await fetch(url);
+    const response = await fetchWrapper(url);
 
     if (response.ok) {
       const data = await response.json();
@@ -158,7 +181,7 @@ export const getRacesBySeason = async (year: number): Promise<F1Meeting[]> => {
   try {
     const url = `${JOLPICA_BASE}/${year}.json`;
     console.log(`[F1 API] Trying Jolpica: ${url}`);
-    const response = await fetch(url);
+    const response = await fetchWrapper(url);
 
     if (response.ok) {
       const data = await response.json();
@@ -263,6 +286,67 @@ export const getCountryFlag = (countryCode: string): string => {
   return `https://flagcdn.com/w320/${alpha2Code}.png`;
 };
 
+export const getCountryNameFromCode = (countryCode: string): string => {
+  const codeToCountry: { [key: string]: string } = {
+    'AUS': 'Australia',
+    'AUT': 'Austria',
+    'AZE': 'Azerbaijan',
+    'BRN': 'Bahrain',
+    'BEL': 'Belgium',
+    'BRA': 'Brazil',
+    'CAN': 'Canada',
+    'CHN': 'China',
+    'ESP': 'Spain',
+    'FRA': 'France',
+    'GBR': 'United Kingdom',
+    'DEU': 'Germany',
+    'HUN': 'Hungary',
+    'ITA': 'Italy',
+    'JPN': 'Japan',
+    'KSA': 'Saudi Arabia',
+    'SAU': 'Saudi Arabia',
+    'MEX': 'Mexico',
+    'MCO': 'Monaco',
+    'MON': 'Monaco',
+    'NLD': 'Netherlands',
+    'NED': 'Netherlands',
+    'PRT': 'Portugal',
+    'QAT': 'Qatar',
+    'RUS': 'Russia',
+    'SGP': 'Singapore',
+    'TUR': 'Turkey',
+    'ARE': 'UAE',
+    'USA': 'United States',
+    'ae': 'UAE',
+    'au': 'Australia',
+    'at': 'Austria',
+    'az': 'Azerbaijan',
+    'be': 'Belgium',
+    'bh': 'Bahrain',
+    'br': 'Brazil',
+    'ca': 'Canada',
+    'cn': 'China',
+    'es': 'Spain',
+    'fr': 'France',
+    'gb': 'United Kingdom',
+    'de': 'Germany',
+    'hu': 'Hungary',
+    'it': 'Italy',
+    'jp': 'Japan',
+    'sa': 'Saudi Arabia',
+    'mx': 'Mexico',
+    'mc': 'Monaco',
+    'nl': 'Netherlands',
+    'pt': 'Portugal',
+    'qa': 'Qatar',
+    'ru': 'Russia',
+    'sg': 'Singapore',
+    'tr': 'Turkey',
+    'us': 'United States',
+  };
+  return codeToCountry[countryCode] || countryCode;
+};
+
 export const getPosterUrl = (circuitName: string): string | null => {
   return null;
 };
@@ -272,7 +356,7 @@ export const getRaceWinner = async (year: number, round: number): Promise<string
   try {
     console.log(`[F1 API] Fetching race winner for ${year} round ${round}`);
     const url = `${JOLPICA_BASE}/${year}/${round}/results/1.json`;
-    const response = await fetch(url);
+    const response = await fetchWrapper(url);
 
     if (response.ok) {
       const data = await response.json();

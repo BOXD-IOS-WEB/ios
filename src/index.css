@@ -122,14 +122,21 @@ All colors MUST be HSL.
 
   html {
     @apply dark;
+    /* Force black background to cover safe areas */
+    background-color: #0a0a0a;
     /* Prevent double-tap zoom on iOS */
     touch-action: manipulation;
     /* Prevent horizontal overflow */
     overflow-x: hidden;
+    /* Fill entire viewport including safe areas */
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
   }
 
   body {
     @apply bg-background text-foreground;
+    /* Force black background */
+    background-color: #0a0a0a !important;
     font-feature-settings: 'liga' 1, 'calt' 1;
     /* Better touch handling on iOS/iPad */
     -webkit-tap-highlight-color: transparent;
@@ -139,12 +146,24 @@ All colors MUST be HSL.
     max-width: 100vw;
     /* Better base font size for desktop */
     font-size: 14px;
+    /* Fill entire viewport including safe areas */
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    margin: 0;
+    padding: 0;
   }
 
   @media (min-width: 768px) {
     body {
       font-size: 15px;
     }
+  }
+
+  /* Root app container */
+  #root {
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    background-color: #0a0a0a;
   }
 
   /* Better button/interactive element touch handling */

@@ -27,7 +27,7 @@ const Landing = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white overflow-hidden">
+    <div className="min-h-[100vh] min-h-[100dvh] bg-[#0a0a0a] text-white overflow-hidden">
       {/* Animated background grid */}
       <div className="fixed inset-0 z-0">
         {/* Racing grid lines */}

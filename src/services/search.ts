@@ -1,12 +1,6 @@
 import {
-  collection,
-  getDocs,
-  query,
-  where,
-  orderBy,
-  limit
-} from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+  getDocuments
+} from '@/lib/firestore-native';
 import { getRacesBySeason } from './f1Api';
 
 export interface SearchResult {
@@ -47,14 +41,13 @@ export const searchUsers = async (searchTerm: string, limitCount: number = 10): 
 
   try {
     console.log('[searchUsers] Searching for:', term);
-    const usersCollection = collection(db, 'users');
-    const q = query(usersCollection, limit(100));
-    const snapshot = await getDocs(q);
+    const docs = await getDocuments('users', {
+      limit: 100
+    });
 
-    console.log('[searchUsers] Found', snapshot.docs.length, 'total users');
+    console.log('[searchUsers] Found', docs.length, 'total users');
 
-    const users = snapshot.docs
-      .map(doc => ({ id: doc.id, ...doc.data() }))
+    const users = docs
       .filter(user => {
         const nameMatch = user.name?.toLowerCase().includes(term);
         const emailMatch = user.email?.toLowerCase().includes(term);
@@ -81,12 +74,11 @@ export const searchLists = async (searchTerm: string, limitCount: number = 10): 
   const term = searchTerm.toLowerCase();
 
   try {
-    const listsCollection = collection(db, 'lists');
-    const q = query(listsCollection, limit(50));
-    const snapshot = await getDocs(q);
+    const docs = await getDocuments('lists', {
+      limit: 50
+    });
 
-    const lists = snapshot.docs
-      .map(doc => ({ id: doc.id, ...doc.data() }))
+    const lists = docs
       .filter(list =>
         list.title?.toLowerCase().includes(term) ||
         list.description?.toLowerCase().includes(term) ||

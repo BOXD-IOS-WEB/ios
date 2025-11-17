@@ -10,8 +10,10 @@ import { useEffect, useState } from "react";
 import { getPublicRaceLogs } from "@/services/raceLogs";
 import { getPublicLists } from "@/services/lists";
 import { getCurrentSeasonRaces, getRacesBySeason } from "@/services/f1Api";
+import { useNavigate } from "react-router-dom";
 
 const Explore = () => {
+  const navigate = useNavigate();
   const [trendingRaces, setTrendingRaces] = useState<any[]>([]);
   const [topReviews, setTopReviews] = useState<any[]>([]);
   const [popularLists, setPopularLists] = useState<any[]>([]);
@@ -52,7 +54,7 @@ const Explore = () => {
         setTrendingRaces(uniqueRaces);
 
         const reviewsWithContent = logs
-          .filter(log => log.review && log.review.length > 0)
+          .filter(log => log.review && log.review.trim().length > 0)
           .sort((a, b) => (b.likesCount || 0) - (a.likesCount || 0))
           .slice(0, 10);
 
@@ -99,17 +101,17 @@ const Explore = () => {
   }, [selectedSeason]);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] racing-grid pb-20 lg:pb-0">
+    <div className="min-h-[100vh] min-h-[100dvh] bg-[#0a0a0a] racing-grid pb-[env(safe-area-inset-bottom,4rem)] lg:pb-0">
       <Header />
 
-      <main className="container px-4 sm:px-6 py-6 sm:py-8">
+      <main className="container px-[4vw] py-[2vh] sm:py-[3vh] max-w-full">
         <div className="mb-6 sm:mb-8 pb-4 border-b-2 border-red-900/30">
           <div className="inline-block px-4 py-1 bg-racing-red/20 border border-racing-red rounded-full mb-2">
             <span className="text-racing-red font-black text-xs tracking-widest">TRACK BROWSER</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">EXPLORE RACES</h1>
           <p className="text-xs sm:text-sm text-gray-400 mt-1 font-bold uppercase tracking-wider">
-            Browse seasons · Trending · Reviews · Lists
+            Browse seasons · Trending · Lists
           </p>
         </div>
 
@@ -124,10 +126,6 @@ const Explore = () => {
                 <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" />
                 <span className="hidden xs:inline">Trending</span>
                 <span className="xs:hidden">Trend</span>
-              </TabsTrigger>
-              <TabsTrigger value="reviews" className="gap-1 sm:gap-2 text-[10px] sm:text-xs whitespace-nowrap px-2 sm:px-3 font-black uppercase tracking-wider data-[state=active]:bg-racing-red data-[state=active]:text-white">
-                <Star className="w-3 h-3 sm:w-4 sm:h-4" />
-                Reviews
               </TabsTrigger>
               <TabsTrigger value="lists" className="gap-1 sm:gap-2 text-[10px] sm:text-xs whitespace-nowrap px-2 sm:px-3 font-black uppercase tracking-wider data-[state=active]:bg-racing-red data-[state=active]:text-white">
                 <List className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -172,7 +170,7 @@ const Explore = () => {
               ) : (
                 <>
                   <p className="text-xs text-gray-200 font-bold uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,1)] mb-2">Showing {seasonRaces.length} races for {selectedSeason}</p>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+                  <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-[2vw] sm:gap-[1.5vw]">
                     {seasonRaces.map((race) => (
                         <RaceCard
                           key={race.meeting_key}
@@ -206,7 +204,7 @@ const Explore = () => {
                   description="Start logging races to see what's trending in the community"
                 />
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-[2vw] sm:gap-[1.5vw]">
                   {trendingRaces.map((race) => (
                     <RaceCard
                       key={race.id}
@@ -247,7 +245,7 @@ const Explore = () => {
                   <Card
                     key={review.id}
                     className="p-6 space-y-4 hover:ring-2 hover:ring-racing-red border-2 border-red-900/40 bg-black/90 backdrop-blur transition-all cursor-pointer"
-                    onClick={() => window.location.href = `/race/${review.id}`}
+                    onClick={() => review.id && navigate(`/race/${review.id}`)}
                   >
                     <div className="flex items-start gap-4">
                       <div className="w-12 h-12 rounded-full bg-black/80 border-2 border-racing-red/40 flex items-center justify-center font-bold overflow-hidden shadow-lg">
@@ -267,8 +265,8 @@ const Explore = () => {
                           <span className="text-gray-200 font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">reviewed</span>
                           <span className="font-black text-white drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">{review.raceName} {review.raceYear}</span>
                           <div className="flex items-center gap-1 ml-auto">
-                            <Star className="w-4 h-4 fill-racing-red text-racing-red" />
-                            <span className="text-sm font-black text-racing-red drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">{review.rating}</span>
+                            <Star className="w-4 h-4 fill-yellow-500 text-yellow-500" />
+                            <span className="text-sm font-black text-yellow-500 drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">{review.rating}</span>
                           </div>
                         </div>
                         <p className="text-sm text-gray-200 font-medium mb-3 drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
@@ -304,18 +302,51 @@ const Explore = () => {
               ) : (
                 <div className="grid md:grid-cols-2 gap-4">
                   {popularLists.map((list) => (
-                    <Card key={list.id} className="p-6 space-y-4 hover:ring-2 hover:ring-racing-red border-2 border-red-900/40 bg-black/90 backdrop-blur transition-all cursor-pointer">
+                    <Card
+                      key={list.id}
+                      className="p-6 space-y-4 hover:ring-2 hover:ring-racing-red border-2 border-red-900/40 bg-black/90 backdrop-blur transition-all cursor-pointer"
+                      onClick={() => navigate(`/list/${list.id}`)}
+                    >
                       <div className="flex items-start gap-3">
-                        <div className="w-12 h-12 bg-racing-red/20 rounded-lg flex items-center justify-center border-2 border-racing-red/40 shadow-lg shadow-red-500/30">
+                        <div className="w-12 h-12 bg-racing-red/20 rounded-lg flex items-center justify-center border-2 border-racing-red/40 shadow-lg shadow-red-500/30 flex-shrink-0">
                           <List className="w-6 h-6 text-racing-red drop-shadow-[0_0_6px_rgba(220,38,38,0.8)]" />
                         </div>
-                        <div className="flex-1">
+                        <div className="flex-1 min-w-0">
                           <h3 className="font-black text-white text-lg mb-1 uppercase tracking-wider drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">{list.title}</h3>
                           <p className="text-sm text-gray-200 font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
                             by {list.username}
                           </p>
+                          {list.description && (
+                            <p className="text-xs text-gray-400 mt-2 line-clamp-2 font-medium">
+                              {list.description}
+                            </p>
+                          )}
                         </div>
                       </div>
+                      {list.races && list.races.length > 0 && (
+                        <div className="border-t border-red-900/30 pt-3">
+                          <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">Races in this list:</p>
+                          <div className="flex flex-wrap gap-1">
+                            {list.races.slice(0, 3).map((race: any, idx: number) => (
+                              <Badge
+                                key={idx}
+                                variant="secondary"
+                                className="text-[10px] px-2 py-0.5 bg-racing-red/10 border-racing-red/30"
+                              >
+                                {race.raceName || race.name}
+                              </Badge>
+                            ))}
+                            {list.races.length > 3 && (
+                              <Badge
+                                variant="secondary"
+                                className="text-[10px] px-2 py-0.5 bg-racing-red/10 border-racing-red/30"
+                              >
+                                +{list.races.length - 3} more
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      )}
                       <div className="flex items-center gap-4 text-sm text-gray-300 font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
                         <span>{list.races?.length || 0} races</span>
                         <span>❤️ {list.likesCount || 0} likes</span>

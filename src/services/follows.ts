@@ -1,17 +1,13 @@
+import { getCurrentUser } from '@/lib/auth-native';
 import {
-  collection,
-  doc,
-  addDoc,
-  deleteDoc,
-  getDocs,
-  getDoc,
-  query,
-  where,
+  getDocument,
+  getDocuments,
+  addDocument,
+  updateDocument,
+  deleteDocument,
   Timestamp,
-  updateDoc,
   increment
-} from 'firebase/firestore';
-import { db, auth } from '@/lib/firebase';
+} from '@/lib/firestore-native';
 import { createActivity } from './activity';
 import { createNotification } from './notifications';
 
@@ -22,35 +18,33 @@ export interface Follow {
   createdAt: Date;
 }
 
-const followsCollection = collection(db, 'follows');
-
 export const followUser = async (userIdToFollow: string) => {
-  const user = auth.currentUser;
+  const user = await getCurrentUser();
   if (!user) throw new Error('User not authenticated');
   if (user.uid === userIdToFollow) throw new Error('Cannot follow yourself');
 
-  const existingFollow = await query(
-    followsCollection,
-    where('followerId', '==', user.uid),
-    where('followingId', '==', userIdToFollow)
-  );
-  const snapshot = await getDocs(existingFollow);
+  const existingFollow = await getDocuments('follows', {
+    where: [
+      { field: 'followerId', operator: '==', value: user.uid },
+      { field: 'followingId', operator: '==', value: userIdToFollow }
+    ]
+  });
 
-  if (!snapshot.empty) {
+  if (existingFollow.length > 0) {
     throw new Error('Already following this user');
   }
 
-  await addDoc(followsCollection, {
+  await addDocument('follows', {
     followerId: user.uid,
     followingId: userIdToFollow,
     createdAt: Timestamp.now()
   });
 
-  await updateDoc(doc(db, 'userStats', userIdToFollow), {
+  await updateDocument(`userStats/${userIdToFollow}`, {
     followersCount: increment(1)
   });
 
-  await updateDoc(doc(db, 'userStats', user.uid), {
+  await updateDocument(`userStats/${user.uid}`, {
     followingCount: increment(1)
   });
 
@@ -66,10 +60,9 @@ export const followUser = async (userIdToFollow: string) => {
 
   // Create notification for the followed user
   try {
-    const followerDoc = await getDoc(doc(db, 'users', user.uid));
-    const followerData = followerDoc.exists() ? followerDoc.data() : {};
-    const followerName = followerData.name || user.displayName || user.email?.split('@')[0] || 'Someone';
-    const followerPhoto = followerData.photoURL || user.photoURL;
+    const followerData = await getDocument(`users/${user.uid}`);
+    const followerName = followerData?.name || user.displayName || user.email?.split('@')[0] || 'Someone';
+    const followerPhoto = followerData?.photoURL || user.photoURL;
 
     await createNotification({
       userId: userIdToFollow,
@@ -87,58 +80,61 @@ export const followUser = async (userIdToFollow: string) => {
 };
 
 export const unfollowUser = async (userIdToUnfollow: string) => {
-  const user = auth.currentUser;
+  const user = await getCurrentUser();
   if (!user) throw new Error('User not authenticated');
 
-  const q = query(
-    followsCollection,
-    where('followerId', '==', user.uid),
-    where('followingId', '==', userIdToUnfollow)
-  );
-  const snapshot = await getDocs(q);
+  const follows = await getDocuments('follows', {
+    where: [
+      { field: 'followerId', operator: '==', value: user.uid },
+      { field: 'followingId', operator: '==', value: userIdToUnfollow }
+    ]
+  });
 
-  if (snapshot.empty) {
+  if (follows.length === 0) {
     throw new Error('Not following this user');
   }
 
-  await deleteDoc(doc(db, 'follows', snapshot.docs[0].id));
+  await deleteDocument(`follows/${follows[0].id}`);
 
-  await updateDoc(doc(db, 'userStats', userIdToUnfollow), {
+  await updateDocument(`userStats/${userIdToUnfollow}`, {
     followersCount: increment(-1)
   });
 
-  await updateDoc(doc(db, 'userStats', user.uid), {
+  await updateDocument(`userStats/${user.uid}`, {
     followingCount: increment(-1)
   });
 };
 
 export const isFollowing = async (userId: string): Promise<boolean> => {
-  const user = auth.currentUser;
+  const user = await getCurrentUser();
   if (!user) return false;
 
-  const q = query(
-    followsCollection,
-    where('followerId', '==', user.uid),
-    where('followingId', '==', userId)
-  );
-  const snapshot = await getDocs(q);
-  return !snapshot.empty;
+  const follows = await getDocuments('follows', {
+    where: [
+      { field: 'followerId', operator: '==', value: user.uid },
+      { field: 'followingId', operator: '==', value: userId }
+    ]
+  });
+  return follows.length > 0;
 };
 
 export const getFollowers = async (userId: string) => {
   console.log('[getFollowers] Fetching followers for user:', userId);
-  const q = query(followsCollection, where('followingId', '==', userId));
-  const snapshot = await getDocs(q);
+  const follows = await getDocuments('follows', {
+    where: [{ field: 'followingId', operator: '==', value: userId }]
+  });
 
-  console.log('[getFollowers] Found', snapshot.docs.length, 'follow documents');
+  console.log('[getFollowers] Found', follows.length, 'follow documents');
 
-  // Get the actual user data for each follower
-  const followerIds = snapshot.docs.map(doc => doc.data().followerId);
+  // Get the actual user data for each follower - deduplicate first
+  const followerIds = [...new Set(follows.map(f => f.followerId))];
+  console.log('[getFollowers] Unique follower IDs:', followerIds.length);
+
   const followers = await Promise.all(
     followerIds.map(async (followerId) => {
-      const userDoc = await getDoc(doc(db, 'users', followerId));
-      if (userDoc.exists()) {
-        return { id: userDoc.id, ...userDoc.data() };
+      const userData = await getDocument(`users/${followerId}`);
+      if (userData) {
+        return { id: followerId, ...userData };
       }
       return null;
     })
@@ -151,18 +147,21 @@ export const getFollowers = async (userId: string) => {
 
 export const getFollowing = async (userId: string) => {
   console.log('[getFollowing] Fetching following for user:', userId);
-  const q = query(followsCollection, where('followerId', '==', userId));
-  const snapshot = await getDocs(q);
+  const follows = await getDocuments('follows', {
+    where: [{ field: 'followerId', operator: '==', value: userId }]
+  });
 
-  console.log('[getFollowing] Found', snapshot.docs.length, 'follow documents');
+  console.log('[getFollowing] Found', follows.length, 'follow documents');
 
-  // Get the actual user data for each followed user
-  const followingIds = snapshot.docs.map(doc => doc.data().followingId);
+  // Get the actual user data for each followed user - deduplicate first
+  const followingIds = [...new Set(follows.map(f => f.followingId))];
+  console.log('[getFollowing] Unique following IDs:', followingIds.length);
+
   const following = await Promise.all(
     followingIds.map(async (followingId) => {
-      const userDoc = await getDoc(doc(db, 'users', followingId));
-      if (userDoc.exists()) {
-        return { id: userDoc.id, ...userDoc.data() };
+      const userData = await getDocument(`users/${followingId}`);
+      if (userData) {
+        return { id: followingId, ...userData };
       }
       return null;
     })

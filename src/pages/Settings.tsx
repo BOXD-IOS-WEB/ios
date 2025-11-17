@@ -21,10 +21,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { auth } from "@/lib/firebase";
-import { deleteUser, EmailAuthProvider, reauthenticateWithCredential, updatePassword } from "firebase/auth";
-import { doc, deleteDoc, collection, query, where, getDocs, getDoc, updateDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { getDocument, getDocuments, updateDocument, deleteDocument } from "@/lib/firestore-native";
+import { reauthenticateUser, updateUserPassword, deleteUserAccount, getCurrentUser } from "@/lib/auth-native";
 import { resendVerificationEmail } from "@/services/auth";
 
 const Settings = () => {
@@ -48,12 +46,11 @@ const Settings = () => {
       if (!user) return;
 
       try {
-        const statsDoc = await getDoc(doc(db, "userStats", user.uid));
-        if (statsDoc.exists()) {
-          const data = statsDoc.data();
-          setFavoriteDriver(data.favoriteDriver || "");
-          setFavoriteCircuit(data.favoriteCircuit || "");
-          setFavoriteTeam(data.favoriteTeam || "");
+        const statsData = await getDocument(`userStats/${user.uid}`);
+        if (statsData) {
+          setFavoriteDriver(statsData.favoriteDriver || "");
+          setFavoriteCircuit(statsData.favoriteCircuit || "");
+          setFavoriteTeam(statsData.favoriteTeam || "");
         }
       } catch (error) {
         console.error("Error loading favorites:", error);
@@ -93,15 +90,9 @@ const Settings = () => {
 
     setLoading(true);
     try {
-      // Re-authenticate user
-      const credential = EmailAuthProvider.credential(
-        user.email!,
-        currentPassword
-      );
-      await reauthenticateWithCredential(user, credential);
-
-      // Update password
-      await updatePassword(user, newPassword);
+      // Re-authenticate and update password
+      await reauthenticateUser(user.email!, currentPassword);
+      await updateUserPassword(newPassword);
 
       toast({
         title: "Password updated",
@@ -135,40 +126,32 @@ const Settings = () => {
     setLoading(true);
     try {
       // Re-authenticate user
-      const credential = EmailAuthProvider.credential(
-        user.email!,
-        deletePassword
-      );
-      await reauthenticateWithCredential(user, credential);
+      await reauthenticateUser(user.email!, deletePassword);
 
       // Delete user data from Firestore
-      await deleteDoc(doc(db, "users", user.uid));
-      await deleteDoc(doc(db, "userStats", user.uid));
+      await deleteDocument(`users/${user.uid}`);
+      await deleteDocument(`userStats/${user.uid}`);
 
       // Delete user's race logs
-      const logsQuery = query(
-        collection(db, "raceLogs"),
-        where("userId", "==", user.uid)
+      const raceLogs = await getDocuments('raceLogs', {
+        where: [{ field: 'userId', operator: '==', value: user.uid }]
+      });
+      const deleteLogPromises = raceLogs.map((log) =>
+        deleteDocument(`raceLogs/${log.id}`)
       );
-      const logsSnapshot = await getDocs(logsQuery);
-      const deletePromises = logsSnapshot.docs.map((doc) =>
-        deleteDoc(doc.ref)
-      );
-      await Promise.all(deletePromises);
+      await Promise.all(deleteLogPromises);
 
       // Delete user's lists
-      const listsQuery = query(
-        collection(db, "lists"),
-        where("userId", "==", user.uid)
-      );
-      const listsSnapshot = await getDocs(listsQuery);
-      const deleteListsPromises = listsSnapshot.docs.map((doc) =>
-        deleteDoc(doc.ref)
+      const lists = await getDocuments('lists', {
+        where: [{ field: 'userId', operator: '==', value: user.uid }]
+      });
+      const deleteListsPromises = lists.map((list) =>
+        deleteDocument(`lists/${list.id}`)
       );
       await Promise.all(deleteListsPromises);
 
       // Delete Firebase Auth user
-      await deleteUser(user);
+      await deleteUserAccount();
 
       toast({
         title: "Account deleted",
@@ -215,7 +198,7 @@ const Settings = () => {
 
     setLoading(true);
     try {
-      await updateDoc(doc(db, "userStats", user.uid), {
+      await updateDocument(`userStats/${user.uid}`, {
         favoriteDriver,
         favoriteCircuit,
         favoriteTeam,
@@ -237,28 +220,28 @@ const Settings = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-[100vh] min-h-[100dvh] bg-[#0a0a0a] racing-grid pb-[env(safe-area-inset-bottom,5rem)] lg:pb-[2vh]">
       <Header />
 
-      <main className="container px-4 sm:px-6 py-6 sm:py-8 max-w-4xl">
-        <div className="mb-6 sm:mb-8">
-          <h1 className="text-3xl sm:text-4xl font-bold mb-2">Settings</h1>
-          <p className="text-sm sm:text-base text-muted-foreground">Manage your account and preferences</p>
+      <main className="container px-4 sm:px-6 py-4 sm:py-6 max-w-4xl">
+        <div className="mb-4 sm:mb-6">
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">SETTINGS</h1>
+          <p className="text-xs sm:text-sm text-gray-400 font-bold uppercase tracking-wider">Manage your account and preferences</p>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Account Section */}
-          <Card className="p-6 space-y-6">
+          <Card className="p-4 sm:p-6 space-y-4 sm:space-y-6 border-2 border-red-900/40 bg-black/90">
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold mb-1">Account</h2>
-              <p className="text-sm text-muted-foreground">
+              <h2 className="text-lg sm:text-xl font-black text-white uppercase tracking-wider">Account</h2>
+              <p className="text-xs sm:text-sm text-gray-400 font-bold">
                 Manage your account settings
               </p>
             </div>
 
-            <Separator />
+            <Separator className="bg-red-900/30" />
 
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               <div>
                 <Label className="text-sm font-medium">Email</Label>
                 <p className="text-sm text-muted-foreground mt-1">
@@ -309,27 +292,28 @@ const Settings = () => {
               <Button
                 onClick={handleChangePassword}
                 disabled={loading || !currentPassword || !newPassword || !confirmPassword}
+                className="w-full sm:w-auto bg-racing-red hover:bg-red-600 border-2 border-red-400 shadow-lg shadow-red-500/30 font-black uppercase tracking-wider"
               >
-                Change Password
+                {loading ? "Changing..." : "Change Password"}
               </Button>
             </div>
           </Card>
 
           {/* F1 Favorites Section */}
-          <Card className="p-6 space-y-6">
+          <Card className="p-4 sm:p-6 space-y-4 sm:space-y-6 border-2 border-red-900/40 bg-black/90">
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold mb-1 flex items-center gap-2">
-                <Heart className="w-5 h-5 sm:w-6 sm:h-6 text-racing-red" />
+              <h2 className="text-lg sm:text-xl font-black text-white uppercase tracking-wider flex items-center gap-2">
+                <Heart className="w-4 h-4 sm:w-5 sm:h-5 text-racing-red fill-racing-red" />
                 F1 Favorites
               </h2>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs sm:text-sm text-gray-400 font-bold">
                 Set your favorite driver, circuit, and team
               </p>
             </div>
 
-            <Separator />
+            <Separator className="bg-red-900/30" />
 
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="favoriteDriver">Favorite Driver</Label>
                 <Input
@@ -363,124 +347,134 @@ const Settings = () => {
                 />
               </div>
 
-              <Button onClick={handleSaveFavorites} disabled={loading}>
-                Save Favorites
+              <Button
+                onClick={handleSaveFavorites}
+                disabled={loading}
+                className="w-full sm:w-auto bg-racing-red hover:bg-red-600 border-2 border-red-400 shadow-lg shadow-red-500/30 font-black uppercase tracking-wider"
+              >
+                {loading ? "Saving..." : "Save Favorites"}
               </Button>
             </div>
           </Card>
 
           {/* Privacy Section */}
-          <Card className="p-6 space-y-6">
+          <Card className="p-4 sm:p-6 space-y-4 sm:space-y-6 border-2 border-red-900/40 bg-black/90">
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold mb-1">Privacy</h2>
-              <p className="text-sm text-muted-foreground">
+              <h2 className="text-lg sm:text-xl font-black text-white uppercase tracking-wider">Privacy</h2>
+              <p className="text-xs sm:text-sm text-gray-400 font-bold">
                 Control who can see your content
               </p>
             </div>
 
-            <Separator />
+            <Separator className="bg-red-900/30" />
 
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <Label>Private Account</Label>
-                  <p className="text-sm text-muted-foreground">
+            <div className="space-y-3 sm:space-y-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="space-y-0.5 flex-1">
+                  <Label className="text-sm font-semibold text-white">Private Account</Label>
+                  <p className="text-xs text-gray-400">
                     Only approved followers can see your content
                   </p>
                 </div>
-                <Switch />
+                <Switch className="mt-1 flex-shrink-0" />
               </div>
 
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <Label>Show Activity Status</Label>
-                  <p className="text-sm text-muted-foreground">
+              <div className="flex items-start justify-between gap-3">
+                <div className="space-y-0.5 flex-1">
+                  <Label className="text-sm font-semibold text-white">Show Activity Status</Label>
+                  <p className="text-xs text-gray-400">
                     Let others see when you're active
                   </p>
                 </div>
-                <Switch defaultChecked />
+                <Switch defaultChecked className="mt-1 flex-shrink-0" />
               </div>
             </div>
           </Card>
 
           {/* Notifications Section */}
-          <Card className="p-6 space-y-6">
+          <Card className="p-4 sm:p-6 space-y-4 sm:space-y-6 border-2 border-red-900/40 bg-black/90">
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold mb-1">Notifications</h2>
-              <p className="text-sm text-muted-foreground">
+              <h2 className="text-lg sm:text-xl font-black text-white uppercase tracking-wider">Notifications</h2>
+              <p className="text-xs sm:text-sm text-gray-400 font-bold">
                 Choose what you want to be notified about
               </p>
             </div>
 
-            <Separator />
+            <Separator className="bg-red-900/30" />
 
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <Label>Email Notifications</Label>
-                  <p className="text-sm text-muted-foreground">
+            <div className="space-y-3 sm:space-y-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="space-y-0.5 flex-1">
+                  <Label className="text-sm font-semibold text-white">Email Notifications</Label>
+                  <p className="text-xs text-gray-400">
                     Receive updates via email
                   </p>
                 </div>
                 <Switch
                   checked={emailNotifications}
                   onCheckedChange={setEmailNotifications}
+                  className="mt-1 flex-shrink-0"
                 />
               </div>
 
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <Label>Push Notifications</Label>
-                  <p className="text-sm text-muted-foreground">
+              <div className="flex items-start justify-between gap-3">
+                <div className="space-y-0.5 flex-1">
+                  <Label className="text-sm font-semibold text-white">Push Notifications</Label>
+                  <p className="text-xs text-gray-400">
                     Receive push notifications on your device
                   </p>
                 </div>
                 <Switch
                   checked={pushNotifications}
                   onCheckedChange={setPushNotifications}
+                  className="mt-1 flex-shrink-0"
                 />
               </div>
 
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <Label>Likes & Comments</Label>
-                  <p className="text-sm text-muted-foreground">
+              <div className="flex items-start justify-between gap-3">
+                <div className="space-y-0.5 flex-1">
+                  <Label className="text-sm font-semibold text-white">Likes & Comments</Label>
+                  <p className="text-xs text-gray-400">
                     When someone likes or comments on your content
                   </p>
                 </div>
-                <Switch defaultChecked />
+                <Switch defaultChecked className="mt-1 flex-shrink-0" />
               </div>
 
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <Label>New Followers</Label>
-                  <p className="text-sm text-muted-foreground">
+              <div className="flex items-start justify-between gap-3">
+                <div className="space-y-0.5 flex-1">
+                  <Label className="text-sm font-semibold text-white">New Followers</Label>
+                  <p className="text-xs text-gray-400">
                     When someone follows you
                   </p>
                 </div>
-                <Switch defaultChecked />
+                <Switch defaultChecked className="mt-1 flex-shrink-0" />
               </div>
             </div>
           </Card>
 
           {/* Data & Privacy Section */}
-          <Card className="p-6 space-y-6">
+          <Card className="p-4 sm:p-6 space-y-4 sm:space-y-6 border-2 border-red-900/40 bg-black/90">
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold mb-1">Data & Privacy</h2>
-              <p className="text-sm text-muted-foreground">
+              <h2 className="text-lg sm:text-xl font-black text-white uppercase tracking-wider">Data & Privacy</h2>
+              <p className="text-xs sm:text-sm text-gray-400 font-bold">
                 Manage your data and privacy settings
               </p>
             </div>
 
-            <Separator />
+            <Separator className="bg-red-900/30" />
 
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               <div>
-                <Button variant="outline" onClick={handleExportData}>
+                <Button
+                  variant="outline"
+                  onClick={handleExportData}
+                  className="w-full sm:w-auto border-2 border-racing-red bg-black/60 text-white hover:bg-racing-red/20 font-black uppercase tracking-wider"
+                >
                   <Download className="w-4 h-4 mr-2" />
                   Export My Data
                 </Button>
-                <p className="text-xs text-muted-foreground mt-2">
+                <p className="text-xs text-gray-400 mt-2">
                   Download a copy of your data
                 </p>
               </div>
@@ -500,28 +494,28 @@ const Settings = () => {
           </Card>
 
           {/* Danger Zone */}
-          <Card className="p-6 space-y-6 border-destructive">
+          <Card className="p-4 sm:p-6 space-y-4 sm:space-y-6 border-2 border-red-600/60 bg-black/90">
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold mb-1 text-destructive">Danger Zone</h2>
-              <p className="text-sm text-muted-foreground">
+              <h2 className="text-lg sm:text-xl font-black text-red-600 uppercase tracking-wider">Danger Zone</h2>
+              <p className="text-xs sm:text-sm text-gray-400 font-bold">
                 Irreversible actions
               </p>
             </div>
 
-            <Separator />
+            <Separator className="bg-red-600/40" />
 
             <div>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="destructive" className="gap-2">
+                  <Button variant="destructive" className="gap-2 w-full sm:w-auto font-black uppercase tracking-wider">
                     <Trash2 className="w-4 h-4" />
                     Delete Account
                   </Button>
                 </AlertDialogTrigger>
-                <AlertDialogContent>
+                <AlertDialogContent className="max-w-md w-[95vw] sm:w-full max-h-[90vh] overflow-y-auto">
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                    <AlertDialogDescription className="space-y-4">
+                    <AlertDialogTitle className="text-lg sm:text-xl font-black">Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription className="space-y-3 sm:space-y-4 text-xs sm:text-sm">
                       <p>
                         This action cannot be undone. This will permanently delete your
                         account and remove all your data from our servers.

@@ -1,18 +1,14 @@
+import { getCurrentUser } from '@/lib/auth-native';
 import {
-  collection,
-  doc,
-  addDoc,
-  deleteDoc,
-  getDocs,
-  query,
-  where,
-  orderBy,
+  getDocument,
+  getDocuments,
+  addDocument,
+  updateDocument,
+  deleteDocument,
   Timestamp,
-  updateDoc,
   increment,
-  getDoc
-} from 'firebase/firestore';
-import { db, auth } from '@/lib/firebase';
+  timestampToDate
+} from '@/lib/firestore-native';
 import { createNotification } from './notifications';
 
 export interface Comment {
@@ -27,10 +23,8 @@ export interface Comment {
   likedBy: string[];
 }
 
-const commentsCollection = collection(db, 'comments');
-
 export const addComment = async (raceLogId: string, content: string) => {
-  const user = auth.currentUser;
+  const user = await getCurrentUser();
   if (!user) throw new Error('User not authenticated');
 
   // Fetch user's profile from Firestore to get the latest photoURL
@@ -38,9 +32,8 @@ export const addComment = async (raceLogId: string, content: string) => {
   let username = user.displayName || user.email?.split('@')[0] || 'User';
 
   try {
-    const userDoc = await getDoc(doc(db, 'users', user.uid));
-    if (userDoc.exists()) {
-      const userData = userDoc.data();
+    const userData = await getDocument(`users/${user.uid}`);
+    if (userData) {
       userAvatar = userData.photoURL || user.photoURL || '';
       username = userData.name || username;
     }
@@ -59,19 +52,19 @@ export const addComment = async (raceLogId: string, content: string) => {
     likedBy: []
   };
 
-  const docRef = await addDoc(commentsCollection, newComment);
+  const docId = await addDocument('comments', newComment);
 
-  await updateDoc(doc(db, 'raceLogs', raceLogId), {
+  await updateDocument(`raceLogs/${raceLogId}`, {
     commentsCount: increment(1)
   });
 
   // Create notification for the race log owner
   try {
-    const raceLogDoc = await getDoc(doc(db, 'raceLogs', raceLogId));
-    if (raceLogDoc.exists()) {
-      const raceLogOwnerId = raceLogDoc.data().userId;
+    const raceLogData = await getDocument(`raceLogs/${raceLogId}`);
+    if (raceLogData) {
+      const raceLogOwnerId = raceLogData.userId;
       if (raceLogOwnerId && raceLogOwnerId !== user.uid) {
-        const raceName = raceLogDoc.data().raceName || 'your race log';
+        const raceName = raceLogData.raceName || 'your race log';
 
         await createNotification({
           userId: raceLogOwnerId,
@@ -89,51 +82,49 @@ export const addComment = async (raceLogId: string, content: string) => {
     console.error('[addComment] Failed to create notification:', error);
   }
 
-  return docRef.id;
+  return docId;
 };
 
 export const deleteComment = async (commentId: string, raceLogId: string) => {
-  const user = auth.currentUser;
+  const user = await getCurrentUser();
   if (!user) throw new Error('User not authenticated');
 
-  await deleteDoc(doc(db, 'comments', commentId));
+  await deleteDocument(`comments/${commentId}`);
 
-  await updateDoc(doc(db, 'raceLogs', raceLogId), {
+  await updateDocument(`raceLogs/${raceLogId}`, {
     commentsCount: increment(-1)
   });
 };
 
 export const getComments = async (raceLogId: string) => {
-  const q = query(
-    commentsCollection,
-    where('raceLogId', '==', raceLogId),
-    orderBy('createdAt', 'desc')
-  );
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Comment));
+  const docs = await getDocuments('comments', {
+    where: [{ field: 'raceLogId', operator: '==', value: raceLogId }],
+    orderBy: { field: 'createdAt', direction: 'desc' }
+  });
+  return docs.map(doc => ({
+    ...doc,
+    createdAt: timestampToDate(doc.createdAt)
+  })) as Comment[];
 };
 
 export const toggleCommentLike = async (commentId: string) => {
-  const user = auth.currentUser;
+  const user = await getCurrentUser();
   if (!user) throw new Error('User not authenticated');
 
-  const commentRef = doc(db, 'comments', commentId);
-  const commentDoc = await getDocs(query(commentsCollection, where('__name__', '==', commentId)));
+  const commentData = await getDocument(`comments/${commentId}`);
+  if (!commentData) throw new Error('Comment not found');
 
-  if (commentDoc.empty) throw new Error('Comment not found');
-
-  const comment = commentDoc.docs[0].data() as Comment;
-  const likedBy = comment.likedBy || [];
+  const likedBy = commentData.likedBy || [];
   const isLiked = likedBy.includes(user.uid);
 
   if (isLiked) {
-    await updateDoc(commentRef, {
-      likedBy: likedBy.filter(id => id !== user.uid),
+    await updateDocument(`comments/${commentId}`, {
+      likedBy: likedBy.filter((id: string) => id !== user.uid),
       likesCount: increment(-1)
     });
     return false;
   } else {
-    await updateDoc(commentRef, {
+    await updateDocument(`comments/${commentId}`, {
       likedBy: [...likedBy, user.uid],
       likesCount: increment(1)
     });

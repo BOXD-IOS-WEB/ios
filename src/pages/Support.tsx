@@ -5,7 +5,7 @@ import { Mail, MessageCircle, HelpCircle, FileText, Shield } from "lucide-react"
 
 const Support = () => {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-[100vh] min-h-[100dvh] bg-[#0a0a0a] racing-grid pb-[env(safe-area-inset-bottom,4rem)] lg:pb-0">
       <Header />
 
       <main className="container px-4 sm:px-6 md:px-8 py-6 sm:py-8 md:py-10 max-w-4xl">
