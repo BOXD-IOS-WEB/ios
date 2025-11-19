@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1033200550139",
+    "project_id": "boxboxd-web-new",
+    "storage_bucket": "boxboxd-web-new.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1033200550139:android:badc5d7e1281a0f5a0f05e",
+        "android_client_info": {
+          "package_name": "com.boxboxd.boxboxd"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC-BmIW9lyWxvQW0kQ_ZHM0lkRjDE7J9J0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
