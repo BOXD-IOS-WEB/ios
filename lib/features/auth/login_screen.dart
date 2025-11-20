@@ -48,19 +48,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           _passwordController.text.trim(),
         );
       } else {
-        final userCredential = await authService.signUp(
+        // Sign up now creates user profile and stats automatically
+        await authService.signUp(
           _emailController.text.trim(),
           _passwordController.text.trim(),
+          _nameController.text.trim(),
         );
-        
-        // Create user profile in Firestore
-        if (userCredential.user != null) {
-          await firestoreService.createUserProfile(
-            userCredential.user!.uid,
-            _nameController.text.trim(),
-            _emailController.text.trim(),
-          );
-        }
       }
       
       if (mounted) {

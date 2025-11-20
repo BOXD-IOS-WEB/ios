@@ -13,7 +13,7 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final nextRaceAsync = ref.watch(nextRaceProvider);
-    final allRacesAsync = ref.watch(currentSeasonRacesProvider);
+    final allRacesAsync = ref.watch(allRacesProvider);
 
     return Scaffold(
       body: SingleChildScrollView(
@@ -23,14 +23,14 @@ class HomeScreen extends ConsumerWidget {
             // Hero Section (Next Race)
             _buildHeroSection(context, nextRaceAsync),
 
-            // Recent/Upcoming Races
+            // All Races from All Years
             Padding(
               padding: const EdgeInsets.all(24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    '2025 SEASON',
+                    'ALL RACES',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w900,

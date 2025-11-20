@@ -92,6 +92,39 @@ class ExploreScreen extends ConsumerWidget {
 class _SeasonsTab extends ConsumerWidget {
   const _SeasonsTab();
 
+  String _getCountryFlag(String countryCode) {
+    // Map of country codes to flag emojis
+    const flags = {
+      'AU': '🇦🇺', 'AUS': '🇦🇺', // Australia
+      'BH': '🇧🇭', 'BAH': '🇧🇭', // Bahrain
+      'SA': '🇸🇦', 'SAU': '🇸🇦', // Saudi Arabia
+      'JP': '🇯🇵', 'JPN': '🇯🇵', // Japan
+      'CN': '🇨🇳', 'CHN': '🇨🇳', // China
+      'US': '🇺🇸', 'USA': '🇺🇸', // United States
+      'IT': '🇮🇹', 'ITA': '🇮🇹', // Italy
+      'MC': '🇲🇨', 'MON': '🇲🇨', // Monaco
+      'ES': '🇪🇸', 'ESP': '🇪🇸', // Spain
+      'CA': '🇨🇦', 'CAN': '🇨🇦', // Canada
+      'AT': '🇦🇹', 'AUT': '🇦🇹', // Austria
+      'GB': '🇬🇧', 'GBR': '🇬🇧', // Great Britain
+      'HU': '🇭🇺', 'HUN': '🇭🇺', // Hungary
+      'BE': '🇧🇪', 'BEL': '🇧🇪', // Belgium
+      'NL': '🇳🇱', 'NED': '🇳🇱', // Netherlands
+      'SG': '🇸🇬', 'SGP': '🇸🇬', // Singapore
+      'AZ': '🇦🇿', 'AZE': '🇦🇿', // Azerbaijan
+      'MX': '🇲🇽', 'MEX': '🇲🇽', // Mexico
+      'BR': '🇧🇷', 'BRA': '🇧🇷', // Brazil
+      'AE': '🇦🇪', 'UAE': '🇦🇪', // UAE
+      'QA': '🇶🇦', 'QAT': '🇶🇦', // Qatar
+      'DE': '🇩🇪', 'GER': '🇩🇪', // Germany
+      'FR': '🇫🇷', 'FRA': '🇫🇷', // France
+      'PT': '🇵🇹', 'POR': '🇵🇹', // Portugal
+      'TR': '🇹🇷', 'TUR': '🇹🇷', // Turkey
+      'RU': '🇷🇺', 'RUS': '🇷🇺', // Russia
+    };
+    return flags[countryCode.toUpperCase()] ?? '🏁';
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedSeason = ref.watch(selectedSeasonProvider);
@@ -99,38 +132,44 @@ class _SeasonsTab extends ConsumerWidget {
 
     return Column(
       children: [
-        // Season Selector
+        // Season Selector - Now dynamically loaded from Firebase
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [2025, 2024, 2023, 2022, 2021, 2020].map((year) {
-              final isSelected = year == selectedSeason;
-              return Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: ChoiceChip(
-                  label: Text(year.toString()),
-                  selected: isSelected,
-                  onSelected: (selected) {
-                    if (selected) {
-                      ref.read(selectedSeasonProvider.notifier).setSeason(year);
-                    }
-                  },
-                  selectedColor: AppTheme.racingRed,
-                  backgroundColor: Colors.white.withValues(alpha: 0.1),
-                  labelStyle: TextStyle(
-                    color: isSelected ? Colors.white : Colors.white70,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    side: BorderSide(
-                      color: isSelected ? AppTheme.racingRed : Colors.transparent,
+          child: FutureBuilder<List<int>>(
+            future: ref.read(f1ApiServiceProvider).getAvailableSeasons(),
+            builder: (context, snapshot) {
+              final years = snapshot.data ?? [2025, 2024, 2023, 2022, 2021, 2020];
+              return Row(
+                children: years.map((year) {
+                  final isSelected = year == selectedSeason;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ChoiceChip(
+                      label: Text(year.toString()),
+                      selected: isSelected,
+                      onSelected: (selected) {
+                        if (selected) {
+                          ref.read(selectedSeasonProvider.notifier).setSeason(year);
+                        }
+                      },
+                      selectedColor: AppTheme.racingRed,
+                      backgroundColor: Colors.white.withValues(alpha: 0.1),
+                      labelStyle: TextStyle(
+                        color: isSelected ? Colors.white : Colors.white70,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                        side: BorderSide(
+                          color: isSelected ? AppTheme.racingRed : Colors.transparent,
+                        ),
+                      ),
                     ),
-                  ),
-                ),
+                  );
+                }).toList(),
               );
-            }).toList(),
+            },
           ),
         ),
 
@@ -166,23 +205,57 @@ class _SeasonsTab extends ConsumerWidget {
                           Expanded(
                             child: Container(
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.1),
                                 borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                                image: race.posterUrl != null ? DecorationImage(
-                                  image: NetworkImage(race.posterUrl!),
-                                  fit: BoxFit.cover,
-                                ) : null,
+                                image: race.posterUrl != null 
+                                  ? DecorationImage(
+                                      image: NetworkImage(race.posterUrl!),
+                                      fit: BoxFit.cover,
+                                    )
+                                  : const DecorationImage(
+                                      image: AssetImage('assets/ferrari-f1.jpg'),
+                                      fit: BoxFit.cover,
+                                    ),
                               ),
-                              child: race.posterUrl == null ? Center(
-                                child: Text(
-                                  race.country ?? 'Unknown',
-                                  style: const TextStyle(
-                                    fontSize: 40,
-                                    fontWeight: FontWeight.w900,
-                                    color: Colors.white10,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [
+                                      Colors.black.withValues(alpha: 0.3),
+                                      Colors.black.withValues(alpha: 0.7),
+                                    ],
+                                  ),
+                                  borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                                ),
+                                child: Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        _getCountryFlag(race.country ?? ''),
+                                        style: const TextStyle(fontSize: 48),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        race.country ?? 'XX',
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w900,
+                                          color: Colors.white,
+                                          letterSpacing: 2,
+                                          shadows: [
+                                            Shadow(
+                                              color: Colors.black,
+                                              blurRadius: 4,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                              ) : null,
+                              ),
                             ),
                           ),
                           Padding(

@@ -1,8 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:boxboxd/core/theme.dart';
 import 'package:boxboxd/features/auth/providers/auth_state.dart';
+import 'package:boxboxd/features/settings/widgets/account_section.dart';
+import 'package:boxboxd/features/settings/widgets/f1_favorites_section.dart';
+import 'package:boxboxd/features/settings/widgets/privacy_section.dart';
+import 'package:boxboxd/features/settings/widgets/notifications_section.dart';
+import 'package:boxboxd/features/settings/widgets/danger_zone_section.dart';
+import 'package:boxboxd/features/settings/widgets/delete_account_dialog.dart';
+import 'package:boxboxd/core/services/data_export_service.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -12,71 +23,225 @@ class SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
-  final _currentPasswordController = TextEditingController();
-  final _newPasswordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
-  
-  final _driverController = TextEditingController();
-  final _teamController = TextEditingController();
-  final _circuitController = TextEditingController();
-
   bool _isLoading = false;
 
   @override
-  void initState() {
-    super.initState();
-    _loadFavorites();
-  }
-
-  Future<void> _loadFavorites() async {
-    final user = ref.read(currentUserProfileProvider).value;
-    if (user != null) {
-      setState(() {
-        _driverController.text = user.favoriteDriver ?? '';
-        _teamController.text = user.favoriteTeam ?? '';
-        _circuitController.text = user.favoriteCircuit ?? '';
-      });
-    }
-  }
-
-  @override
   void dispose() {
-    _currentPasswordController.dispose();
-    _newPasswordController.dispose();
-    _confirmPasswordController.dispose();
-    _driverController.dispose();
-    _teamController.dispose();
-    _circuitController.dispose();
     super.dispose();
   }
 
-  Future<void> _saveFavorites() async {
-    setState(() => _isLoading = true);
+  Future<void> _saveFavorites(String driver, String team, String circuit) async {
+    final firestoreService = ref.read(firestoreServiceProvider);
+    final user = ref.read(currentUserProfileProvider).value;
+    
+    if (user != null) {
+      // Convert empty strings to null
+      final driverValue = driver.trim().isEmpty ? null : driver.trim();
+      final teamValue = team.trim().isEmpty ? null : team.trim();
+      final circuitValue = circuit.trim().isEmpty ? null : circuit.trim();
+      
+      await firestoreService.updateUserStats(user.id, {
+        'favoriteDriver': driverValue,
+        'favoriteTeam': teamValue,
+        'favoriteCircuit': circuitValue,
+      });
+      
+      // Invalidate the user profile provider to refresh the data
+      ref.invalidate(currentUserProfileProvider);
+    }
+  }
+
+  Future<void> _savePrivacySettings(bool privateAccount, bool showActivityStatus) async {
     try {
       final firestoreService = ref.read(firestoreServiceProvider);
       final user = ref.read(currentUserProfileProvider).value;
       
       if (user != null) {
-        await firestoreService.updateUserStats(user.id, {
-          'favoriteDriver': _driverController.text,
-          'favoriteTeam': _teamController.text,
-          'favoriteCircuit': _circuitController.text,
+        await firestoreService.updateUserProfile(user.id, {
+          'privateAccount': privateAccount,
+          'showActivityStatus': showActivityStatus,
         });
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Favorites saved successfully')),
-          );
-        }
+        
+        // Invalidate the user profile provider to refresh the data
+        ref.invalidate(currentUserProfileProvider);
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error saving favorites: $e')),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
+      rethrow; // Let the PrivacySection handle the error display
     }
+  }
+
+  Future<void> _saveNotificationSettings({
+    required bool emailNotifications,
+    required bool pushNotifications,
+    required bool likesCommentsNotifications,
+    required bool followersNotifications,
+  }) async {
+    try {
+      final firestoreService = ref.read(firestoreServiceProvider);
+      final user = ref.read(currentUserProfileProvider).value;
+      
+      if (user != null) {
+        await firestoreService.updateUserProfile(user.id, {
+          'emailNotifications': emailNotifications,
+          'pushNotifications': pushNotifications,
+          'likesCommentsNotifications': likesCommentsNotifications,
+          'followersNotifications': followersNotifications,
+        });
+        
+        // Invalidate the user profile provider to refresh the data
+        ref.invalidate(currentUserProfileProvider);
+      }
+    } catch (e) {
+      rethrow; // Let the NotificationsSection handle the error display
+    }
+  }
+
+  Future<void> _showChangePasswordDialog() async {
+    final currentPasswordController = TextEditingController();
+    final newPasswordController = TextEditingController();
+    final confirmPasswordController = TextEditingController();
+
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppTheme.card,
+        title: const Text(
+          'Change Password',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: currentPasswordController,
+              obscureText: true,
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                labelText: 'Current Password',
+                labelStyle: const TextStyle(color: Colors.grey),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: const BorderSide(color: AppTheme.racingRed),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                filled: true,
+                fillColor: Colors.black26,
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: newPasswordController,
+              obscureText: true,
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                labelText: 'New Password',
+                labelStyle: const TextStyle(color: Colors.grey),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: const BorderSide(color: AppTheme.racingRed),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                filled: true,
+                fillColor: Colors.black26,
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: confirmPasswordController,
+              obscureText: true,
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                labelText: 'Confirm Password',
+                labelStyle: const TextStyle(color: Colors.grey),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: const BorderSide(color: AppTheme.racingRed),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                filled: true,
+                fillColor: Colors.black26,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('CANCEL', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final currentPassword = currentPasswordController.text.trim();
+              final newPassword = newPasswordController.text.trim();
+              final confirmPassword = confirmPasswordController.text.trim();
+
+              if (currentPassword.isEmpty || newPassword.isEmpty || confirmPassword.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('All password fields are required')),
+                );
+                return;
+              }
+
+              if (newPassword.length < 8) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('New password must be at least 8 characters')),
+                );
+                return;
+              }
+
+              if (newPassword != confirmPassword) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('New password and confirmation do not match')),
+                );
+                return;
+              }
+
+              try {
+                final authService = ref.read(authServiceProvider);
+                await authService.changePassword(currentPassword, newPassword);
+                
+                if (context.mounted) {
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Password changed successfully'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error: ${e.toString().replaceAll('Exception: ', '')}'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.racingRed,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('CHANGE PASSWORD'),
+          ),
+        ],
+      ),
+    );
+
+    currentPasswordController.dispose();
+    newPasswordController.dispose();
+    confirmPasswordController.dispose();
   }
 
   Future<void> _signOut() async {
@@ -87,6 +252,142 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error signing out: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _exportData() async {
+    setState(() => _isLoading = true);
+    
+    try {
+      final exportService = DataExportService();
+      
+      // Show progress dialog
+      if (mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => const AlertDialog(
+            backgroundColor: AppTheme.card,
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(color: AppTheme.racingRed),
+                SizedBox(height: 16),
+                Text(
+                  'Collecting your data...',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+      
+      // Export data
+      final data = await exportService.exportUserData();
+      final jsonString = exportService.exportToJsonString(data);
+      
+      // Close progress dialog
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+      
+      // Save and share the file
+      final directory = await getApplicationDocumentsDirectory();
+      final timestamp = DateTime.now().toIso8601String().replaceAll(':', '-');
+      final file = File('${directory.path}/boxboxd_data_export_$timestamp.json');
+      await file.writeAsString(jsonString);
+      
+      // Share the file
+      await Share.shareXFiles(
+        [XFile(file.path)],
+        subject: 'BoxBoxd Data Export',
+        text: 'Your BoxBoxd data export from ${DateTime.now().toLocal()}',
+      );
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Data exported successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      // Close progress dialog if still open
+      if (mounted && Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error exporting data: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _deleteAccount() async {
+    // Show confirmation dialog
+    final password = await showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const DeleteAccountDialog(),
+    );
+
+    // User cancelled
+    if (password == null) return;
+
+    // Show loading indicator
+    if (mounted) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    try {
+      final authService = ref.read(authServiceProvider);
+      await authService.deleteAccount(password);
+      
+      // Close loading dialog
+      if (mounted) {
+        Navigator.of(context).pop();
+        
+        // Navigate to login screen
+        context.go('/login');
+        
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Account deleted successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      // Close loading dialog
+      if (mounted) {
+        Navigator.of(context).pop();
+        
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error deleting account: ${e.toString().replaceAll('Exception: ', '')}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
         );
       }
     }
@@ -115,28 +416,65 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Account Section
-            _buildSectionHeader('ACCOUNT'),
+            AccountSection(
+              email: user?.email ?? 'Loading...',
+              onChangePassword: _showChangePasswordDialog,
+            ),
+
+            const SizedBox(height: 24),
+
+            // F1 Favorites Section
+            F1FavoritesSection(
+              initialDriver: user?.favoriteDriver,
+              initialTeam: user?.favoriteTeam,
+              initialCircuit: user?.favoriteCircuit,
+              onSave: _saveFavorites,
+            ),
+
+            const SizedBox(height: 24),
+
+            // Privacy Section
+            PrivacySection(
+              initialPrivateAccount: user?.privateAccount ?? false,
+              initialShowActivityStatus: user?.showActivityStatus ?? true,
+              onSave: _savePrivacySettings,
+            ),
+
+            const SizedBox(height: 24),
+
+            // Notifications Section
+            NotificationsSection(
+              initialEmailNotifications: user?.emailNotifications ?? true,
+              initialPushNotifications: user?.pushNotifications ?? true,
+              initialLikesCommentsNotifications: user?.likesCommentsNotifications ?? true,
+              initialFollowersNotifications: user?.followersNotifications ?? true,
+              onSave: _saveNotificationSettings,
+            ),
+
+            const SizedBox(height: 24),
+
+            // Data Management Section
+            _buildSectionHeader('DATA MANAGEMENT'),
             _buildCard(
               children: [
-                _buildInfoRow('Email', user?.email ?? 'Loading...'),
-                const SizedBox(height: 16),
-                const Text('Change Password', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                _buildTextField('Current Password', _currentPasswordController, obscureText: true),
-                const SizedBox(height: 8),
-                _buildTextField('New Password', _newPasswordController, obscureText: true),
-                const SizedBox(height: 8),
-                _buildTextField('Confirm Password', _confirmPasswordController, obscureText: true),
-                const SizedBox(height: 16),
                 SizedBox(
                   width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {}, // TODO: Implement change password
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.racingRed,
+                  child: OutlinedButton.icon(
+                    onPressed: _isLoading ? null : _exportData,
+                    icon: const Icon(LucideIcons.download),
+                    label: Text(_isLoading ? 'EXPORTING...' : 'EXPORT MY DATA'),
+                    style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.white,
+                      side: const BorderSide(color: Colors.white54),
                     ),
-                    child: const Text('UPDATE PASSWORD'),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Download all your data including profile, race logs, lists, comments, and more in JSON format.',
+                  style: TextStyle(
+                    color: Colors.grey,
+                    fontSize: 12,
                   ),
                 ),
               ],
@@ -144,26 +482,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
             const SizedBox(height: 24),
 
-            // Favorites Section
-            _buildSectionHeader('F1 FAVORITES'),
+            // Support & Legal Section
+            _buildSectionHeader('SUPPORT & LEGAL'),
             _buildCard(
               children: [
-                _buildTextField('Favorite Driver', _driverController),
-                const SizedBox(height: 12),
-                _buildTextField('Favorite Team', _teamController),
-                const SizedBox(height: 12),
-                _buildTextField('Favorite Circuit', _circuitController),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _saveFavorites,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.racingRed,
-                      foregroundColor: Colors.white,
-                    ),
-                    child: Text(_isLoading ? 'SAVING...' : 'SAVE FAVORITES'),
-                  ),
+                _buildLinkButton(
+                  icon: LucideIcons.helpCircle,
+                  label: 'Support',
+                  onTap: () => context.push('/support'),
+                ),
+                const SizedBox(height: 8),
+                _buildLinkButton(
+                  icon: LucideIcons.shield,
+                  label: 'Privacy Policy',
+                  onTap: () => context.push('/privacy-policy'),
+                ),
+                const SizedBox(height: 8),
+                _buildLinkButton(
+                  icon: LucideIcons.fileText,
+                  label: 'Terms of Service',
+                  onTap: () => context.push('/terms-of-service'),
                 ),
               ],
             ),
@@ -171,37 +509,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             const SizedBox(height: 24),
 
             // Danger Zone
-            _buildSectionHeader('DANGER ZONE', color: Colors.red),
-            _buildCard(
-              borderColor: Colors.red.withValues(alpha: 0.5),
-              children: [
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: _signOut,
-                    icon: const Icon(LucideIcons.logOut),
-                    label: const Text('SIGN OUT'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      side: const BorderSide(color: Colors.white54),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () {}, // TODO: Implement delete account
-                    icon: const Icon(LucideIcons.trash2),
-                    label: const Text('DELETE ACCOUNT'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                    ),
-                  ),
-                ),
-              ],
+            DangerZoneSection(
+              onSignOut: _signOut,
+              onDeleteAccount: _deleteAccount,
             ),
+
+            const SizedBox(height: 24),
           ],
         ),
       ),
@@ -238,35 +551,36 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(color: Colors.grey, fontSize: 12)),
-        const SizedBox(height: 4),
-        Text(value, style: const TextStyle(color: Colors.white, fontSize: 16)),
-      ],
-    );
-  }
-
-  Widget _buildTextField(String label, TextEditingController controller, {bool obscureText = false}) {
-    return TextField(
-      controller: controller,
-      obscureText: obscureText,
-      style: const TextStyle(color: Colors.white),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(color: Colors.grey),
-        enabledBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
-          borderRadius: BorderRadius.circular(8),
+  Widget _buildLinkButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        child: Row(
+          children: [
+            Icon(icon, color: Colors.white70, size: 20),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+            const Icon(
+              LucideIcons.chevronRight,
+              color: Colors.white54,
+              size: 20,
+            ),
+          ],
         ),
-        focusedBorder: OutlineInputBorder(
-          borderSide: const BorderSide(color: AppTheme.racingRed),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        filled: true,
-        fillColor: Colors.black26,
       ),
     );
   }

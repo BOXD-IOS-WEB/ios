@@ -82,6 +82,27 @@ class _ActivityItem extends StatelessWidget {
 
   const _ActivityItem({required this.activity});
 
+  /// Check if the avatar URL is valid
+  bool _isValidUrl(String? url) {
+    if (url == null || url.isEmpty) return false;
+    try {
+      final uri = Uri.parse(url);
+      return uri.hasScheme && (uri.scheme == 'http' || uri.scheme == 'https');
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// Get avatar image provider if URL is valid
+  ImageProvider? _getAvatarImage(String? url) {
+    return _isValidUrl(url) ? NetworkImage(url!) : null;
+  }
+
+  /// Check if we should show the initial letter
+  bool _shouldShowInitial(String? url) {
+    return !_isValidUrl(url);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -96,11 +117,9 @@ class _ActivityItem extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 20,
-            backgroundImage: activity.userAvatar != null && activity.userAvatar!.isNotEmpty
-                ? NetworkImage(activity.userAvatar!)
-                : null,
+            backgroundImage: _getAvatarImage(activity.userAvatar),
             backgroundColor: AppTheme.racingRed,
-            child: activity.userAvatar == null || activity.userAvatar!.isEmpty
+            child: _shouldShowInitial(activity.userAvatar)
                 ? Text(activity.username[0].toUpperCase(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))
                 : null,
           ),

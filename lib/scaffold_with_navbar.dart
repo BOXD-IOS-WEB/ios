@@ -37,6 +37,10 @@ class ScaffoldWithNavBar extends StatelessWidget {
             label: 'Explore',
           ),
           NavigationDestination(
+            icon: Icon(LucideIcons.bookOpen),
+            label: 'Diary',
+          ),
+          NavigationDestination(
             icon: Icon(LucideIcons.activity),
             label: 'Activity',
           ),
@@ -46,21 +50,14 @@ class ScaffoldWithNavBar extends StatelessWidget {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // TODO: Open Log Dialog
-          showDialog(
-            context: context,
-            builder: (context) => const AlertDialog(
-              title: Text('Log Race'),
-              content: Text('Log Race Dialog Placeholder'),
-            ),
-          );
-        },
-        backgroundColor: AppTheme.racingRed,
-        child: const Icon(LucideIcons.plus, color: Colors.white),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      // floatingActionButton: FloatingActionButton(
+      //   onPressed: () {
+      //     context.push('/search');
+      //   },
+      //   backgroundColor: AppTheme.racingRed,
+      //   child: const Icon(LucideIcons.plus, color: Colors.white),
+      // ),
+      // floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 }

@@ -106,4 +106,19 @@ class FollowService {
     
     return follows.docs.map((doc) => doc['followingId'] as String).toList();
   }
+
+  /// Get ALL follows from the collection
+  Future<List<Map<String, dynamic>>> getAllFollows() async {
+    print('[FollowService] Fetching ALL follows');
+    final snapshot = await _firestore
+        .collection('follows')
+        .orderBy('createdAt', descending: true)
+        .get();
+
+    print('[FollowService] Found ${snapshot.docs.length} follows');
+    return snapshot.docs.map((doc) => {
+      'id': doc.id,
+      ...doc.data(),
+    }).toList();
+  }
 }

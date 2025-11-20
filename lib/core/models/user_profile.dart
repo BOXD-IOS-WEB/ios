@@ -11,6 +11,13 @@ class UserProfile {
   final String? favoriteDriver;
   final String? favoriteTeam;
   final String? favoriteCircuit;
+  final bool onboardingCompleted;
+  final bool privateAccount;
+  final bool showActivityStatus;
+  final bool emailNotifications;
+  final bool pushNotifications;
+  final bool likesCommentsNotifications;
+  final bool followersNotifications;
 
   UserProfile({
     required this.id,
@@ -25,6 +32,13 @@ class UserProfile {
     this.favoriteDriver,
     this.favoriteTeam,
     this.favoriteCircuit,
+    this.onboardingCompleted = false,
+    this.privateAccount = false,
+    this.showActivityStatus = true,
+    this.emailNotifications = true,
+    this.pushNotifications = true,
+    this.likesCommentsNotifications = true,
+    this.followersNotifications = true,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json, String id) {
@@ -41,6 +55,13 @@ class UserProfile {
       favoriteDriver: json['favoriteDriver'],
       favoriteTeam: json['favoriteTeam'],
       favoriteCircuit: json['favoriteCircuit'],
+      onboardingCompleted: json['onboardingCompleted'] ?? false,
+      privateAccount: json['privateAccount'] ?? false,
+      showActivityStatus: json['showActivityStatus'] ?? true,
+      emailNotifications: json['emailNotifications'] ?? true,
+      pushNotifications: json['pushNotifications'] ?? true,
+      likesCommentsNotifications: json['likesCommentsNotifications'] ?? true,
+      followersNotifications: json['followersNotifications'] ?? true,
     );
   }
 
@@ -53,6 +74,13 @@ class UserProfile {
       'favoriteDriver': favoriteDriver,
       'favoriteTeam': favoriteTeam,
       'favoriteCircuit': favoriteCircuit,
+      'onboardingCompleted': onboardingCompleted,
+      'privateAccount': privateAccount,
+      'showActivityStatus': showActivityStatus,
+      'emailNotifications': emailNotifications,
+      'pushNotifications': pushNotifications,
+      'likesCommentsNotifications': likesCommentsNotifications,
+      'followersNotifications': followersNotifications,
     };
   }
   
@@ -68,6 +96,13 @@ class UserProfile {
     String? favoriteDriver,
     String? favoriteTeam,
     String? favoriteCircuit,
+    bool? onboardingCompleted,
+    bool? privateAccount,
+    bool? showActivityStatus,
+    bool? emailNotifications,
+    bool? pushNotifications,
+    bool? likesCommentsNotifications,
+    bool? followersNotifications,
   }) {
     return UserProfile(
       id: id,
@@ -82,6 +117,13 @@ class UserProfile {
       favoriteDriver: favoriteDriver ?? this.favoriteDriver,
       favoriteTeam: favoriteTeam ?? this.favoriteTeam,
       favoriteCircuit: favoriteCircuit ?? this.favoriteCircuit,
+      onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
+      privateAccount: privateAccount ?? this.privateAccount,
+      showActivityStatus: showActivityStatus ?? this.showActivityStatus,
+      emailNotifications: emailNotifications ?? this.emailNotifications,
+      pushNotifications: pushNotifications ?? this.pushNotifications,
+      likesCommentsNotifications: likesCommentsNotifications ?? this.likesCommentsNotifications,
+      followersNotifications: followersNotifications ?? this.followersNotifications,
     );
   }
 }

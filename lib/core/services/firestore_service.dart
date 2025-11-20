@@ -13,6 +13,12 @@ class FirestoreService {
       'email': email,
       'description': '',
       'photoURL': '',
+      'privateAccount': false,
+      'showActivityStatus': true,
+      'emailNotifications': true,
+      'pushNotifications': true,
+      'likesCommentsNotifications': true,
+      'followersNotifications': true,
       'created_at': FieldValue.serverTimestamp(),
       'updated_at': FieldValue.serverTimestamp(),
     });
@@ -66,5 +72,49 @@ class FirestoreService {
       ...stats,
       'updated_at': FieldValue.serverTimestamp(),
     });
+  }
+
+  /// Get ALL users from the collection
+  Future<List<UserProfile>> getAllUsers() async {
+    print('[FirestoreService] Fetching ALL users');
+    final snapshot = await _firestore
+        .collection('users')
+        .get();
+
+    print('[FirestoreService] Found ${snapshot.docs.length} users');
+    
+    final users = <UserProfile>[];
+    for (var doc in snapshot.docs) {
+      try {
+        final statsDoc = await _firestore.collection('userStats').doc(doc.id).get();
+        final userData = doc.data();
+        final statsData = statsDoc.exists ? statsDoc.data()! : <String, dynamic>{};
+        
+        final mergedData = {
+          ...userData,
+          ...statsData,
+        };
+        
+        users.add(UserProfile.fromJson(mergedData, doc.id));
+      } catch (e) {
+        print('[FirestoreService] Error loading user ${doc.id}: $e');
+      }
+    }
+    
+    return users;
+  }
+
+  /// Get ALL userStats from the collection
+  Future<List<Map<String, dynamic>>> getAllUserStats() async {
+    print('[FirestoreService] Fetching ALL userStats');
+    final snapshot = await _firestore
+        .collection('userStats')
+        .get();
+
+    print('[FirestoreService] Found ${snapshot.docs.length} userStats');
+    return snapshot.docs.map((doc) => {
+      'id': doc.id,
+      ...doc.data(),
+    }).toList();
   }
 }

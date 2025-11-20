@@ -3,12 +3,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:boxboxd/core/theme.dart';
 import 'package:boxboxd/core/models/race.dart';
-import 'package:boxboxd/core/widgets/responsive_flex.dart';
 import 'package:boxboxd/features/home/providers/f1_provider.dart';
 import 'package:boxboxd/features/race/widgets/log_race_dialog.dart';
+import 'package:boxboxd/features/race/widgets/comments_section.dart';
 import 'package:boxboxd/core/services/race_log_service.dart';
+import 'package:boxboxd/core/services/watchlist_service.dart';
+import 'package:boxboxd/features/auth/providers/auth_state.dart';
 
 final raceLogServiceProvider = Provider<RaceLogService>((ref) => RaceLogService());
+final watchlistServiceProvider = Provider<WatchlistService>((ref) => WatchlistService());
+
+// Provider for fetching a specific season's races
+final seasonRacesProvider = FutureProvider.family<List<Race>, int>((ref, season) async {
+  final api = ref.read(f1ApiServiceProvider);
+  return api.getRacesBySeason(season);
+});
 
 class RaceDetailScreen extends ConsumerWidget {
   final int season;
@@ -22,19 +31,58 @@ class RaceDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final racesAsync = ref.watch(currentSeasonRacesProvider);
+    // Fetch races for the specific season
+    final racesAsync = ref.watch(seasonRacesProvider(season));
 
     return Scaffold(
       body: racesAsync.when(
         data: (races) {
-          final race = races.firstWhere(
-            (r) => r.season == season && r.round == round,
-            orElse: () => throw Exception('Race not found'),
-          );
-          return _buildContent(context, ref, race);
+          try {
+            final race = races.firstWhere(
+              (r) => r.season == season && r.round == round,
+            );
+            return _buildContent(context, ref, race);
+          } catch (e) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(LucideIcons.alertCircle, size: 64, color: AppTheme.racingRed),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Race not found',
+                    style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 18),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Season $season, Round $round',
+                    style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 14),
+                  ),
+                ],
+              ),
+            );
+          }
         },
         loading: () => const Center(child: CircularProgressIndicator(color: AppTheme.racingRed)),
-        error: (err, stack) => Center(child: Text('Error: $err', style: const TextStyle(color: Colors.white))),
+        error: (err, stack) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(LucideIcons.alertCircle, size: 64, color: AppTheme.racingRed),
+              const SizedBox(height: 16),
+              Text(
+                'Error loading race',
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                err.toString(),
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -125,9 +173,7 @@ class RaceDetailScreen extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Action Buttons
-                ResponsiveFlex(
-                  breakpoint: 400,
-                  spacing: 12,
+                Row(
                   children: [
                     Expanded(
                       child: ElevatedButton.icon(
@@ -150,17 +196,29 @@ class RaceDetailScreen extends ConsumerWidget {
                         ),
                       ),
                     ),
+                    const SizedBox(width: 12),
                     Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () {}, // TODO: Add to watchlist
-                        icon: const Icon(LucideIcons.eye, size: 18),
-                        label: const Text('WATCHLIST'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          side: const BorderSide(color: Colors.white24),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          textStyle: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1),
-                        ),
+                      child: FutureBuilder<bool>(
+                        future: _isInWatchlist(ref, race),
+                        builder: (context, snapshot) {
+                          final isInWatchlist = snapshot.data ?? false;
+                          return OutlinedButton.icon(
+                            onPressed: () => _toggleWatchlist(context, ref, race, isInWatchlist),
+                            icon: Icon(
+                              isInWatchlist ? LucideIcons.bookmark : LucideIcons.bookmarkPlus,
+                              size: 18,
+                            ),
+                            label: Text(isInWatchlist ? 'IN WATCHLIST' : 'WATCHLIST'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: isInWatchlist ? AppTheme.racingRed : Colors.white,
+                              side: BorderSide(
+                                color: isInWatchlist ? AppTheme.racingRed : Colors.white24,
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              textStyle: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1),
+                            ),
+                          );
+                        },
                       ),
                     ),
                   ],
@@ -196,12 +254,72 @@ class RaceDetailScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 16),
                 _buildReviewsList(ref, race),
+                
+                const SizedBox(height: 32),
+                
+                // Comments Section
+                CommentsSection(
+                  targetId: '${race.season}_${race.round}',
+                  targetType: 'race',
+                ),
               ],
             ),
           ),
         ),
       ],
     );
+  }
+
+  Future<bool> _isInWatchlist(WidgetRef ref, Race race) async {
+    try {
+      final watchlist = await ref.read(watchlistServiceProvider).getUserWatchlist();
+      return watchlist.any((item) => 
+        item.raceYear == race.season && item.raceName == race.gpName
+      );
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<void> _toggleWatchlist(BuildContext context, WidgetRef ref, Race race, bool isInWatchlist) async {
+    try {
+      if (isInWatchlist) {
+        // Find the watchlist item to get its ID
+        final watchlist = await ref.read(watchlistServiceProvider).getUserWatchlist();
+        final item = watchlist.firstWhere(
+          (item) => item.raceYear == race.season && item.raceName == race.gpName,
+        );
+        await ref.read(watchlistServiceProvider).removeFromWatchlist(item.id!);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Removed from watchlist')),
+          );
+        }
+      } else {
+        await ref.read(watchlistServiceProvider).addToWatchlist(
+          raceName: race.gpName,
+          raceLocation: race.circuit,
+          raceYear: race.season,
+          raceDate: race.date,
+          countryCode: race.country,
+        );
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Added to watchlist')),
+          );
+        }
+      }
+      // Trigger rebuild
+      if (context.mounted) {
+        (context as Element).markNeedsBuild();
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    }
   }
 
   Widget _buildReviewsList(WidgetRef ref, Race race) {
