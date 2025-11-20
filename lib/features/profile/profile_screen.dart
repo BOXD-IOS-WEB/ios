@@ -127,12 +127,16 @@ class ProfileScreen extends ConsumerWidget {
                       ),
                     ),
                     actions: [
-                      if (isCurrentUser)
+                      if (isCurrentUser) ...[
+                        IconButton(
+                          icon: const Icon(LucideIcons.edit, color: Colors.white),
+                          onPressed: () => context.push('/profile/edit'),
+                        ),
                         IconButton(
                           icon: const Icon(LucideIcons.settings, color: Colors.white),
                           onPressed: () => context.push('/settings'),
-                        )
-                      else
+                        ),
+                      ] else
                         _FollowButton(userId: targetUserId),
                     ],
                     bottom: TabBar(

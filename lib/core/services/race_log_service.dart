@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:boxboxd/core/models/race_log.dart';
-import 'package:boxboxd/core/services/firestore_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class RaceLogService {
@@ -54,28 +53,42 @@ class RaceLogService {
     return docRef.id;
   }
 
-  Future<List<RaceLog>> getPublicRaceLogs({int limit = 20}) async {
-    final snapshot = await _firestore
+  Future<List<RaceLog>> getPublicRaceLogs({int? limit}) async {
+    print('[RaceLogService] Fetching ALL public race logs');
+    var query = _firestore
         .collection('raceLogs')
         .where('visibility', isEqualTo: 'public')
-        .orderBy('createdAt', descending: true)
-        .limit(limit)
-        .get();
+        .orderBy('createdAt', descending: true);
+    
+    // Only apply limit if specified
+    if (limit != null) {
+      query = query.limit(limit);
+    }
+    
+    final snapshot = await query.get();
+    print('[RaceLogService] Found ${snapshot.docs.length} public race logs');
 
     return snapshot.docs
         .map((doc) => RaceLog.fromJson(doc.data(), doc.id))
         .toList();
   }
 
-  Future<List<RaceLog>> getHighRatedLogs({int limit = 10}) async {
-    final snapshot = await _firestore
+  Future<List<RaceLog>> getHighRatedLogs({int? limit}) async {
+    print('[RaceLogService] Fetching ALL high-rated logs');
+    var query = _firestore
         .collection('raceLogs')
         .where('visibility', isEqualTo: 'public')
         .where('rating', isGreaterThanOrEqualTo: 4.0)
         .orderBy('rating', descending: true)
-        .orderBy('createdAt', descending: true)
-        .limit(limit)
-        .get();
+        .orderBy('createdAt', descending: true);
+    
+    // Only apply limit if specified
+    if (limit != null) {
+      query = query.limit(limit);
+    }
+    
+    final snapshot = await query.get();
+    print('[RaceLogService] Found ${snapshot.docs.length} high-rated logs');
 
     return snapshot.docs
         .map((doc) => RaceLog.fromJson(doc.data(), doc.id))
@@ -119,5 +132,97 @@ class RaceLogService {
       }
       return total + hours;
     });
+  }
+
+  /// Get ALL race logs from the collection
+  Future<List<RaceLog>> getAllRaceLogs() async {
+    print('[RaceLogService] Fetching ALL race logs');
+    final snapshot = await _firestore
+        .collection('raceLogs')
+        .orderBy('createdAt', descending: true)
+        .get();
+
+    print('[RaceLogService] Found ${snapshot.docs.length} race logs');
+    return snapshot.docs
+        .map((doc) => RaceLog.fromJson(doc.data(), doc.id))
+        .toList();
+  }
+
+  /// Update an existing race log
+  Future<void> updateRaceLog(String logId, RaceLog updates) async {
+    final user = _auth.currentUser;
+    if (user == null) throw Exception('User not authenticated');
+
+    // Verify the log belongs to the current user
+    final logDoc = await _firestore.collection('raceLogs').doc(logId).get();
+    if (!logDoc.exists) {
+      throw Exception('Race log not found');
+    }
+    
+    final logData = logDoc.data();
+    if (logData?['userId'] != user.uid) {
+      throw Exception('Unauthorized: Cannot update another user\'s race log');
+    }
+
+    // Create updated log data with new updatedAt timestamp
+    final updatedData = updates.toJson();
+    updatedData['updatedAt'] = Timestamp.fromDate(DateTime.now());
+    
+    // Update the document
+    await _firestore.collection('raceLogs').doc(logId).update(updatedData);
+    
+    // Recalculate user stats
+    await _updateUserStats(user.uid);
+  }
+
+  /// Delete a race log
+  Future<void> deleteRaceLog(String logId) async {
+    final user = _auth.currentUser;
+    if (user == null) throw Exception('User not authenticated');
+
+    // Verify the log belongs to the current user
+    final logDoc = await _firestore.collection('raceLogs').doc(logId).get();
+    if (!logDoc.exists) {
+      throw Exception('Race log not found');
+    }
+    
+    final logData = logDoc.data();
+    if (logData?['userId'] != user.uid) {
+      throw Exception('Unauthorized: Cannot delete another user\'s race log');
+    }
+
+    // Delete the document
+    await _firestore.collection('raceLogs').doc(logId).delete();
+    
+    // Recalculate user stats
+    await _updateUserStats(user.uid);
+  }
+
+  /// Get race logs by year for a specific user
+  Future<List<RaceLog>> getRaceLogsByYear(String userId, int year) async {
+    final snapshot = await _firestore
+        .collection('raceLogs')
+        .where('userId', isEqualTo: userId)
+        .where('raceYear', isEqualTo: year)
+        .orderBy('createdAt', descending: true)
+        .get();
+
+    return snapshot.docs
+        .map((doc) => RaceLog.fromJson(doc.data(), doc.id))
+        .toList();
+  }
+
+  /// Get race logs by tag for a specific user
+  Future<List<RaceLog>> getRaceLogsByTag(String userId, String tag) async {
+    final snapshot = await _firestore
+        .collection('raceLogs')
+        .where('userId', isEqualTo: userId)
+        .where('tags', arrayContains: tag)
+        .orderBy('createdAt', descending: true)
+        .get();
+
+    return snapshot.docs
+        .map((doc) => RaceLog.fromJson(doc.data(), doc.id))
+        .toList();
   }
 }

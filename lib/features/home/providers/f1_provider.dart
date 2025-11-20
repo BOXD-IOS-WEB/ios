@@ -3,15 +3,23 @@ import 'package:boxboxd/core/models/race.dart';
 import 'package:boxboxd/core/services/f1_api_service.dart';
 import 'package:dio/dio.dart';
 
-final f1ApiServiceProvider = Provider<F1ApiService>((ref) => F1ApiService(dio: Dio()));
+final f1ApiServiceProvider = Provider<F1ApiService>((ref) => F1ApiService());
 
-final currentSeasonRacesProvider = FutureProvider<List<Race>>((ref) async {
+// Fetch ALL races from all years
+final allRacesProvider = FutureProvider<List<Race>>((ref) async {
   final f1Service = ref.watch(f1ApiServiceProvider);
-  return f1Service.getCurrentSeasonRaces();
+  return f1Service.getAllRaces();
+});
+
+// Keep this for backward compatibility - now fetches current season from all races
+final currentSeasonRacesProvider = FutureProvider<List<Race>>((ref) async {
+  final allRaces = await ref.watch(allRacesProvider.future);
+  final currentYear = DateTime.now().year;
+  return allRaces.where((race) => race.season == currentYear).toList();
 });
 
 final nextRaceProvider = Provider<AsyncValue<Race?>>((ref) {
-  final racesAsync = ref.watch(currentSeasonRacesProvider);
+  final racesAsync = ref.watch(allRacesProvider);
   
   return racesAsync.whenData((races) {
     final now = DateTime.now();

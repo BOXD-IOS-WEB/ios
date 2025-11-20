@@ -45,25 +45,39 @@ class ActivityService {
     await _firestore.collection('activities').add(activity.toJson());
   }
 
-  Future<List<Activity>> getUserActivity(String userId, {int limit = 20}) async {
-    final snapshot = await _firestore
+  Future<List<Activity>> getUserActivity(String userId, {int? limit}) async {
+    print('[ActivityService] Fetching ALL activities for user: $userId');
+    var query = _firestore
         .collection('activities')
         .where('userId', isEqualTo: userId)
-        .orderBy('createdAt', descending: true)
-        .limit(limit)
-        .get();
+        .orderBy('createdAt', descending: true);
+    
+    // Only apply limit if specified
+    if (limit != null) {
+      query = query.limit(limit);
+    }
+    
+    final snapshot = await query.get();
+    print('[ActivityService] Found ${snapshot.docs.length} activities');
 
     return snapshot.docs
         .map((doc) => Activity.fromJson(doc.data(), doc.id))
         .toList();
   }
 
-  Future<List<Activity>> getGlobalActivity({int limit = 50}) async {
-    final snapshot = await _firestore
+  Future<List<Activity>> getGlobalActivity({int? limit}) async {
+    print('[ActivityService] Fetching ALL global activities');
+    var query = _firestore
         .collection('activities')
-        .orderBy('createdAt', descending: true)
-        .limit(limit)
-        .get();
+        .orderBy('createdAt', descending: true);
+    
+    // Only apply limit if specified
+    if (limit != null) {
+      query = query.limit(limit);
+    }
+    
+    final snapshot = await query.get();
+    print('[ActivityService] Found ${snapshot.docs.length} activities');
 
     return snapshot.docs
         .map((doc) => Activity.fromJson(doc.data(), doc.id))
@@ -75,4 +89,18 @@ class ActivityService {
   // For this migration, we'll implement a simple client-side merge or limit to global/user for now,
   // or implement the batching logic if we have the following list.
   // We'll start with Global Activity as the default feed for now as per many MVPs.
+
+  /// Get ALL activities from the collection
+  Future<List<Activity>> getAllActivities() async {
+    print('[ActivityService] Fetching ALL activities');
+    final snapshot = await _firestore
+        .collection('activities')
+        .orderBy('createdAt', descending: true)
+        .get();
+
+    print('[ActivityService] Found ${snapshot.docs.length} activities');
+    return snapshot.docs
+        .map((doc) => Activity.fromJson(doc.data(), doc.id))
+        .toList();
+  }
 }

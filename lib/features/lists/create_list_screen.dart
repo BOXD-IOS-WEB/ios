@@ -4,6 +4,7 @@ import 'package:boxboxd/core/theme.dart';
 import 'package:boxboxd/core/models/race_list.dart';
 import 'package:boxboxd/core/services/list_service.dart';
 import 'package:boxboxd/features/auth/providers/auth_state.dart';
+import 'package:boxboxd/features/profile/profile_screen.dart';
 import 'package:go_router/go_router.dart';
 
 class CreateListScreen extends ConsumerStatefulWidget {
@@ -55,6 +56,9 @@ class _CreateListScreenState extends ConsumerState<CreateListScreen> {
       );
 
       final listId = await ref.read(listServiceProvider).createList(newList);
+      
+      // Invalidate the user lists provider to refresh the profile screen
+      ref.invalidate(userListsProvider);
       
       if (mounted) {
         context.pop(); // Go back to profile/lists
